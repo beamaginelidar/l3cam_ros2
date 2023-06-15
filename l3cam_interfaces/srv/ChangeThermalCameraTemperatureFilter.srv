@@ -1,0 +1,4 @@
+float32 min_temperature
+float32 max_temperature
+---
+int32 error

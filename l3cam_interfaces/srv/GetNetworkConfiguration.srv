@@ -1,0 +1,5 @@
+---
+int32 error
+string ip_address
+string netmask
+string gateway

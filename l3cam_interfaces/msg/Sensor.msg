@@ -1,0 +1,5 @@
+int32 protocol
+int32 sensor_type
+uint8 sensor_status
+uint8 image_type
+bool perception_enabled

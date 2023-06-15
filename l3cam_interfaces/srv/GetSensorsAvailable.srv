@@ -1,0 +1,4 @@
+---
+int32 error
+Sensor[] sensors
+int32 num_sensors

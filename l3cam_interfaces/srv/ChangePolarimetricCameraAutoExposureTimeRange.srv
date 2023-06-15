@@ -1,0 +1,4 @@
+float32 min_exposure
+float32 max_exposure
+---
+int32 error

@@ -1,0 +1,6 @@
+string ip_address
+string netmask
+string gateway
+bool enable_dhcp
+---
+int32 error

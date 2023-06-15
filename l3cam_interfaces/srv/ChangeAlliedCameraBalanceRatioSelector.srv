@@ -1,0 +1,4 @@
+int32 allied_type
+int32 white_balance_ratio_selector
+---
+int32 error

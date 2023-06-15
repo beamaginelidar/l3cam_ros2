@@ -1,0 +1,4 @@
+int32 max_value
+int32 min_value
+---
+int32 error

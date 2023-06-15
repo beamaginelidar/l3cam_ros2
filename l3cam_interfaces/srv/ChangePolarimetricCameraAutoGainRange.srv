@@ -1,0 +1,4 @@
+float32 min_gain
+float32 max_gain
+---
+int32 error

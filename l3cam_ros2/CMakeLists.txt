@@ -1,0 +1,94 @@
+cmake_minimum_required(VERSION 3.5)
+project(l3cam_ros2)
+
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(l3cam_interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
+
+include_directories(
+  /usr/local/lib/libl3cam
+  /usr/local/include/libl3cam
+)
+FIND_LIBRARY(l3cam_LIBRARIES libL3Cam.a /usr/local/lib/libl3cam/)
+
+add_executable(l3cam_ros2_node src/l3cam_ros2_node.cpp)
+ament_target_dependencies(l3cam_ros2_node rclcpp l3cam_interfaces)
+target_link_libraries(l3cam_ros2_node ${l3cam_LIBRARIES})
+
+add_executable(network_configuration src/network_configuration.cpp)
+ament_target_dependencies(network_configuration rclcpp l3cam_interfaces)
+target_link_libraries(network_configuration ${l3cam_LIBRARIES})
+
+add_executable(pointcloud_configuration src/pointcloud_configuration.cpp)
+ament_target_dependencies(pointcloud_configuration rclcpp l3cam_interfaces)
+target_link_libraries(pointcloud_configuration ${l3cam_LIBRARIES})
+
+add_executable(polarimetric_configuration src/polarimetric_configuration.cpp)
+ament_target_dependencies(polarimetric_configuration rclcpp l3cam_interfaces)
+target_link_libraries(polarimetric_configuration ${l3cam_LIBRARIES})
+
+add_executable(rgb_configuration src/rgb_configuration.cpp)
+ament_target_dependencies(rgb_configuration rclcpp l3cam_interfaces)
+target_link_libraries(rgb_configuration ${l3cam_LIBRARIES})
+
+add_executable(thermal_configuration src/thermal_configuration.cpp)
+ament_target_dependencies(thermal_configuration rclcpp l3cam_interfaces)
+target_link_libraries(thermal_configuration ${l3cam_LIBRARIES})
+
+add_executable(allied_wide_configuration src/allied_wide_configuration.cpp)
+ament_target_dependencies(allied_wide_configuration rclcpp l3cam_interfaces)
+target_link_libraries(allied_wide_configuration ${l3cam_LIBRARIES})
+
+add_executable(allied_narrow_configuration src/allied_narrow_configuration.cpp)
+ament_target_dependencies(allied_narrow_configuration rclcpp l3cam_interfaces)
+target_link_libraries(allied_narrow_configuration ${l3cam_LIBRARIES})
+
+add_executable(pointcloud_stream src/pointcloud_stream.cpp)
+ament_target_dependencies(pointcloud_stream rclcpp l3cam_interfaces sensor_msgs cv_bridge)
+target_link_libraries(pointcloud_stream ${l3cam_LIBRARIES})
+
+add_executable(polarimetric_stream src/polarimetric_stream.cpp)
+ament_target_dependencies(polarimetric_stream rclcpp l3cam_interfaces sensor_msgs cv_bridge)
+target_link_libraries(polarimetric_stream ${l3cam_LIBRARIES})
+
+add_executable(rgb_stream src/rgb_stream.cpp)
+ament_target_dependencies(rgb_stream rclcpp l3cam_interfaces sensor_msgs cv_bridge)
+target_link_libraries(rgb_stream ${l3cam_LIBRARIES})
+
+add_executable(thermal_stream src/thermal_stream.cpp)
+ament_target_dependencies(thermal_stream rclcpp l3cam_interfaces sensor_msgs cv_bridge)
+target_link_libraries(thermal_stream ${l3cam_LIBRARIES})
+
+install(TARGETS 
+    l3cam_ros2_node
+    network_configuration
+    pointcloud_configuration
+    polarimetric_configuration
+    rgb_configuration
+    thermal_configuration
+    allied_wide_configuration
+    allied_narrow_configuration
+    pointcloud_stream
+    polarimetric_stream
+    rgb_stream
+    thermal_stream
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY 
+    launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
+ament_package()

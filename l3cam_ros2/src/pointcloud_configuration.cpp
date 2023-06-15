@@ -1,0 +1,349 @@
+/*  Copyright (c) 2023, Beamagine
+
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+        - Redistributions of source code must retain the above copyright notice,
+          this list of conditions and the following disclaimer.
+        - Redistributions in binary form must reproduce the above copyright notice,
+          this list of conditions and the following disclaimer in the documentation and/or
+          other materials provided with the distribution.
+        - Neither the name of copyright holders nor the names of its contributors may be
+          used to endorse or promote products derived from this software without specific
+          prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY
+    EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+    COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+    HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+    TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#include <iostream>
+#include <rclcpp/rclcpp.hpp>
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
+
+#include <libL3Cam.h>
+#include <beamagine.h>
+#include <beamErrors.h>
+
+#include "l3cam_interfaces/msg/sensor.hpp"
+#include "l3cam_interfaces/srv/get_sensors_available.hpp"
+
+#include "l3cam_interfaces/srv/change_pointcloud_color.hpp"
+#include "l3cam_interfaces/srv/change_pointcloud_color_range.hpp"
+#include "l3cam_interfaces/srv/change_distance_range.hpp"
+
+using namespace std::chrono_literals;
+
+class PointCloudConfiguration : public rclcpp::Node
+{
+public:
+    PointCloudConfiguration() : Node("pointcloud_configuration"){
+        rcl_interfaces::msg::ParameterDescriptor descriptor;
+        rcl_interfaces::msg::IntegerRange range;
+        range.set__from_value(0).set__to_value(13).set__step(1); // TODO: dropdown menu pointCloudColor
+        descriptor.integer_range = {range};
+        descriptor.description = 
+        "Value must be: (pointCloudColor)\n" 
+            "\tRAINBOW = 0\n"
+            "\tRAINBOW_Z = 1\n"
+            "\tINTENSITY = 2\n"
+            "\tRGB_FUSION = 3\n"
+            "\tPOLARIMETRIC_FUSION = 4\n"
+            "\tPOL_PROCESSED_FUSION = 5\n"
+            "\tTHERMAL_FUSION = 6\n"
+            "\tRGBT_FUSION = 7\n"
+            "\tALLIED_NARROW_FUSION = 12\n"
+            "\tALLIED_WIDE_FUSION = 13";
+        this->declare_parameter("pointcloud_color", 0, descriptor); // see pointCloudColor
+        descriptor.description = "";
+        range.set__from_value(0).set__to_value(400000).set__step(1);
+        descriptor.integer_range = {range};
+        this->declare_parameter("pointcloud_color_range_minimum", 0, descriptor); // 0 - 400000
+        range.set__from_value(0).set__to_value(400000).set__step(1);
+        descriptor.integer_range = {range};
+        this->declare_parameter("pointcloud_color_range_maximum", 400000, descriptor); // 0 - 400000
+        range.set__from_value(0).set__to_value(400000).set__step(1);
+        descriptor.integer_range = {range};
+        this->declare_parameter("distance_range_minimum", 0, descriptor); // 0 - 400000
+        range.set__from_value(0).set__to_value(400000).set__step(1);
+        descriptor.integer_range = {range};
+        this->declare_parameter("distance_range_maximum", 400000, descriptor); // 0 - 400000
+
+        pointcloud_color = this->get_parameter("pointcloud_color").as_int();
+        pointcloud_color_range_minimum = this->get_parameter("pointcloud_color_range_minimum").as_int();
+        pointcloud_color_range_maximum = this->get_parameter("pointcloud_color_range_maximum").as_int();
+        distance_range_minimum = this->get_parameter("distance_range_minimum").as_int();
+        distance_range_maximum = this->get_parameter("distance_range_maximum").as_int();
+
+        clientColor = this->create_client<l3cam_interfaces::srv::ChangePointcloudColor>("change_pointcloud_color");
+        clientColorRange = this->create_client<l3cam_interfaces::srv::ChangePointcloudColorRange>("change_pointcloud_color_range");
+        clientDistanceRange = this->create_client<l3cam_interfaces::srv::ChangeDistanceRange>("change_distance_range");
+
+        callback_handle_ = this->add_on_set_parameters_callback(
+            std::bind(&PointCloudConfiguration::parametersCallback, this, std::placeholders::_1));
+    }
+
+private:
+    rcl_interfaces::msg::SetParametersResult parametersCallback(
+        const std::vector<rclcpp::Parameter> &parameters)
+    {
+        rcl_interfaces::msg::SetParametersResult result;
+        result.successful = true;
+        result.reason = "success";
+
+        for (const auto &param : parameters)
+        {
+            std::string param_name = param.get_name();
+            if (param_name == "pointcloud_color")
+            {
+                while (!clientColor->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
+
+                auto requestColor = std::make_shared<l3cam_interfaces::srv::ChangePointcloudColor::Request>();
+                requestColor->visualization_color = param.as_int();
+
+                auto resultColor = clientColor->async_send_request(
+                    requestColor, std::bind(&PointCloudConfiguration::colorResponseCallback, this, std::placeholders::_1));
+            }
+            if (param_name == "pointcloud_color_range_minimum")
+            {
+                while (!clientColorRange->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
+
+                auto requestColorRange = std::make_shared<l3cam_interfaces::srv::ChangePointcloudColorRange::Request>();
+                requestColorRange->min_value = param.as_int();
+                requestColorRange->max_value = pointcloud_color_range_maximum;
+
+                auto resultColorRange = clientColorRange->async_send_request(
+                    requestColorRange, std::bind(&PointCloudConfiguration::colorRangeResponseCallback, this, std::placeholders::_1));
+            }
+            if (param_name == "pointcloud_color_range_maximum")
+            {
+                while (!clientColorRange->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
+
+                auto requestColorRange = std::make_shared<l3cam_interfaces::srv::ChangePointcloudColorRange::Request>();
+                requestColorRange->min_value = pointcloud_color_range_minimum;
+                requestColorRange->max_value = param.as_int();
+
+                auto resultColorRange = clientColorRange->async_send_request(
+                    requestColorRange, std::bind(&PointCloudConfiguration::colorRangeResponseCallback, this, std::placeholders::_1));
+            }
+            if (param_name == "distance_range_minimum")
+            {
+                while (!clientDistanceRange->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
+
+                auto requestDistanceRange = std::make_shared<l3cam_interfaces::srv::ChangeDistanceRange::Request>();
+                requestDistanceRange->min_value = param.as_int();
+                requestDistanceRange->max_value = distance_range_maximum;
+
+                auto resultDistanceRange = clientDistanceRange->async_send_request(
+                    requestDistanceRange, std::bind(&PointCloudConfiguration::distanceRangeResponseCallback, this, std::placeholders::_1));
+            }
+            if (param_name == "distance_range_maximum")
+            {
+                while (!clientDistanceRange->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
+
+                auto requestDistanceRange = std::make_shared<l3cam_interfaces::srv::ChangeDistanceRange::Request>();
+                requestDistanceRange->min_value = distance_range_minimum;
+                requestDistanceRange->max_value = param.as_int();
+
+                auto resultDistanceRange = clientDistanceRange->async_send_request(
+                    requestDistanceRange, std::bind(&PointCloudConfiguration::distanceRangeResponseCallback, this, std::placeholders::_1));
+            }
+
+        }
+
+        return result;
+    }
+
+    void colorResponseCallback(
+        rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColor>::SharedFuture future)
+    {
+        auto status = future.wait_for(1s);
+        if (status == std::future_status::ready)
+        {
+            int error = future.get()->error;
+            if (!error)
+                pointcloud_color = this->get_parameter("pointcloud_color").as_int();
+            else
+            {
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                // this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
+            }
+        }
+        else
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color");
+            // this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
+        }
+    }
+
+    void colorRangeResponseCallback(
+        rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedFuture future)
+    {
+        auto status = future.wait_for(1s);
+        if (status == std::future_status::ready)
+        {
+            int error = future.get()->error;
+            if (!error)
+            {
+                pointcloud_color_range_minimum = this->get_parameter("pointcloud_color_range_minimum").as_int();
+                pointcloud_color_range_maximum = this->get_parameter("pointcloud_color_range_maximum").as_int();
+            }
+            else
+            {
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
+                // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
+            }
+        }
+        else
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color_range");
+            // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
+            // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
+        }
+    }
+
+    void distanceRangeResponseCallback(
+        rclcpp::Client<l3cam_interfaces::srv::ChangeDistanceRange>::SharedFuture future)
+    {
+        auto status = future.wait_for(1s);
+        if (status == std::future_status::ready)
+        {
+            int error = future.get()->error;
+            if (!error)
+            {
+                distance_range_minimum = this->get_parameter("distance_range_minimum").as_int();
+                distance_range_maximum = this->get_parameter("distance_range_maximum").as_int();
+            }
+            else
+            {
+                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                // this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
+                // this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
+            }
+        }
+        else
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_distance_range");
+            // this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
+            // this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
+        }
+    }
+
+    int pointcloud_color;
+    int pointcloud_color_range_minimum;
+    int pointcloud_color_range_maximum;
+    int distance_range_minimum;
+    int distance_range_maximum;
+
+    rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColor>::SharedPtr clientColor;
+    rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedPtr clientColorRange;
+    rclcpp::Client<l3cam_interfaces::srv::ChangeDistanceRange>::SharedPtr clientDistanceRange;
+
+    OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+};
+
+int main(int argc, char ** argv)
+{
+    rclcpp::init(argc, argv);
+
+    int error = L3CAM_OK;
+
+    std::shared_ptr<PointCloudConfiguration> node = std::make_shared<PointCloudConfiguration>();
+
+    // Check if LiDAR is available
+    rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors =
+        node->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
+
+    while (!clientGetSensors->wait_for_service(1s))
+    {
+        if (!rclcpp::ok())
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+            return 0;
+        }
+        //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+    }
+
+    auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
+    auto resultGetSensors = clientGetSensors->async_send_request(requestGetSensors);
+    bool sensor_is_available = false;
+    if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+        error = resultGetSensors.get()->error;
+
+        if (!error)
+            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
+            {
+                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar)
+                    sensor_is_available = true;
+            }
+        else
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+            return 1;
+        }
+    }
+    else
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
+        return 1;
+    }
+
+    if (sensor_is_available)
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "LiDAR configuration is available");
+    else
+        return 0;
+
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
+}

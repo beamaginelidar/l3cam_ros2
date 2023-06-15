@@ -2,6 +2,8 @@
 
 This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](https://beamagine.com/). The driver relies on the library provided by Beamagine as part of the [L3Cam SDK](https://github.com/beamaginelidar/libl3cam.git). For more info on the L3Cam check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf).
 
+If you are looking for this package for ROS, go to the [l3cam_ros](https://github.com/beamaginelidar/l3cam_ros) package.
+
 This package is supported only on Linux systems and has only been tested with ROS2 foxy on an Ubuntu 20.04 system.
 
 ## Installation
@@ -25,13 +27,13 @@ sudo apt install ros-<ROS_DISTRO>-l3cam-ros
 ```
 
 Or clone this repository in your ROS2 workspace (e.g. ros2_ws): -->
+
 Clone this repository in your ROS2 workspace (e.g. ros2_ws) and build:
 
 ```
 cd ~/ros2_ws/src && git clone https://github.com/beamaginelidar/l3cam_ros2
+colcon build
 ```
-
-
 
 ## Operational Advice
 
@@ -178,7 +180,7 @@ Some parameters are enumerate's declared on the `libL3Cam`, check the [L3Cam Use
 ros2 param describe <NODE> <PARAM>
 ```
 
-When using `rqt_reconfigure`, if the parameter has a description and you hover over the parameter name, the description will show too. With `rqt_reconfigure` for ROS2 it is not possible to have dropdown menus  for this kind of parameters anymore, so be careful with this kind of parameters.
+When using `rqt_reconfigure`, if the parameter has a description and you hover over the parameter name, the description will show too. With `rqt_reconfigure` for ROS2 it is not possible to have dropdown menus for this kind of parameters anymore, so be careful with this kind of parameters.
 
 ### Network parameters
 

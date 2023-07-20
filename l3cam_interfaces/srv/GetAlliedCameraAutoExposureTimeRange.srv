@@ -1,0 +1,5 @@
+int32 allied_type
+---
+float32 auto_exposure_time_range_min
+float32 auto_exposure_time_range_max
+int32 error

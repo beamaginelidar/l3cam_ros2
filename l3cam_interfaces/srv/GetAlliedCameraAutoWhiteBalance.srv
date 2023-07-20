@@ -1,0 +1,4 @@
+int32 allied_type
+---
+bool enabled
+int32 error

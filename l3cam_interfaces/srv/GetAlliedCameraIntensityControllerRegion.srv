@@ -1,0 +1,4 @@
+int32 allied_type
+---
+int32 intensity_controller_region
+int32 error

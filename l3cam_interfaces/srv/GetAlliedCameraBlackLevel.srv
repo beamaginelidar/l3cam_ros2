@@ -1,0 +1,4 @@
+int32 allied_type
+---
+float32 black_level
+int32 error

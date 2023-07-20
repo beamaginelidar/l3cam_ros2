@@ -1,2 +1,4 @@
+string local_address
+string device_address
 ---
 int32 error

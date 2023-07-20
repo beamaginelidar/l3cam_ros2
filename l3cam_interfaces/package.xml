@@ -3,9 +3,9 @@
 <package format="3">
   <name>l3cam_interfaces</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="adria.subirana@upc.edu">beamagine</maintainer>
-  <license>TODO: License declaration</license>
+  <description>L3Cam interfaces</description>
+  <maintainer email="info@beamagine.com">Beamagine</maintainer>
+  <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

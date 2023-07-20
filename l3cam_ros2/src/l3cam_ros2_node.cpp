@@ -29,6 +29,10 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <libL3Cam.h>
+#include <libL3Cam_allied.h>
+#include <libL3Cam_econ.h>
+#include <libL3Cam_polarimetric.h>
+#include <libL3Cam_thermal.h>
 #include <beamagine.h>
 #include <beamErrors.h>
 
@@ -96,6 +100,28 @@
 #include "l3cam_interfaces/srv/change_allied_camera_balance_white_auto_tolerance.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_intensity_controller_region.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_intensity_controller_target.hpp"
+
+#include "l3cam_interfaces/srv/get_allied_camera_black_level.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_exposure_time.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_auto_exposure_time.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_auto_exposure_time_range.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_gain.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_auto_gain.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_auto_gain_range.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_gamma.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_saturation.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_sharpness.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_hue.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_intensity_auto_precedence.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_auto_white_balance.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_balance_ratio_selector.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_balance_ratio.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_balance_white_auto_rate.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_balance_white_auto_tolerance.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_auto_mode_region.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_intensity_controller_region.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_intensity_controller_target.hpp"
+#include "l3cam_interfaces/srv/get_allied_camera_max_driver_buffers_count.hpp"
 
 using namespace std::chrono_literals;
 
@@ -192,7 +218,7 @@ void getVersion(const std::shared_ptr<l3cam_interfaces::srv::GetVersion::Request
 void initialize(const std::shared_ptr<l3cam_interfaces::srv::Initialize::Request> req,
                 std::shared_ptr<l3cam_interfaces::srv::Initialize::Response> res)
 {
-    res->error = INITIALIZE();
+    res->error = INITIALIZE(&req->local_address[0], &req->device_address[0]);
 }
 
 void terminate(const std::shared_ptr<l3cam_interfaces::srv::Terminate::Request> req,
@@ -727,6 +753,343 @@ void changeAlliedCameraIntensityControllerTarget(const std::shared_ptr<l3cam_int
     }
 }
 
+void getAlliedCameraBlackLevel(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBlackLevel::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBlackLevel::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_wide_sensor, &res->black_level);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_narrow_sensor, &res->black_level);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraExposureTime(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraExposureTime::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraExposureTime::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_wide_sensor, &res->exposure_time);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_narrow_sensor, &res->exposure_time);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraAutoExposureTime(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_wide_sensor, &res->enabled);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_narrow_sensor, &res->enabled);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraAutoExposureTimeRange(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_wide_sensor, &res->auto_exposure_time_range_min, &res->auto_exposure_time_range_max);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_narrow_sensor, &res->auto_exposure_time_range_min, &res->auto_exposure_time_range_max);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraGain(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGain::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGain::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_GAIN(devices[0], *m_allied_wide_sensor, &res->gain);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_GAIN(devices[0], *m_allied_narrow_sensor, &res->gain);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraAutoGain(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGain::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGain::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_wide_sensor, &res->enabled);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_narrow_sensor, &res->enabled);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraAutoGainRange(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_wide_sensor, &res->auto_gain_range_min, &res->auto_gain_range_max);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_narrow_sensor, &res->auto_gain_range_min, &res->auto_gain_range_max);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraGamma(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGamma::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGamma::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_wide_sensor, &res->gamma);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_narrow_sensor, &res->gamma);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraSaturation(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSaturation::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSaturation::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_wide_sensor, &res->saturation);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_narrow_sensor, &res->saturation);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraSharpness(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSharpness::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSharpness::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_wide_sensor, &res->sharpness);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_narrow_sensor, &res->sharpness);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraHue(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraHue::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraHue::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_HUE(devices[0], *m_allied_wide_sensor, &res->hue);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_HUE(devices[0], *m_allied_narrow_sensor, &res->hue);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraIntensityAutoPrecedence(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_wide_sensor, &res->intensity_auto_precedence);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_narrow_sensor, &res->intensity_auto_precedence);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraAutoWhiteBalance(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_wide_sensor, &res->enabled);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_narrow_sensor, &res->enabled);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraBalanceRatioSelector(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_wide_sensor, &res->white_balance_ratio_selector);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_narrow_sensor, &res->white_balance_ratio_selector);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraBalanceRatio(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_wide_sensor, &res->balance_ratio);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_narrow_sensor, &res->balance_ratio);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraBalanceWhiteAutoRate(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_wide_sensor, &res->white_balance_auto_rate);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_narrow_sensor, &res->white_balance_auto_rate);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraBalanceWhiteAutoTolerance(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_wide_sensor, &res->white_balance_auto_tolerance);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_narrow_sensor, &res->white_balance_auto_tolerance);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraAutoModeRegion(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_wide_sensor, &res->height, &res->width);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_narrow_sensor, &res->height, &res->width);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraIntensityControllerRegion(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_wide_sensor, &res->intensity_controller_region);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_narrow_sensor, &res->intensity_controller_region);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraIntensityControllerTarget(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_wide_sensor, &res->intensity_controller_target);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_narrow_sensor, &res->intensity_controller_target);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+void getAlliedCameraMaxDriverBuffersCount(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Request> req,
+                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Response> res)
+{
+    switch(req->allied_type)
+    {
+    case 1:
+        res->error = GET_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_wide_sensor, &res->max_driver_buffers_count);
+        break;
+    case 2:
+        res->error = GET_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_narrow_sensor, &res->max_driver_buffers_count);
+        break;
+    default:
+        res->error = L3CAM_VALUE_OUT_OF_RANGE;
+    }
+}
+
+
 class L3Cam : public rclcpp::Node
 {
 public:
@@ -736,6 +1099,13 @@ public:
         descriptor.read_only = true;
         rcl_interfaces::msg::IntegerRange intRange;
         rcl_interfaces::msg::FloatingPointRange floatRange;
+        // Network
+        this->declare_parameter("ip_address", "192.168.1.250");
+        this->declare_parameter("netmask", "255.255.255.0");
+        this->declare_parameter("gateway", "0.0.0.0");
+        this->declare_parameter("dhcp", false);
+        this->declare_parameter("local_address", "");
+        this->declare_parameter("device_address", "");
         // Point Cloud
         intRange.set__from_value(0).set__to_value(13).set__step(1); // TODO: enumerate pointCloudColor
         descriptor.integer_range = {intRange};
@@ -1024,6 +1394,14 @@ public:
 
     void loadDefaultParams()
     {
+        /*std::string ip_address = this->get_parameter("ip_address").as_string().data();
+        std::string netmask = this->get_parameter("netmask").as_string().data();
+        std::string gateway = this->get_parameter("gateway").as_string().data();
+        printDefaultError(CHANGE_NETWORK_CONFIGURATION(devices[0], 
+                &ip_address[0],
+                &netmask[0],
+                &gateway[0],
+                this->get_parameter("dhcp").as_bool()));*/
         if (m_lidar_sensor != NULL)
         {
             printDefaultError(CHANGE_POINT_CLOUD_COLOR(devices[0], 
@@ -1362,6 +1740,49 @@ int main(int argc, char **argv)
     rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>::SharedPtr srvChangeAlliedCameraIntensityControllerTarget =
         node->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>("change_allied_camera_intensity_controller_target", &changeAlliedCameraIntensityControllerTarget);
 
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>::SharedPtr srvGetAlliedCameraBlackLevel =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>("get_allied_camera_black_level", &getAlliedCameraBlackLevel);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>::SharedPtr srvGetAlliedCameraExposureTime =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>("get_allied_camera_exposure_time", &getAlliedCameraExposureTime);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>::SharedPtr srvGetAlliedCameraAutoExposureTime =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>("get_allied_camera_auto_exposure_time", &getAlliedCameraAutoExposureTime);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>::SharedPtr srvGetAlliedCameraAutoExposureTimeRange =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>("get_allied_camera_auto_exposure_time_range", &getAlliedCameraAutoExposureTimeRange);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraGain>::SharedPtr srvGetAlliedCameraGain =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraGain>("get_allied_camera_gain", &getAlliedCameraGain);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>::SharedPtr srvGetAlliedCameraAutoGain =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>("get_allied_camera_auto_gain", &getAlliedCameraAutoGain);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>::SharedPtr srvGetAlliedCameraAutoGainRange =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>("get_allied_camera_auto_gain_range", &getAlliedCameraAutoGainRange);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraGamma>::SharedPtr srvGetAlliedCameraGamma =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraGamma>("get_allied_camera_gamma", &getAlliedCameraGamma);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraSaturation>::SharedPtr srvGetAlliedCameraSaturation =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraSaturation>("get_allied_camera_saturation", &getAlliedCameraSaturation);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraSharpness>::SharedPtr srvGetAlliedCameraSharpness =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraSharpness>("get_allied_camera_sharpness", &getAlliedCameraSharpness);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraHue>::SharedPtr srvGetAlliedCameraHue =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraHue>("get_allied_camera_hue", &getAlliedCameraHue);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>::SharedPtr srvGetAlliedCameraIntensityAutoPrecedence =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>("get_allied_camera_intensity_auto_precedence", &getAlliedCameraIntensityAutoPrecedence);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>::SharedPtr srvGetAlliedCameraAutoWhiteBalance =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>("get_allied_camera_auto_white_balance", &getAlliedCameraAutoWhiteBalance);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>::SharedPtr srvGetAlliedCameraBalanceRatioSelector =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>("get_allied_camera_balance_ratio_selector", &getAlliedCameraBalanceRatioSelector);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>::SharedPtr srvGetAlliedCameraBalanceRatio =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>("get_allied_camera_balance_ratio", &getAlliedCameraBalanceRatio);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>::SharedPtr srvGetAlliedCameraBalanceWhiteAutoRate =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>("get_allied_camera_balance_white_auto_rate", &getAlliedCameraBalanceWhiteAutoRate);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr srvGetAlliedCameraBalanceWhiteAutoTolerance =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>("get_allied_camera_balance_white_auto_tolerance", &getAlliedCameraBalanceWhiteAutoTolerance);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>::SharedPtr srvGetAlliedCameraAutoModeRegion =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>("get_allied_camera_auto_mode_region", &getAlliedCameraAutoModeRegion);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>::SharedPtr srvGetAlliedCameraIntensityControllerRegion =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>("get_allied_camera_intensity_controller_region", &getAlliedCameraIntensityControllerRegion);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>::SharedPtr srvGetAlliedCameraIntensityControllerTarget =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>("get_allied_camera_intensity_controller_target", &getAlliedCameraIntensityControllerTarget);
+    rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>::SharedPtr srvGetAlliedCameraMaxDriverBuffersCount =
+        node->create_service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>("get_allied_camera_max_driver_buffers_count", &getAlliedCameraMaxDriverBuffersCount);
+
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Services ready");
 
     // Initialize L3Cam
@@ -1369,7 +1790,9 @@ int main(int argc, char **argv)
 
     registerSystemSignals();
 
-    error = INITIALIZE();
+    std::string local_address = node->get_parameter("local_address").as_string();
+    std::string device_address = node->get_parameter("device_address").as_string();
+    error = INITIALIZE((local_address == "") ? NULL : &local_address[0], (device_address == "") ? NULL : &device_address[0]);
     if (error)
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "(INTIALIZE error " << error << ") " << getBeamErrorDescription(error));
@@ -1434,7 +1857,7 @@ int main(int argc, char **argv)
             break;
         }
     }
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), num_sensors << " sensors available");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), num_sensors << ((num_sensors == 1) ? " sensor" : " sensors") << " available");
 
     error = START_DEVICE(devices[0]);
     if (error)

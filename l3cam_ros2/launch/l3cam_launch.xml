@@ -10,6 +10,8 @@
     <arg name="netmask" default="255.255.255.0" />
     <arg name="gateway" default="0.0.0.0" />
     <arg name="dhcp" default="false" />
+    <arg name="local_address" default="" />
+    <arg name="device_address" default="" />
 
     <!-- Pointcloud configuration -->
     <arg name="pointcloud_color" default="0" /> <!-- see pointCloudColor -->

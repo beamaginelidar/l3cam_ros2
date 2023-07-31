@@ -184,12 +184,14 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 
 ### Network parameters
 
-| Parameter    | Type   | Default       |
-| ------------ | ------ | ------------- |
-| `ip_address` | string | 192.168.1.250 |
-| `netmask`    | string | 255.255.255.0 |
-| `gateway`    | string | 0.0.0.0       |
-| `dhcp`       | bool   | false         |
+| Parameter        | Type   | Default       |
+| ---------------- | ------ | ------------- |
+| `ip_address`     | string | 192.168.1.250 |
+| `netmask`        | string | 255.255.255.0 |
+| `gateway`        | string | 0.0.0.0       |
+| `dhcp`           | bool   | false         |
+| `local_address`  | string | NULL          |
+| `device_address` | string | NULL          |
 
 ### Pointcloud parameters
 
@@ -311,7 +313,7 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | Service                                                | Args                                                                                    | Return                                                       |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | `/get_version`                                         | -                                                                                       | string version                                               |
-| `/initialize`                                          | -                                                                                       | int error                                                    |
+| `/initialize`                                          | string local_address, string device_address                                             | int error                                                    |
 | `/terminate`                                           | -                                                                                       | int error                                                    |
 | `/find_devices`                                        | -                                                                                       | int error, int num_devices                                   |
 | `/get_local_server_address`                            | -                                                                                       | string local_ip_address                                      |
@@ -367,6 +369,27 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `/change_allied_camera_balance_white_auto_tolerance`   | int allied_type, float white_balance_auto_tolerance                                     | int error                                                    |
 | `/change_allied_camera_intensity_controller_region`    | int allied_type, int intensity_controller_region                                        | int error                                                    |
 | `/change_allied_camera_intensity_controller_target`    | int allied_type, float intensity_controller_target                                      | int error                                                    |
+| `get_allied_camera_black_level`                        | int allied_type                                                                         | int error, float black_level                                 |
+| `get_allied_camera_exposure_time`                      | int allied_type                                                                         | int error, float exposure_time                               |
+| `get_allied_camera_auto_exposure_time`                 | int allied_type                                                                         | int error, bool enabled                                      |
+| `get_allied_camera_auto_exposure_time_range`           | int allied_type                                                                         | int error, float auto_exposure_time_range                    |
+| `get_allied_camera_gain`                               | int allied_type                                                                         | int error, float gain                                        |
+| `get_allied_camera_auto_gain`                          | int allied_type                                                                         | int error, bool enabled                                      |
+| `get_allied_camera_auto_gain_range`                    | int allied_type                                                                         | int error, float min, float max                              |
+| `get_allied_camera_gamma`                              | int allied_type                                                                         | int error, float gamma                                       |
+| `get_allied_camera_saturation`                         | int allied_type                                                                         | int error, float saturation                                  |
+| `get_allied_camera_sharpness`                          | int allied_type                                                                         | int error, int sharpness                                     |
+| `get_allied_camera_hue`                                | int allied_type                                                                         | int error, float hue                                         |
+| `get_allied_camera_intensity_auto_precedence`          | int allied_type                                                                         | int error, int mode                                          |
+| `get_allied_camera_auto_white_balance`                 | int allied_type                                                                         | int error, bool enabled                                      |
+| `get_allied_camera_balance_ratio_selector`             | int allied_type                                                                         | int error, int ratio_selector                                |
+| `get_allied_camera_balance_ratio`                      | int allied_type                                                                         | int error, float balance_ratio                               |
+| `get_allied_camera_balance_white_auto_rate`            | int allied_type                                                                         | int error, float balance_white_auto_rate                     |
+| `get_allied_camera_balance_white_auto_tolerance`       | int allied_type                                                                         | int error, float balance_white_auto_tolerance                |
+| `get_allied_camera_auto_mode_region`                   | int allied_type                                                                         | int error, int height, int width                             |
+| `get_allied_camera_intensity_controller_region`        | int allied_type                                                                         | int error, int mode                                          |
+| `get_allied_camera_intensity_controller_target`        | int allied_type                                                                         | int error, float intensity_controller_target                 |
+| `get_allied_camera_max_driver_buffers_count`           | int allied_type                                                                         | int error, int max_driver_buffers_count                      |
 
 **Note**: The arg allied_type must be 1 for Wide or 2 for Narrow. Any other value will return out of range error.
 

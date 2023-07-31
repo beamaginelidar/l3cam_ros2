@@ -10,6 +10,8 @@
     <arg name="netmask" default="255.255.255.0" />
     <arg name="gateway" default="0.0.0.0" />
     <arg name="dhcp" default="false" />
+    <arg name="local_address" default="" />
+    <arg name="device_address" default="" />
 
     <!-- Pointcloud configuration -->
     <arg name="pointcloud_color" default="0" /> <!-- see pointCloudColor -->
@@ -104,6 +106,9 @@
 
     <!-- Start the driver -->
     <node pkg="l3cam_ros2" exec="l3cam_ros2_node" name="l3cam_ros2_node" output="screen">
+        <param name="local_address" value="$(var local_address)" type="str" />
+        <param name="device_address" value="$(var device_address)" type="str" />
+
         <param name="pointcloud_color" value="$(var pointcloud_color)" type="int" />
         <param name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" type="int" />
         <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />

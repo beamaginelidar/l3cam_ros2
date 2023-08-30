@@ -31,6 +31,8 @@ set(srv_files
   "srv/ChangePointcloudColor.srv"
   "srv/ChangePointcloudColorRange.srv"
   "srv/ChangeDistanceRange.srv"
+  "srv/EnableAutoBias.srv"
+  "srv/ChangeBiasValue.srv"
   "srv/SetPolarimetricCameraDefaultSettings.srv"
   "srv/ChangePolarimetricCameraBrightness.srv"
   "srv/ChangePolarimetricCameraBlackLevel.srv"

@@ -39,19 +39,22 @@
 #include "l3cam_interfaces/srv/change_pointcloud_color.hpp"
 #include "l3cam_interfaces/srv/change_pointcloud_color_range.hpp"
 #include "l3cam_interfaces/srv/change_distance_range.hpp"
+#include "l3cam_interfaces/srv/enable_auto_bias.hpp"
+#include "l3cam_interfaces/srv/change_bias_value.hpp"
 
 using namespace std::chrono_literals;
 
 class PointCloudConfiguration : public rclcpp::Node
 {
 public:
-    PointCloudConfiguration() : Node("pointcloud_configuration"){
+    PointCloudConfiguration() : Node("pointcloud_configuration")
+    {
         rcl_interfaces::msg::ParameterDescriptor descriptor;
         rcl_interfaces::msg::IntegerRange range;
         range.set__from_value(0).set__to_value(13).set__step(1); // TODO: dropdown menu pointCloudColor
         descriptor.integer_range = {range};
-        descriptor.description = 
-        "Value must be: (pointCloudColor)\n" 
+        descriptor.description =
+            "Value must be: (pointCloudColor)\n"
             "\tRAINBOW = 0\n"
             "\tRAINBOW_Z = 1\n"
             "\tINTENSITY = 2\n"
@@ -76,16 +79,26 @@ public:
         range.set__from_value(0).set__to_value(400000).set__step(1);
         descriptor.integer_range = {range};
         this->declare_parameter("distance_range_maximum", 400000, descriptor); // 0 - 400000
+        this->declare_parameter("auto_bias", true);
+        range.set__from_value(700).set__to_value(3500).set__step(1);
+        descriptor.integer_range = {range};
+        this->declare_parameter("bias_value_right", 1580, descriptor); // 700 - 3500
+        this->declare_parameter("bias_value_left", 1380, descriptor);  // 700 - 3500
 
         pointcloud_color = this->get_parameter("pointcloud_color").as_int();
         pointcloud_color_range_minimum = this->get_parameter("pointcloud_color_range_minimum").as_int();
         pointcloud_color_range_maximum = this->get_parameter("pointcloud_color_range_maximum").as_int();
         distance_range_minimum = this->get_parameter("distance_range_minimum").as_int();
         distance_range_maximum = this->get_parameter("distance_range_maximum").as_int();
+        auto_bias = this->get_parameter("auto_bias").as_bool();
+        bias_value_right = this->get_parameter("bias_value_right").as_int();
+        bias_value_left = this->get_parameter("bias_value_left").as_int();
 
         clientColor = this->create_client<l3cam_interfaces::srv::ChangePointcloudColor>("change_pointcloud_color");
         clientColorRange = this->create_client<l3cam_interfaces::srv::ChangePointcloudColorRange>("change_pointcloud_color_range");
         clientDistanceRange = this->create_client<l3cam_interfaces::srv::ChangeDistanceRange>("change_distance_range");
+        clientAutoBias = this->create_client<l3cam_interfaces::srv::EnableAutoBias>("enable_auto_bias");
+        clientBiasValue = this->create_client<l3cam_interfaces::srv::ChangeBiasValue>("change_bias_value");
 
         callback_handle_ = this->add_on_set_parameters_callback(
             std::bind(&PointCloudConfiguration::parametersCallback, this, std::placeholders::_1));
@@ -196,7 +209,62 @@ private:
                 auto resultDistanceRange = clientDistanceRange->async_send_request(
                     requestDistanceRange, std::bind(&PointCloudConfiguration::distanceRangeResponseCallback, this, std::placeholders::_1));
             }
+            if (param_name == "auto_bias")
+            {
+                while (!clientAutoBias->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
 
+                auto requestAutoBias = std::make_shared<l3cam_interfaces::srv::EnableAutoBias::Request>();
+                requestAutoBias->enabled = param.as_bool();
+
+                auto resultAutoBias = clientAutoBias->async_send_request(
+                    requestAutoBias, std::bind(&PointCloudConfiguration::autoBiasResponseCallback, this, std::placeholders::_1));
+            }
+            if (param_name == "bias_value_right")
+            {
+                while (!clientBiasValue->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
+
+                auto requestBiasValueRight = std::make_shared<l3cam_interfaces::srv::ChangeBiasValue::Request>();
+                requestBiasValueRight->index = 1;
+                requestBiasValueRight->bias = param.as_int();
+
+                auto resultBiasValueRight = clientBiasValue->async_send_request(
+                    requestBiasValueRight, std::bind(&PointCloudConfiguration::biasValueRightResponseCallback, this, std::placeholders::_1));
+            }
+            if (param_name == "bias_value_left")
+            {
+                while (!clientBiasValue->wait_for_service(1s))
+                {
+                    if (!rclcpp::ok())
+                    {
+                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                        break;
+                    }
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                }
+
+                auto requestBiasValue = std::make_shared<l3cam_interfaces::srv::ChangeBiasValue::Request>();
+                requestBiasValue->index = 2;
+                requestBiasValue->bias = param.as_int();
+
+                auto resultBiasValue = clientBiasValue->async_send_request(
+                    requestBiasValue, std::bind(&PointCloudConfiguration::biasValueLeftResponseCallback, this, std::placeholders::_1));
+            }
         }
 
         return result;
@@ -278,20 +346,70 @@ private:
         }
     }
 
+    void autoBiasResponseCallback(
+        rclcpp::Client<l3cam_interfaces::srv::EnableAutoBias>::SharedFuture future)
+    {
+        auto status = future.wait_for(1s);
+        if (status == std::future_status::ready)
+        {
+            auto_bias = this->get_parameter("auto_bias").as_bool();
+        }
+        else
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service enable_auto_bias");
+            // this->set_parameter(rclcpp::Parameter("auto_bias", auto_bias));
+        }
+    }
+
+    void biasValueRightResponseCallback(
+        rclcpp::Client<l3cam_interfaces::srv::ChangeBiasValue>::SharedFuture future)
+    {
+        auto status = future.wait_for(1s);
+        if (status == std::future_status::ready)
+        {
+            bias_value_right = this->get_parameter("bias_value_right").as_int();
+        }
+        else
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
+            // this->set_parameter(rclcpp::Parameter("bias_value_right", bias_value_right));
+        }
+    }
+
+    void biasValueLeftResponseCallback(
+        rclcpp::Client<l3cam_interfaces::srv::ChangeBiasValue>::SharedFuture future)
+    {
+        auto status = future.wait_for(1s);
+        if (status == std::future_status::ready)
+        {
+            bias_value_left = this->get_parameter("bias_value_left").as_int();
+        }
+        else
+        {
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
+            // this->set_parameter(rclcpp::Parameter("bias_value_left", bias_value_left));
+        }
+    }
+
     int pointcloud_color;
     int pointcloud_color_range_minimum;
     int pointcloud_color_range_maximum;
     int distance_range_minimum;
     int distance_range_maximum;
+    bool auto_bias;
+    int bias_value_right;
+    int bias_value_left;
 
     rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColor>::SharedPtr clientColor;
     rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedPtr clientColorRange;
     rclcpp::Client<l3cam_interfaces::srv::ChangeDistanceRange>::SharedPtr clientDistanceRange;
+    rclcpp::Client<l3cam_interfaces::srv::EnableAutoBias>::SharedPtr clientAutoBias;
+    rclcpp::Client<l3cam_interfaces::srv::ChangeBiasValue>::SharedPtr clientBiasValue;
 
     OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 };
 
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
@@ -310,7 +428,7 @@ int main(int argc, char ** argv)
             RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
             return 0;
         }
-        //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
 
     auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();

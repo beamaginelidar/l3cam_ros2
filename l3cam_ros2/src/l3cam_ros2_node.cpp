@@ -56,6 +56,8 @@
 #include "l3cam_interfaces/srv/change_pointcloud_color.hpp"
 #include "l3cam_interfaces/srv/change_pointcloud_color_range.hpp"
 #include "l3cam_interfaces/srv/change_distance_range.hpp"
+#include "l3cam_interfaces/srv/enable_auto_bias.hpp"
+#include "l3cam_interfaces/srv/change_bias_value.hpp"
 
 #include "l3cam_interfaces/srv/set_polarimetric_camera_default_settings.hpp"
 #include "l3cam_interfaces/srv/change_polarimetric_camera_brightness.hpp"
@@ -337,6 +339,18 @@ void changeDistanceRange(const std::shared_ptr<l3cam_interfaces::srv::ChangeDist
                          std::shared_ptr<l3cam_interfaces::srv::ChangeDistanceRange::Response> res)
 {
     res->error = CHANGE_DISTANCE_RANGE(devices[0], req->min_value, req->max_value);
+}
+
+void enableAutoBias(const std::shared_ptr<l3cam_interfaces::srv::EnableAutoBias::Request> req,
+                    std::shared_ptr<l3cam_interfaces::srv::EnableAutoBias::Response> res)
+{
+    ENABLE_AUTO_BIAS(devices[0], req->enabled);
+}
+
+void changeBiasValue(const std::shared_ptr<l3cam_interfaces::srv::ChangeBiasValue::Request> req,
+                     std::shared_ptr<l3cam_interfaces::srv::ChangeBiasValue::Response> res)
+{
+    CHANGE_BIAS_VALUE(devices[0], req->index, req->bias);
 }
 
 // Polarimetric
@@ -754,9 +768,9 @@ void changeAlliedCameraIntensityControllerTarget(const std::shared_ptr<l3cam_int
 }
 
 void getAlliedCameraBlackLevel(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBlackLevel::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBlackLevel::Response> res)
+                               std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBlackLevel::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_wide_sensor, &res->black_level);
@@ -770,9 +784,9 @@ void getAlliedCameraBlackLevel(const std::shared_ptr<l3cam_interfaces::srv::GetA
 }
 
 void getAlliedCameraExposureTime(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraExposureTime::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraExposureTime::Response> res)
+                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraExposureTime::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_wide_sensor, &res->exposure_time);
@@ -786,9 +800,9 @@ void getAlliedCameraExposureTime(const std::shared_ptr<l3cam_interfaces::srv::Ge
 }
 
 void getAlliedCameraAutoExposureTime(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime::Response> res)
+                                     std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_wide_sensor, &res->enabled);
@@ -802,9 +816,9 @@ void getAlliedCameraAutoExposureTime(const std::shared_ptr<l3cam_interfaces::srv
 }
 
 void getAlliedCameraAutoExposureTimeRange(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange::Response> res)
+                                          std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_wide_sensor, &res->auto_exposure_time_range_min, &res->auto_exposure_time_range_max);
@@ -818,9 +832,9 @@ void getAlliedCameraAutoExposureTimeRange(const std::shared_ptr<l3cam_interfaces
 }
 
 void getAlliedCameraGain(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGain::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGain::Response> res)
+                         std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGain::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_GAIN(devices[0], *m_allied_wide_sensor, &res->gain);
@@ -834,9 +848,9 @@ void getAlliedCameraGain(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedC
 }
 
 void getAlliedCameraAutoGain(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGain::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGain::Response> res)
+                             std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGain::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_wide_sensor, &res->enabled);
@@ -850,9 +864,9 @@ void getAlliedCameraAutoGain(const std::shared_ptr<l3cam_interfaces::srv::GetAll
 }
 
 void getAlliedCameraAutoGainRange(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange::Response> res)
+                                  std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_wide_sensor, &res->auto_gain_range_min, &res->auto_gain_range_max);
@@ -866,9 +880,9 @@ void getAlliedCameraAutoGainRange(const std::shared_ptr<l3cam_interfaces::srv::G
 }
 
 void getAlliedCameraGamma(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGamma::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGamma::Response> res)
+                          std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraGamma::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_wide_sensor, &res->gamma);
@@ -882,9 +896,9 @@ void getAlliedCameraGamma(const std::shared_ptr<l3cam_interfaces::srv::GetAllied
 }
 
 void getAlliedCameraSaturation(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSaturation::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSaturation::Response> res)
+                               std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSaturation::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_wide_sensor, &res->saturation);
@@ -898,9 +912,9 @@ void getAlliedCameraSaturation(const std::shared_ptr<l3cam_interfaces::srv::GetA
 }
 
 void getAlliedCameraSharpness(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSharpness::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSharpness::Response> res)
+                              std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraSharpness::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_wide_sensor, &res->sharpness);
@@ -914,9 +928,9 @@ void getAlliedCameraSharpness(const std::shared_ptr<l3cam_interfaces::srv::GetAl
 }
 
 void getAlliedCameraHue(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraHue::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraHue::Response> res)
+                        std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraHue::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_HUE(devices[0], *m_allied_wide_sensor, &res->hue);
@@ -930,9 +944,9 @@ void getAlliedCameraHue(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCa
 }
 
 void getAlliedCameraIntensityAutoPrecedence(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence::Response> res)
+                                            std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_wide_sensor, &res->intensity_auto_precedence);
@@ -946,9 +960,9 @@ void getAlliedCameraIntensityAutoPrecedence(const std::shared_ptr<l3cam_interfac
 }
 
 void getAlliedCameraAutoWhiteBalance(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance::Response> res)
+                                     std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_wide_sensor, &res->enabled);
@@ -962,9 +976,9 @@ void getAlliedCameraAutoWhiteBalance(const std::shared_ptr<l3cam_interfaces::srv
 }
 
 void getAlliedCameraBalanceRatioSelector(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector::Response> res)
+                                         std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_wide_sensor, &res->white_balance_ratio_selector);
@@ -978,9 +992,9 @@ void getAlliedCameraBalanceRatioSelector(const std::shared_ptr<l3cam_interfaces:
 }
 
 void getAlliedCameraBalanceRatio(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio::Response> res)
+                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_wide_sensor, &res->balance_ratio);
@@ -994,9 +1008,9 @@ void getAlliedCameraBalanceRatio(const std::shared_ptr<l3cam_interfaces::srv::Ge
 }
 
 void getAlliedCameraBalanceWhiteAutoRate(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate::Response> res)
+                                         std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_wide_sensor, &res->white_balance_auto_rate);
@@ -1010,9 +1024,9 @@ void getAlliedCameraBalanceWhiteAutoRate(const std::shared_ptr<l3cam_interfaces:
 }
 
 void getAlliedCameraBalanceWhiteAutoTolerance(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance::Response> res)
+                                              std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_wide_sensor, &res->white_balance_auto_tolerance);
@@ -1026,9 +1040,9 @@ void getAlliedCameraBalanceWhiteAutoTolerance(const std::shared_ptr<l3cam_interf
 }
 
 void getAlliedCameraAutoModeRegion(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion::Response> res)
+                                   std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_wide_sensor, &res->height, &res->width);
@@ -1042,9 +1056,9 @@ void getAlliedCameraAutoModeRegion(const std::shared_ptr<l3cam_interfaces::srv::
 }
 
 void getAlliedCameraIntensityControllerRegion(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion::Response> res)
+                                              std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_wide_sensor, &res->intensity_controller_region);
@@ -1058,9 +1072,9 @@ void getAlliedCameraIntensityControllerRegion(const std::shared_ptr<l3cam_interf
 }
 
 void getAlliedCameraIntensityControllerTarget(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Response> res)
+                                              std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_wide_sensor, &res->intensity_controller_target);
@@ -1074,9 +1088,9 @@ void getAlliedCameraIntensityControllerTarget(const std::shared_ptr<l3cam_interf
 }
 
 void getAlliedCameraMaxDriverBuffersCount(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Request> req,
-                                                 std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Response> res)
+                                          std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Response> res)
 {
-    switch(req->allied_type)
+    switch (req->allied_type)
     {
     case 1:
         res->error = GET_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_wide_sensor, &res->max_driver_buffers_count);
@@ -1088,7 +1102,6 @@ void getAlliedCameraMaxDriverBuffersCount(const std::shared_ptr<l3cam_interfaces
         res->error = L3CAM_VALUE_OUT_OF_RANGE;
     }
 }
-
 
 class L3Cam : public rclcpp::Node
 {
@@ -1109,8 +1122,8 @@ public:
         // Point Cloud
         intRange.set__from_value(0).set__to_value(13).set__step(1); // TODO: enumerate pointCloudColor
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be: (pointCloudColor)\n" 
+        descriptor.description =
+            "Value must be: (pointCloudColor)\n"
             "\tRAINBOW = 0\n"
             "\tRAINBOW_Z = 1\n"
             "\tINTENSITY = 2\n"
@@ -1135,6 +1148,11 @@ public:
         intRange.set__from_value(0).set__to_value(400000).set__step(1);
         descriptor.integer_range = {intRange};
         this->declare_parameter("distance_range_maximum", 400000, descriptor); // 0 - 400000
+        this->declare_parameter("auto_bias", true);
+        intRange.set__from_value(700).set__to_value(3500).set__step(1);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("bias_value_right", 1580, descriptor); // 700 - 3500
+        this->declare_parameter("bias_value_left", 1380, descriptor);  // 700 - 3500
         // Polarimetric
         intRange.set__from_value(0).set__to_value(255).set__step(1);
         descriptor.integer_range = {intRange};
@@ -1189,8 +1207,8 @@ public:
         this->declare_parameter("rgb_camera_exposure_time", 156, descriptor); // 1 - 10000
         intRange.set__from_value(1).set__to_value(3).set__step(1);
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be: (econResolutions)\n"
+        descriptor.description =
+            "Value must be: (econResolutions)\n"
             "\treso_640_480 = 1\n"
             "\treso_1280_720 = 2\n"
             "\treso_1920_1080 = 3\n";
@@ -1202,8 +1220,8 @@ public:
         // Thermal
         intRange.set__from_value(1).set__to_value(108).set__step(1); // TODO: enumerate thermalTypes
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be: (thermalTypes)\n"
+        descriptor.description =
+            "Value must be: (thermalTypes)\n"
             "\tthermal_WHITE = 1\n"
             "\tthermal_BLACK = 17\n"
             "\tthermal_IRON = 20\n"
@@ -1263,11 +1281,11 @@ public:
         this->declare_parameter("allied_wide_camera_sharpness", 0.0, descriptor); // -12 - 12
         floatRange.set__from_value(-40).set__to_value(40.0).set__step(0.1);
         descriptor.floating_point_range = {floatRange};
-        this->declare_parameter("allied_wide_camera_hue", 0.0, descriptor);    // -40 - 40
-        intRange.set__from_value(0).set__to_value(1).set__step(1); // TODO: enumerate
+        this->declare_parameter("allied_wide_camera_hue", 0.0, descriptor); // -40 - 40
+        intRange.set__from_value(0).set__to_value(1).set__step(1);          // TODO: enumerate
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be:\n"
+        descriptor.description =
+            "Value must be:\n"
             "\tMinimizeNoise = 0\n"
             "\tMinimizeBlur = 1";
         this->declare_parameter("allied_wide_camera_intensity_auto_precedence", 0, descriptor); // 0(MinimizeNoise) or 1(MinimizeBlur)
@@ -1275,8 +1293,8 @@ public:
         this->declare_parameter("allied_wide_camera_auto_white_balance", false);
         intRange.set__from_value(0).set__to_value(1).set__step(1); // TODO: enumerate
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be:\n"
+        descriptor.description =
+            "Value must be:\n"
             "\tRed = 0\n"
             "\tBlue = 1";
         this->declare_parameter("allied_wide_camera_balance_ratio_selector", 0, descriptor); // 0(Red), 1(Blue)
@@ -1296,10 +1314,10 @@ public:
         intRange.set__from_value(0).set__to_value(1232).set__step(1);
         descriptor.integer_range = {intRange};
         this->declare_parameter("allied_wide_camera_auto_mode_region_width", 1232, descriptor); // 0 - 1232
-        intRange.set__from_value(0).set__to_value(4).set__step(1); // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(4).set__step(1);                              // TODO: enumerate
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be:\n"
+        descriptor.description =
+            "Value must be:\n"
             "\tAutoMode = 0\n"
             "\tFullImage = 4";
         this->declare_parameter("allied_wide_camera_intensity_controller_region", 0, descriptor); // 0(AutoMode), 4(FullImage)
@@ -1343,11 +1361,11 @@ public:
         this->declare_parameter("allied_narrow_camera_sharpness", 0.0, descriptor); // -12 - 12
         floatRange.set__from_value(-40).set__to_value(40.0).set__step(0.1);
         descriptor.floating_point_range = {floatRange};
-        this->declare_parameter("allied_narrow_camera_hue", 0.0, descriptor);  // -40 - 40
-        intRange.set__from_value(0).set__to_value(1).set__step(1); // TODO: enumerate
+        this->declare_parameter("allied_narrow_camera_hue", 0.0, descriptor); // -40 - 40
+        intRange.set__from_value(0).set__to_value(1).set__step(1);            // TODO: enumerate
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be:\n"
+        descriptor.description =
+            "Value must be:\n"
             "\tMinimizeNoise = 0\n"
             "\tMinimizeBlur = 1";
         this->declare_parameter("allied_narrow_camera_intensity_auto_precedence", 0, descriptor); // 0(MinimizeNoise) or 1(MinimizeBlur)
@@ -1355,8 +1373,8 @@ public:
         this->declare_parameter("allied_narrow_camera_auto_white_balance", false);
         intRange.set__from_value(0).set__to_value(1).set__step(1); // TODO: enumerate
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be:\n"
+        descriptor.description =
+            "Value must be:\n"
             "\tRed = 0\n"
             "\tBlue = 1";
         this->declare_parameter("allied_narrow_camera_balance_ratio_selector", 0, descriptor); // 0(Red), 1(Blue)
@@ -1376,10 +1394,10 @@ public:
         intRange.set__from_value(0).set__to_value(2464).set__step(1);
         descriptor.integer_range = {intRange};
         this->declare_parameter("allied_narrow_camera_auto_mode_region_width", 2464, descriptor); // 0 - 2464
-        intRange.set__from_value(0).set__to_value(4).set__step(1); // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(4).set__step(1);                                // TODO: enumerate
         descriptor.integer_range = {intRange};
-        descriptor.description = 
-        "Value must be:\n"
+        descriptor.description =
+            "Value must be:\n"
             "\tAutoMode = 0\n"
             "\tFullImage = 4";
         this->declare_parameter("allied_narrow_camera_intensity_controller_region", 0, descriptor); // 0(AutoMode), 4(FullImage)
@@ -1397,205 +1415,211 @@ public:
         /*std::string ip_address = this->get_parameter("ip_address").as_string().data();
         std::string netmask = this->get_parameter("netmask").as_string().data();
         std::string gateway = this->get_parameter("gateway").as_string().data();
-        printDefaultError(CHANGE_NETWORK_CONFIGURATION(devices[0], 
+        printDefaultError(CHANGE_NETWORK_CONFIGURATION(devices[0],
                 &ip_address[0],
                 &netmask[0],
                 &gateway[0],
                 this->get_parameter("dhcp").as_bool()));*/
         if (m_lidar_sensor != NULL)
         {
-            printDefaultError(CHANGE_POINT_CLOUD_COLOR(devices[0], 
-                    this->get_parameter("pointcloud_color").as_int()));
-            printDefaultError(CHANGE_POINT_CLOUD_COLOR_RANGE(devices[0], 
-                    this->get_parameter("pointcloud_color_range_minimum").as_int(), 
-                    this->get_parameter("pointcloud_color_range_maximum").as_int()));
-            printDefaultError(CHANGE_DISTANCE_RANGE(devices[0], 
-                    this->get_parameter("distance_range_minimum").as_int(), 
-                    this->get_parameter("distance_range_maximum").as_int()));
+            printDefaultError(CHANGE_POINT_CLOUD_COLOR(devices[0],
+                                                       this->get_parameter("pointcloud_color").as_int()));
+            printDefaultError(CHANGE_POINT_CLOUD_COLOR_RANGE(devices[0],
+                                                             this->get_parameter("pointcloud_color_range_minimum").as_int(),
+                                                             this->get_parameter("pointcloud_color_range_maximum").as_int()));
+            printDefaultError(CHANGE_DISTANCE_RANGE(devices[0],
+                                                    this->get_parameter("distance_range_minimum").as_int(),
+                                                    this->get_parameter("distance_range_maximum").as_int()));
+            ENABLE_AUTO_BIAS(devices[0], this->get_parameter("auto_bias").as_bool());
+            if (!this->get_parameter("auto_bias").as_bool())
+            { //! Values might not match after disabling auto_bias
+                CHANGE_BIAS_VALUE(devices[0], 1, this->get_parameter("bias_value_right").as_int());
+                CHANGE_BIAS_VALUE(devices[0], 2, this->get_parameter("bias_value_left").as_int());
+            }
         }
         if (m_polarimetric_sensor != NULL)
         {
-            printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BRIGHTNESS(devices[0], 
-                    this->get_parameter("polarimetric_camera_brightness").as_int()));
-            printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BLACK_LEVEL(devices[0], 
-                    this->get_parameter("polarimetric_camera_black_level").as_double()));
-            printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_GAIN(devices[0], 
-                    this->get_parameter("polarimetric_camera_auto_gain").as_bool()));
-            if(this->get_parameter("polarimetric_camera_auto_gain").as_bool())
-            { //! Values could not coincide when enabling polarimetric_camera_auto_gain
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_GAIN_RANGE(devices[0], 
-                        this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double(), 
-                        this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double()));
+            printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BRIGHTNESS(devices[0],
+                                                                    this->get_parameter("polarimetric_camera_brightness").as_int()));
+            printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BLACK_LEVEL(devices[0],
+                                                                     this->get_parameter("polarimetric_camera_black_level").as_double()));
+            printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_GAIN(devices[0],
+                                                                   this->get_parameter("polarimetric_camera_auto_gain").as_bool()));
+            if (this->get_parameter("polarimetric_camera_auto_gain").as_bool())
+            { //! Values might not match after enabling polarimetric_camera_auto_gain
+                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_GAIN_RANGE(devices[0],
+                                                                             this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double(),
+                                                                             this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double()));
             }
             else
-            { //! Values could not coincide when disabling polarimetric_camera_auto_gain
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_GAIN(devices[0], 
-                        this->get_parameter("polarimetric_camera_gain").as_double()));
+            { //! Values might not match after disabling polarimetric_camera_auto_gain
+                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_GAIN(devices[0],
+                                                                  this->get_parameter("polarimetric_camera_gain").as_double()));
             }
-            printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME(devices[0], 
-                    this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool()));
-            if(this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool())
-            { //! Values could not coincide when enabling polarimetric_camera_auto_exposure_time
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], 
-                        this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double(), 
-                        this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double()));
+            printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME(devices[0],
+                                                                            this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool()));
+            if (this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool())
+            { //! Values might not match after enabling polarimetric_camera_auto_exposure_time
+                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0],
+                                                                                      this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double(),
+                                                                                      this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double()));
             }
             else
-            { //! Values could not coincide when disabling polarimetric_camera_auto_exposure_time
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_EXPOSURE_TIME(devices[0], 
-                        this->get_parameter("polarimetric_camera_exposure_time").as_double()));
+            { //! Values might not match after disabling polarimetric_camera_auto_exposure_time
+                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_EXPOSURE_TIME(devices[0],
+                                                                           this->get_parameter("polarimetric_camera_exposure_time").as_double()));
             }
         }
         if (m_rgb_sensor != NULL)
         {
-            printDefaultError(CHANGE_RGB_CAMERA_BRIGHTNESS(devices[0], 
-                    this->get_parameter("rgb_camera_brightness").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_CONTRAST(devices[0], 
-                    this->get_parameter("rgb_camera_contrast").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_SATURATION(devices[0], 
-                    this->get_parameter("rgb_camera_saturation").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_SHARPNESS(devices[0], 
-                    this->get_parameter("rgb_camera_sharpness").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_GAMMA(devices[0], 
-                    this->get_parameter("rgb_camera_gamma").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_GAIN(devices[0], 
-                    this->get_parameter("rgb_camera_gain").as_int()));
-            printDefaultError(ENABLE_RGB_CAMERA_AUTO_WHITE_BALANCE(devices[0], 
-                    this->get_parameter("rgb_camera_auto_white_balance").as_bool()));
-            if(!this->get_parameter("rgb_camera_auto_white_balance").as_bool())
-            { //! Values could not coincide when disabling rgb_camera_auto_white_balance
-                printDefaultError(CHANGE_RGB_CAMERA_WHITE_BALANCE(devices[0], 
-                        this->get_parameter("rgb_camera_white_balance").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_BRIGHTNESS(devices[0],
+                                                           this->get_parameter("rgb_camera_brightness").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_CONTRAST(devices[0],
+                                                         this->get_parameter("rgb_camera_contrast").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_SATURATION(devices[0],
+                                                           this->get_parameter("rgb_camera_saturation").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_SHARPNESS(devices[0],
+                                                          this->get_parameter("rgb_camera_sharpness").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_GAMMA(devices[0],
+                                                      this->get_parameter("rgb_camera_gamma").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_GAIN(devices[0],
+                                                     this->get_parameter("rgb_camera_gain").as_int()));
+            printDefaultError(ENABLE_RGB_CAMERA_AUTO_WHITE_BALANCE(devices[0],
+                                                                   this->get_parameter("rgb_camera_auto_white_balance").as_bool()));
+            if (!this->get_parameter("rgb_camera_auto_white_balance").as_bool())
+            { //! Values might not match after disabling rgb_camera_auto_white_balance
+                printDefaultError(CHANGE_RGB_CAMERA_WHITE_BALANCE(devices[0],
+                                                                  this->get_parameter("rgb_camera_white_balance").as_int()));
             }
-            printDefaultError(ENABLE_RGB_CAMERA_AUTO_EXPOSURE_TIME(devices[0], 
-                    this->get_parameter("rgb_camera_auto_exposure_time").as_bool()));
-            if(!this->get_parameter("rgb_camera_auto_exposure_time").as_bool())
-            { //! Values could not coincide when disabling rgb_camera_auto_exposure_time
-                printDefaultError(CHANGE_RGB_CAMERA_EXPOSURE_TIME(devices[0], 
-                        this->get_parameter("rgb_camera_exposure_time").as_int()));
+            printDefaultError(ENABLE_RGB_CAMERA_AUTO_EXPOSURE_TIME(devices[0],
+                                                                   this->get_parameter("rgb_camera_auto_exposure_time").as_bool()));
+            if (!this->get_parameter("rgb_camera_auto_exposure_time").as_bool())
+            { //! Values might not match after disabling rgb_camera_auto_exposure_time
+                printDefaultError(CHANGE_RGB_CAMERA_EXPOSURE_TIME(devices[0],
+                                                                  this->get_parameter("rgb_camera_exposure_time").as_int()));
             }
-            printDefaultError(CHANGE_RGB_CAMERA_RESOLUTION(devices[0], 
-                    (econResolutions)this->get_parameter("rgb_camera_resolution").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_FRAMERATE(devices[0], 
-                    this->get_parameter("rgb_camera_framerate").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_RESOLUTION(devices[0],
+                                                           (econResolutions)this->get_parameter("rgb_camera_resolution").as_int()));
+            printDefaultError(CHANGE_RGB_CAMERA_FRAMERATE(devices[0],
+                                                          this->get_parameter("rgb_camera_framerate").as_int()));
         }
         if (m_thermal_sensor != NULL)
         {
-            printDefaultError(CHANGE_THERMAL_CAMERA_COLORMAP(devices[0], 
-                    (thermalTypes)this->get_parameter("thermal_camera_colormap").as_int()));
-            printDefaultError(ENABLE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0], 
-                    this->get_parameter("thermal_camera_temperature_filter").as_bool()));
-            printDefaultError(CHANGE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0], 
-                    this->get_parameter("thermal_camera_temperature_filter_min").as_int(), 
-                    this->get_parameter("thermal_camera_temperature_filter_max").as_int()));
+            printDefaultError(CHANGE_THERMAL_CAMERA_COLORMAP(devices[0],
+                                                             (thermalTypes)this->get_parameter("thermal_camera_colormap").as_int()));
+            printDefaultError(ENABLE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0],
+                                                                       this->get_parameter("thermal_camera_temperature_filter").as_bool()));
+            printDefaultError(CHANGE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0],
+                                                                       this->get_parameter("thermal_camera_temperature_filter_min").as_int(),
+                                                                       this->get_parameter("thermal_camera_temperature_filter_max").as_int()));
         }
         if (m_allied_wide_sensor != NULL)
         {
-            printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_black_level").as_double()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double(), 
-                    this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double()));
-            if(!this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool())
-            { //! Values could not coincide when disabling allied_wide_camera_auto_exposure_time
-                printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_wide_sensor, 
-                        this->get_parameter("allied_wide_camera_exposure_time").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_wide_sensor,
+                                                               this->get_parameter("allied_wide_camera_black_level").as_double()));
+            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_wide_sensor,
+                                                                      this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_wide_sensor,
+                                                                            this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double(),
+                                                                            this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double()));
+            if (!this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool())
+            { //! Values might not match after disabling allied_wide_camera_auto_exposure_time
+                printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_wide_sensor,
+                                                                        this->get_parameter("allied_wide_camera_exposure_time").as_double()));
             }
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_auto_gain").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_wide_sensor, 
-                    (float)this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double(), 
-                    (float)this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double()));
-            if(!this->get_parameter("allied_wide_camera_auto_gain").as_bool())
-            { //! Values could not coincide when disabling allied_wide_camera_auto_gain
-                printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_wide_sensor, 
-                        this->get_parameter("allied_wide_camera_gain").as_double()));
+            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_wide_sensor,
+                                                             this->get_parameter("allied_wide_camera_auto_gain").as_bool()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_wide_sensor,
+                                                                   (float)this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double(),
+                                                                   (float)this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double()));
+            if (!this->get_parameter("allied_wide_camera_auto_gain").as_bool())
+            { //! Values might not match after disabling allied_wide_camera_auto_gain
+                printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_wide_sensor,
+                                                            this->get_parameter("allied_wide_camera_gain").as_double()));
             }
-            printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_gamma").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_saturation").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_sharpness").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_hue").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_auto_white_balance").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_balance_ratio").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_auto_mode_region_height").as_int(), 
-                    this->get_parameter("allied_wide_camera_auto_mode_region_width").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_intensity_controller_region").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_intensity_controller_target").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_wide_sensor, 
-                    this->get_parameter("allied_wide_camera_max_driver_buffers_count").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_wide_sensor,
+                                                         this->get_parameter("allied_wide_camera_gamma").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_wide_sensor,
+                                                              this->get_parameter("allied_wide_camera_saturation").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_wide_sensor,
+                                                             this->get_parameter("allied_wide_camera_sharpness").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_wide_sensor,
+                                                       this->get_parameter("allied_wide_camera_hue").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_wide_sensor,
+                                                                             this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int()));
+            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_wide_sensor,
+                                                                      this->get_parameter("allied_wide_camera_auto_white_balance").as_bool()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_wide_sensor,
+                                                                          this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_wide_sensor,
+                                                                 this->get_parameter("allied_wide_camera_balance_ratio").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_wide_sensor,
+                                                                           this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_wide_sensor,
+                                                                                this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_wide_sensor,
+                                                                    this->get_parameter("allied_wide_camera_auto_mode_region_height").as_int(),
+                                                                    this->get_parameter("allied_wide_camera_auto_mode_region_width").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_wide_sensor,
+                                                                               this->get_parameter("allied_wide_camera_intensity_controller_region").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_wide_sensor,
+                                                                               this->get_parameter("allied_wide_camera_intensity_controller_target").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_wide_sensor,
+                                                                            this->get_parameter("allied_wide_camera_max_driver_buffers_count").as_int()));
         }
         if (m_allied_narrow_sensor != NULL)
         {
-            printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_black_level").as_double()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_auto_exposure_time_range_min").as_double(), 
-                    this->get_parameter("allied_narrow_camera_auto_exposure_time_range_max").as_double()));
-            if(!this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool())
-            { //! Values could not coincide when disabling allied_narrow_camera_auto_exposure_time
-                printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_narrow_sensor, 
-                        this->get_parameter("allied_narrow_camera_exposure_time").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_narrow_sensor,
+                                                               this->get_parameter("allied_narrow_camera_black_level").as_double()));
+            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_narrow_sensor,
+                                                                      this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_narrow_sensor,
+                                                                            this->get_parameter("allied_narrow_camera_auto_exposure_time_range_min").as_double(),
+                                                                            this->get_parameter("allied_narrow_camera_auto_exposure_time_range_max").as_double()));
+            if (!this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool())
+            { //! Values might not match after disabling allied_narrow_camera_auto_exposure_time
+                printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_narrow_sensor,
+                                                                        this->get_parameter("allied_narrow_camera_exposure_time").as_double()));
             }
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_auto_gain").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_narrow_sensor, 
-                    (float)this->get_parameter("allied_narrow_camera_auto_gain_range_min").as_double(), 
-                    (float)this->get_parameter("allied_narrow_camera_auto_gain_range_max").as_double()));
-            if(!this->get_parameter("allied_narrow_camera_auto_gain").as_bool())
-            { //! Values could not coincide when disabling allied_narrow_camera_auto_gain
-                printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_narrow_sensor, 
-                        this->get_parameter("allied_narrow_camera_gain").as_double()));
+            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_narrow_sensor,
+                                                             this->get_parameter("allied_narrow_camera_auto_gain").as_bool()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_narrow_sensor,
+                                                                   (float)this->get_parameter("allied_narrow_camera_auto_gain_range_min").as_double(),
+                                                                   (float)this->get_parameter("allied_narrow_camera_auto_gain_range_max").as_double()));
+            if (!this->get_parameter("allied_narrow_camera_auto_gain").as_bool())
+            { //! Values might not match after disabling allied_narrow_camera_auto_gain
+                printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_narrow_sensor,
+                                                            this->get_parameter("allied_narrow_camera_gain").as_double()));
             }
-            printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_gamma").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_saturation").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_sharpness").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_hue").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_intensity_auto_precedence").as_int()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_auto_white_balance").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_balance_ratio_selector").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_balance_ratio").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_balance_white_auto_rate").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_balance_white_auto_tolerance").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_auto_mode_region_height").as_int(), 
-                    this->get_parameter("allied_narrow_camera_auto_mode_region_width").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_intensity_controller_region").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_intensity_controller_target").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_narrow_sensor, 
-                    this->get_parameter("allied_narrow_camera_max_driver_buffers_count").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_narrow_sensor,
+                                                         this->get_parameter("allied_narrow_camera_gamma").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_narrow_sensor,
+                                                              this->get_parameter("allied_narrow_camera_saturation").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_narrow_sensor,
+                                                             this->get_parameter("allied_narrow_camera_sharpness").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_narrow_sensor,
+                                                       this->get_parameter("allied_narrow_camera_hue").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_narrow_sensor,
+                                                                             this->get_parameter("allied_narrow_camera_intensity_auto_precedence").as_int()));
+            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_narrow_sensor,
+                                                                      this->get_parameter("allied_narrow_camera_auto_white_balance").as_bool()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_narrow_sensor,
+                                                                          this->get_parameter("allied_narrow_camera_balance_ratio_selector").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_narrow_sensor,
+                                                                 this->get_parameter("allied_narrow_camera_balance_ratio").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_narrow_sensor,
+                                                                           this->get_parameter("allied_narrow_camera_balance_white_auto_rate").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_narrow_sensor,
+                                                                                this->get_parameter("allied_narrow_camera_balance_white_auto_tolerance").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_narrow_sensor,
+                                                                    this->get_parameter("allied_narrow_camera_auto_mode_region_height").as_int(),
+                                                                    this->get_parameter("allied_narrow_camera_auto_mode_region_width").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_narrow_sensor,
+                                                                               this->get_parameter("allied_narrow_camera_intensity_controller_region").as_int()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_narrow_sensor,
+                                                                               this->get_parameter("allied_narrow_camera_intensity_controller_target").as_double()));
+            printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_narrow_sensor,
+                                                                            this->get_parameter("allied_narrow_camera_max_driver_buffers_count").as_int()));
         }
 
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Default parameters loaded");
@@ -1606,8 +1630,8 @@ private:
     {
         if (error != L3CAM_OK)
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), 
-                    "ERROR SETTING DEFAULT PARAMETER (" << error << ") " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"),
+                                "ERROR SETTING DEFAULT PARAMETER (" << error << ") " << getBeamErrorDescription(error));
         }
     }
 };
@@ -1655,6 +1679,10 @@ int main(int argc, char **argv)
         node->create_service<l3cam_interfaces::srv::ChangePointcloudColorRange>("change_pointcloud_color_range", &changePointcloudColorRange);
     rclcpp::Service<l3cam_interfaces::srv::ChangeDistanceRange>::SharedPtr srvChangeDistanceRange =
         node->create_service<l3cam_interfaces::srv::ChangeDistanceRange>("change_distance_range", &changeDistanceRange);
+    rclcpp::Service<l3cam_interfaces::srv::EnableAutoBias>::SharedPtr srvEnableAutoBias =
+        node->create_service<l3cam_interfaces::srv::EnableAutoBias>("enable_auto_bias", &enableAutoBias);
+    rclcpp::Service<l3cam_interfaces::srv::ChangeBiasValue>::SharedPtr srvChangeBiasValue =
+        node->create_service<l3cam_interfaces::srv::ChangeBiasValue>("change_bias_value", &changeBiasValue);
 
     rclcpp::Service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>::SharedPtr srvSetPolarimetricCameraDefaultSettings =
         node->create_service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>("set_polarimetric_camera_default_settings", &setPolarimetricCameraDefaultSettings);

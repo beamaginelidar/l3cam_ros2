@@ -19,6 +19,9 @@
     <arg name="pointcloud_color_range_maximum" default="400000" /> <!-- 0 - 400000 -->
     <arg name="distance_range_minimum" default="0" /> <!-- 0 - 400000 -->
     <arg name="distance_range_maximum" default="400000" /> <!-- 0 - 400000 -->
+    <arg name="auto_bias" default="true" />
+    <arg name="bias_value_right" default="1580" /> <!-- 700 - 3500 -->
+    <arg name="bias_value_left" default="1380" /> <!-- 700 - 3500 -->
 
     <!-- Polarimetric configuration -->
     <arg name="polarimetric_camera_brightness" default="127" /> <!-- 0 - 255 -->
@@ -114,6 +117,9 @@
         <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />
         <param name="distance_range_minimum" value="$(var distance_range_minimum)" type="int" />
         <param name="distance_range_maximum" value="$(var distance_range_maximum)" type="int" />
+        <param name="auto_bias" value="$(var auto_bias)" type="bool" />
+        <param name="bias_value_right" value="$(var bias_value_right)" type="int" />
+        <param name="bias_value_left" value="$(var bias_value_left)" type="int" />
 
         <param name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" type="int" />
         <param name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" type="float" />

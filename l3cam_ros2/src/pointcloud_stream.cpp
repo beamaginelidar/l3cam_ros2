@@ -123,7 +123,7 @@ void *ImageThread(void *functionData)
         if (size_read == 17)
         {
             memcpy(&m_pointcloud_size, &buffer[1], 4);
-            m_pointcloud_data = (int32_t *)malloc(sizeof(int32_t) * (((m_pointcloud_size)*5) + 1));
+            m_pointcloud_data = (int32_t *)malloc(sizeof(int32_t) * (((m_pointcloud_size) * 5) + 1));
             memcpy(&m_pointcloud_data[0], &m_pointcloud_size, sizeof(int32_t));
             int32_t suma_1, suma_2;
             memcpy(&suma_1, &buffer[5], sizeof(int32_t));
@@ -144,8 +144,13 @@ void *ImageThread(void *functionData)
             sensor_msgs::msg::PointCloud cloud_;
             cloud_.points.resize(size_pc);
             cloud_.header.frame_id = "map";
-            rclcpp::Clock time;
-            cloud_.header.stamp = time.now();
+
+            sensor_msgs::msg::ChannelFloat32 intensity_channel;
+            intensity_channel.set__name("intensity");
+            intensity_channel.values.resize(size_pc);
+            sensor_msgs::msg::ChannelFloat32 rgb_channel;
+            rgb_channel.set__name("rgb");
+            rgb_channel.values.resize(size_pc);
 
             for (int i = 0; i < size_pc; i++)
             {
@@ -154,11 +159,22 @@ void *ImageThread(void *functionData)
                 cloud_.points[i].z = -(double)data_received[5 * i + 2] / 1000.0;
 
                 cloud_.points[i].x = (double)data_received[5 * i + 3] / 1000.0;
+
+                intensity_channel.values[i] = data_received[5 * i + 4];
+
+                rgb_channel.values[i] = data_received[5 * i + 5];
             }
+
+            cloud_.channels.push_back(intensity_channel);
+            cloud_.channels.push_back(rgb_channel);
 
             sensor_msgs::msg::PointCloud2 PC2_msg;
             PC2_msg.header.frame_id = "lidar";
-            PC2_msg.header.stamp = time.now();
+            // m_timestamp format: hhmmsszzz
+            PC2_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 + // hh
+                                       (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
+                                       (uint32_t)((m_timestamp / 1000) % 100); // ss
+            PC2_msg.header.stamp.nanosec = m_timestamp % 1000; // zzz
 
             sensor_msgs::convertPointCloudToPointCloud2(cloud_, PC2_msg);
             publisher_->publish(PC2_msg);
@@ -242,7 +258,7 @@ int main(int argc, char const *argv[])
             RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
             return 0;
         }
-        //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
 
     if (!isSensorAvailable(clientGetSensors, node, sensor_lidar))

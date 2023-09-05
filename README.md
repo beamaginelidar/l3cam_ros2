@@ -32,7 +32,7 @@ Clone this repository in your ROS2 workspace (e.g. ros2_ws) and build:
 
 ```
 cd ~/ros2_ws/src && git clone https://github.com/beamaginelidar/l3cam_ros2
-colcon build
+colcon build --packages-select l3cam_interfaces l3cam_ros2
 ```
 
 ## Operational Advice
@@ -202,6 +202,9 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `pointcloud_color_range_maximum` | int  | 400000  | [0, 400000]           |
 | `distance_range_minimum`         | int  | 0       | [0, 400000]           |
 | `distance_range_maximum`         | int  | 400000  | [0, 400000]           |
+| `auto_bias`                      | bool | true    |                       |
+| `bias_value_right`               | int  | 1580    | [700, 3500]           |
+| `bias_value_left`                | int  | 1380    | [700, 3500]           |
 
 ### Polarimetric parameters
 
@@ -329,6 +332,8 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `/change_pointcloud_color`                             | int visualization_color                                                                 | int error                                                    |
 | `/change_pointcloud_color_range`                       | int max_value, int min_value                                                            | int error                                                    |
 | `/change_distance_range`                               | int max_value, int min_value                                                            | int error                                                    |
+| `/enable_auto_bias`                                    | bool enabled                                                                            | -                                                            |
+| `/change_bias_value`                                   | int index, int bias                                                                     | -                                                            |
 | `/set_polarimetric_camera_default_settings`            | -                                                                                       | int error                                                    |
 | `/change_polarimetric_camera_brightness`               | int brightness                                                                          | int error                                                    |
 | `/change_polarimetric_camera_black_level`              | float black_level                                                                       | int error                                                    |
@@ -391,7 +396,9 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `get_allied_camera_intensity_controller_target`        | int allied_type                                                                         | int error, float intensity_controller_target                 |
 | `get_allied_camera_max_driver_buffers_count`           | int allied_type                                                                         | int error, int max_driver_buffers_count                      |
 
-**Note**: The arg allied_type must be 1 for Wide or 2 for Narrow. Any other value will return out of range error.
+**Note**: 
+ - The arg index in the /change_bias_value service must be 1 por right or 2 for left. Any other value will return out of range error.
+ - The arg allied_type must be 1 for Wide or 2 for Narrow. Any other value will return out of range error.
 
 ### Sensor msg
 

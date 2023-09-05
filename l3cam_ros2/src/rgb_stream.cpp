@@ -165,10 +165,14 @@ void *ImageThread(void *functionData)
             cv_bridge::CvImage img_bridge;
             sensor_msgs::msg::Image img_msg; // message to be sent
 
-            std_msgs::msg::Header header; // empty header
-            rclcpp::Clock time;
-            header.stamp = time.now(); // time
+            std_msgs::msg::Header header;
             header.frame_id = rgb ? "rgb" : "allied_narrow";
+            // m_timestamp format: hhmmsszzz
+            header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 + // hh
+                               (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
+                               (uint32_t)((m_timestamp / 1000) % 100); // ss
+            header.stamp.nanosec = m_timestamp % 1000; // zzz
+
             img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::BGR8, img_data);
             img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
             publisher_->publish(img_msg);

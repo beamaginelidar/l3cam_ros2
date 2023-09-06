@@ -169,14 +169,13 @@ void *ImageThread(void *functionData)
             cloud_.channels.push_back(rgb_channel);
 
             sensor_msgs::msg::PointCloud2 PC2_msg;
+            sensor_msgs::convertPointCloudToPointCloud2(cloud_, PC2_msg);
             PC2_msg.header.frame_id = "lidar";
             // m_timestamp format: hhmmsszzz
             PC2_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 + // hh
                                        (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
                                        (uint32_t)((m_timestamp / 1000) % 100); // ss
             PC2_msg.header.stamp.nanosec = m_timestamp % 1000; // zzz
-
-            sensor_msgs::convertPointCloudToPointCloud2(cloud_, PC2_msg);
             publisher_->publish(PC2_msg);
 
             free(m_pointcloud_data);

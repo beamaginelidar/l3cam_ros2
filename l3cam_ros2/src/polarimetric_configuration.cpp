@@ -45,502 +45,581 @@
 #include "l3cam_interfaces/srv/change_polarimetric_camera_auto_exposure_time_range.hpp"
 #include "l3cam_interfaces/srv/change_polarimetric_camera_exposure_time.hpp"
 
+#include "l3cam_interfaces/srv/sensor_disconnected.hpp"
+
+#include "l3cam_ros2_node.hpp" // for ROS2_BMG_UNUSED
+
 using namespace std::chrono_literals;
 
-class PolarimetricConfiguration : public rclcpp::Node
+namespace l3cam_ros2
 {
-public:
-    PolarimetricConfiguration() : Node("polarimetric_configuration"){
-        rcl_interfaces::msg::ParameterDescriptor intDescriptor;
-        rcl_interfaces::msg::ParameterDescriptor floatDescriptor;
-        rcl_interfaces::msg::IntegerRange intRange;
-        rcl_interfaces::msg::FloatingPointRange floatRange;
-        intRange.set__from_value(0).set__to_value(255).set__step(1);
-        intDescriptor.integer_range = {intRange};
-        this->declare_parameter("polarimetric_camera_brightness", 127, intDescriptor); // 0 - 255
-        floatRange.set__from_value(0.0).set__to_value(12.5).set__step(0.1);
-        floatDescriptor.floating_point_range = {floatRange};
-        this->declare_parameter("polarimetric_camera_black_level", 6.0, floatDescriptor); // 0 - 12.5
-        this->declare_parameter("polarimetric_camera_auto_gain", true);
-        floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
-        floatDescriptor.floating_point_range = {floatRange};
-        this->declare_parameter("polarimetric_camera_auto_gain_range_minimum", 0.0, floatDescriptor); // 0 - 48
-        floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
-        floatDescriptor.floating_point_range = {floatRange};
-        this->declare_parameter("polarimetric_camera_auto_gain_range_maximum", 48.0, floatDescriptor); // 0 - 48
-        floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
-        floatDescriptor.floating_point_range = {floatRange};
-        this->declare_parameter("polarimetric_camera_gain", 24.0, floatDescriptor); // 0 - 48
-        this->declare_parameter("polarimetric_camera_auto_exposure_time", true);
-        floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.1);
-        floatDescriptor.floating_point_range = {floatRange};
-        this->declare_parameter("polarimetric_camera_auto_exposure_time_range_minimum", 33.5, floatDescriptor); // 33.5 - 66470.6
-        floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.1);
-        floatDescriptor.floating_point_range = {floatRange};
-        this->declare_parameter("polarimetric_camera_auto_exposure_time_range_maximum", 66470.6, floatDescriptor); // 33.5 - 66470.6
-        floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.001);
-        floatDescriptor.floating_point_range = {floatRange};
-        this->declare_parameter("polarimetric_camera_exposure_time", 33.5, floatDescriptor); // 33.5 - 66470.6
-
-        polarimetric_camera_brightness = this->get_parameter("polarimetric_camera_brightness").as_int();
-        polarimetric_camera_black_level = this->get_parameter("polarimetric_camera_black_level").as_double();
-        polarimetric_camera_auto_gain = this->get_parameter("polarimetric_camera_auto_gain").as_bool();
-        polarimetric_camera_auto_gain_range_minimum = this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double();
-        polarimetric_camera_auto_gain_range_maximum = this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double();
-        polarimetric_camera_gain = this->get_parameter("polarimetric_camera_gain").as_double();
-        polarimetric_camera_auto_exposure_time = this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool();
-        polarimetric_camera_auto_exposure_time_range_minimum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double();
-        polarimetric_camera_auto_exposure_time_range_maximum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double();
-        polarimetric_camera_exposure_time = this->get_parameter("polarimetric_camera_exposure_time").as_double();
-
-        clientBrightness = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>("change_polarimetric_camera_brightness");
-        clientBlackLevel = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>("change_polarimetric_camera_black_level");
-        clientAutoGain = this->create_client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>("enable_polarimetric_camera_auto_gain");
-        clientAutoGainRange = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>("change_polarimetric_camera_auto_gain_range");
-        clientGain = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraGain>("change_polarimetric_camera_gain");
-        clientAutoExposureTime = this->create_client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>("enable_polarimetric_camera_auto_exposure_time");
-        clientAutoExposureTimeRange = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>("change_polarimetric_camera_auto_exposure_time_range");
-        clientExposureTime = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>("change_polarimetric_camera_exposure_time");
-
-        callback_handle_ = this->add_on_set_parameters_callback(
-            std::bind(&PolarimetricConfiguration::parametersCallback, this, std::placeholders::_1));
-    }
-
-private:
-    rcl_interfaces::msg::SetParametersResult parametersCallback(
-        const std::vector<rclcpp::Parameter> &parameters)
+    class PolarimetricConfiguration : public rclcpp::Node
     {
-        rcl_interfaces::msg::SetParametersResult result;
-        result.successful = true;
-        result.reason = "success";
-
-        for (const auto &param : parameters)
+    public:
+        PolarimetricConfiguration() : Node("polarimetric_configuration")
         {
-            std::string param_name = param.get_name();
-            if (param_name == "polarimetric_camera_brightness")
-            {
-                while (!clientBrightness->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
+            declareGetParameters();
 
-                auto requestBrightness = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness::Request>();
-                requestBrightness->brightness = param.as_int();
+            // Create service clients
+            clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
+            clientBrightness = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>("change_polarimetric_camera_brightness");
+            clientBlackLevel = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>("change_polarimetric_camera_black_level");
+            clientAutoGain = this->create_client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>("enable_polarimetric_camera_auto_gain");
+            clientAutoGainRange = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>("change_polarimetric_camera_auto_gain_range");
+            clientGain = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraGain>("change_polarimetric_camera_gain");
+            clientAutoExposureTime = this->create_client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>("enable_polarimetric_camera_auto_exposure_time");
+            clientAutoExposureTimeRange = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>("change_polarimetric_camera_auto_exposure_time_range");
+            clientExposureTime = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>("change_polarimetric_camera_exposure_time");
 
-                auto resultBrightness = clientBrightness->async_send_request(
-                    requestBrightness, std::bind(&PolarimetricConfiguration::brightnessResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_black_level")
-            {
-                while (!clientBlackLevel->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
+            // Create service server
+            srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
+                "polarimetric_configuration_disconnected", std::bind(&PolarimetricConfiguration::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
 
-                auto requestBlackLevel = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel::Request>();
-                requestBlackLevel->black_level = param.as_double();
-
-                auto resultBlackLevel = clientBlackLevel->async_send_request(
-                    requestBlackLevel, std::bind(&PolarimetricConfiguration::blackLevelResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_auto_gain")
-            {
-                while (!clientAutoGain->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
-
-                auto requestAutoGain = std::make_shared<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain::Request>();
-                requestAutoGain->enabled = param.as_bool();
-
-                auto resultAutoGain = clientAutoGain->async_send_request(
-                    requestAutoGain, std::bind(&PolarimetricConfiguration::autoGainResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_auto_gain_range_minimum")
-            {
-                while (!clientAutoGainRange->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
-
-                auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange::Request>();
-                requestAutoGainRange->min_gain = param.as_double();
-                requestAutoGainRange->max_gain = polarimetric_camera_auto_gain_range_maximum;
-
-                auto resultAutoGainRange = clientAutoGainRange->async_send_request(
-                    requestAutoGainRange, std::bind(&PolarimetricConfiguration::autoGainRangeResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_auto_gain_range_maximum")
-            {
-                while (!clientAutoGainRange->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
-
-                auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange::Request>();
-                requestAutoGainRange->min_gain = polarimetric_camera_auto_gain_range_minimum;
-                requestAutoGainRange->max_gain = param.as_double();
-
-                auto resultAutoGainRange = clientAutoGainRange->async_send_request(
-                    requestAutoGainRange, std::bind(&PolarimetricConfiguration::autoGainRangeResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_gain")
-            {
-                while (!clientGain->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
-
-                auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraGain::Request>();
-                requestGain->gain = param.as_double();
-
-                auto resultGain = clientGain->async_send_request(
-                    requestGain, std::bind(&PolarimetricConfiguration::gainResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_auto_exposure_time")
-            {
-                while (!clientAutoExposureTime->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
-
-                auto requestAutoExposureTime = std::make_shared<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime::Request>();
-                requestAutoExposureTime->enabled = param.as_bool();
-
-                auto resultAutoExposureTime = clientAutoExposureTime->async_send_request(
-                    requestAutoExposureTime, std::bind(&PolarimetricConfiguration::autoExposureTimeResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_auto_exposure_time_range_minimum")
-            {
-                while (!clientAutoExposureTimeRange->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting aExposureTime...");
-                }
-
-                auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange::Request>();
-                requestAutoExposureTimeRange->min_exposure = param.as_double();
-                requestAutoExposureTimeRange->max_exposure = polarimetric_camera_auto_exposure_time_range_maximum;
-
-                auto resultAutoExposureTimeRange = clientAutoExposureTimeRange->async_send_request(
-                    requestAutoExposureTimeRange, std::bind(&PolarimetricConfiguration::autoExposureTimeRangeResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_auto_exposure_time_range_maximum")
-            {
-                while (!clientAutoExposureTimeRange->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting aExposureTime...");
-                }
-
-                auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange::Request>();
-                requestAutoExposureTimeRange->min_exposure = polarimetric_camera_auto_exposure_time_range_minimum;
-                requestAutoExposureTimeRange->max_exposure = param.as_double();
-
-                auto resultAutoExposureTimeRange = clientAutoExposureTimeRange->async_send_request(
-                    requestAutoExposureTimeRange, std::bind(&PolarimetricConfiguration::autoExposureTimeRangeResponseCallback, this, std::placeholders::_1));
-            }
-            if (param_name == "polarimetric_camera_exposure_time")
-            {
-                while (!clientExposureTime->wait_for_service(1s))
-                {
-                    if (!rclcpp::ok())
-                    {
-                        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
-                        break;
-                    }
-                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                }
-
-                auto requestExposureTime = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime::Request>();
-                requestExposureTime->exposure_time = param.as_double();
-
-                auto resultExposureTime = clientExposureTime->async_send_request(
-                    requestExposureTime, std::bind(&PolarimetricConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
-            }
-
+            // Callback on parameters changed
+            callback_handle_ = this->add_on_set_parameters_callback(
+                std::bind(&PolarimetricConfiguration::parametersCallback, this, std::placeholders::_1));
         }
 
-        return result;
-    }
+        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
 
-    void brightnessResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
+    private:
+        void declareGetParameters()
         {
-            int error = future.get()->error;
-            if (!error)
-                polarimetric_camera_brightness = this->get_parameter("polarimetric_camera_brightness").as_int();
+            // Declare parameters with range
+            rcl_interfaces::msg::ParameterDescriptor intDescriptor;
+            rcl_interfaces::msg::ParameterDescriptor floatDescriptor;
+            rcl_interfaces::msg::IntegerRange intRange;
+            rcl_interfaces::msg::FloatingPointRange floatRange;
+            intRange.set__from_value(0).set__to_value(255).set__step(1);
+            intDescriptor.integer_range = {intRange};
+            this->declare_parameter("polarimetric_camera_brightness", 127, intDescriptor); // 0 - 255
+            floatRange.set__from_value(0.0).set__to_value(12.5).set__step(0.1);
+            floatDescriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_black_level", 6.0, floatDescriptor); // 0 - 12.5
+            this->declare_parameter("polarimetric_camera_auto_gain", true);
+            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatDescriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_gain_range_minimum", 0.0, floatDescriptor); // 0 - 48
+            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatDescriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_gain_range_maximum", 48.0, floatDescriptor); // 0 - 48
+            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatDescriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_gain", 24.0, floatDescriptor); // 0 - 48
+            this->declare_parameter("polarimetric_camera_auto_exposure_time", true);
+            floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.1);
+            floatDescriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_exposure_time_range_minimum", 33.5, floatDescriptor); // 33.5 - 66470.6
+            floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.1);
+            floatDescriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_exposure_time_range_maximum", 66470.6, floatDescriptor); // 33.5 - 66470.6
+            floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.001);
+            floatDescriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_exposure_time", 33.5, floatDescriptor); // 33.5 - 66470.6
+
+            // Get and save parameters
+            polarimetric_camera_brightness = this->get_parameter("polarimetric_camera_brightness").as_int();
+            polarimetric_camera_black_level = this->get_parameter("polarimetric_camera_black_level").as_double();
+            polarimetric_camera_auto_gain = this->get_parameter("polarimetric_camera_auto_gain").as_bool();
+            polarimetric_camera_auto_gain_range_minimum = this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double();
+            polarimetric_camera_auto_gain_range_maximum = this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double();
+            polarimetric_camera_gain = this->get_parameter("polarimetric_camera_gain").as_double();
+            polarimetric_camera_auto_exposure_time = this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool();
+            polarimetric_camera_auto_exposure_time_range_minimum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double();
+            polarimetric_camera_auto_exposure_time_range_maximum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double();
+            polarimetric_camera_exposure_time = this->get_parameter("polarimetric_camera_exposure_time").as_double();
+        }
+
+        rcl_interfaces::msg::SetParametersResult parametersCallback(
+            const std::vector<rclcpp::Parameter> &parameters)
+        {
+            // parameters contains the values of the changed parameters
+            rcl_interfaces::msg::SetParametersResult result;
+            result.successful = true;
+            result.reason = "success";
+
+            // Filter by parameter and call service
+            for (const auto &param : parameters)
+            {
+                std::string param_name = param.get_name();
+                if (param_name == "polarimetric_camera_brightness")
+                {
+                    while (!clientBrightness->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestBrightness = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness::Request>();
+                    requestBrightness->brightness = param.as_int();
+
+                    auto resultBrightness = clientBrightness->async_send_request(
+                        requestBrightness, std::bind(&PolarimetricConfiguration::brightnessResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_black_level")
+                {
+                    while (!clientBlackLevel->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestBlackLevel = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel::Request>();
+                    requestBlackLevel->black_level = param.as_double();
+
+                    auto resultBlackLevel = clientBlackLevel->async_send_request(
+                        requestBlackLevel, std::bind(&PolarimetricConfiguration::blackLevelResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_auto_gain")
+                {
+                    while (!clientAutoGain->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestAutoGain = std::make_shared<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain::Request>();
+                    requestAutoGain->enabled = param.as_bool();
+
+                    auto resultAutoGain = clientAutoGain->async_send_request(
+                        requestAutoGain, std::bind(&PolarimetricConfiguration::autoGainResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_auto_gain_range_minimum")
+                {
+                    while (!clientAutoGainRange->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange::Request>();
+                    requestAutoGainRange->min_gain = param.as_double();
+                    requestAutoGainRange->max_gain = polarimetric_camera_auto_gain_range_maximum;
+
+                    auto resultAutoGainRange = clientAutoGainRange->async_send_request(
+                        requestAutoGainRange, std::bind(&PolarimetricConfiguration::autoGainRangeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_auto_gain_range_maximum")
+                {
+                    while (!clientAutoGainRange->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange::Request>();
+                    requestAutoGainRange->min_gain = polarimetric_camera_auto_gain_range_minimum;
+                    requestAutoGainRange->max_gain = param.as_double();
+
+                    auto resultAutoGainRange = clientAutoGainRange->async_send_request(
+                        requestAutoGainRange, std::bind(&PolarimetricConfiguration::autoGainRangeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_gain")
+                {
+                    while (!clientGain->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraGain::Request>();
+                    requestGain->gain = param.as_double();
+
+                    auto resultGain = clientGain->async_send_request(
+                        requestGain, std::bind(&PolarimetricConfiguration::gainResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_auto_exposure_time")
+                {
+                    while (!clientAutoExposureTime->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestAutoExposureTime = std::make_shared<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime::Request>();
+                    requestAutoExposureTime->enabled = param.as_bool();
+
+                    auto resultAutoExposureTime = clientAutoExposureTime->async_send_request(
+                        requestAutoExposureTime, std::bind(&PolarimetricConfiguration::autoExposureTimeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_auto_exposure_time_range_minimum")
+                {
+                    while (!clientAutoExposureTimeRange->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting aExposureTime...");
+                    }
+
+                    auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange::Request>();
+                    requestAutoExposureTimeRange->min_exposure = param.as_double();
+                    requestAutoExposureTimeRange->max_exposure = polarimetric_camera_auto_exposure_time_range_maximum;
+
+                    auto resultAutoExposureTimeRange = clientAutoExposureTimeRange->async_send_request(
+                        requestAutoExposureTimeRange, std::bind(&PolarimetricConfiguration::autoExposureTimeRangeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_auto_exposure_time_range_maximum")
+                {
+                    while (!clientAutoExposureTimeRange->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting aExposureTime...");
+                    }
+
+                    auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange::Request>();
+                    requestAutoExposureTimeRange->min_exposure = polarimetric_camera_auto_exposure_time_range_minimum;
+                    requestAutoExposureTimeRange->max_exposure = param.as_double();
+
+                    auto resultAutoExposureTimeRange = clientAutoExposureTimeRange->async_send_request(
+                        requestAutoExposureTimeRange, std::bind(&PolarimetricConfiguration::autoExposureTimeRangeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_camera_exposure_time")
+                {
+                    while (!clientExposureTime->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestExposureTime = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime::Request>();
+                    requestExposureTime->exposure_time = param.as_double();
+
+                    auto resultExposureTime = clientExposureTime->async_send_request(
+                        requestExposureTime, std::bind(&PolarimetricConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
+                }
+            }
+
+            return result;
+        }
+
+        void brightnessResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_brightness = this->get_parameter("polarimetric_camera_brightness").as_int();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_brightness", polarimetric_camera_brightness));
+                }
+            }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_brightness");
+                // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_brightness", polarimetric_camera_brightness));
             }
         }
-        else
+
+        void blackLevelResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedFuture future)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_brightness");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_brightness", polarimetric_camera_brightness));
-        }
-    }
-    
-    void blackLevelResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
-        {
-            int error = future.get()->error;
-            if (!error)
-                polarimetric_camera_black_level = this->get_parameter("polarimetric_camera_black_level").as_double();
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_black_level = this->get_parameter("polarimetric_camera_black_level").as_double();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_black_level", polarimetric_camera_black_level));
+                }
+            }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_black_level");
+                // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_black_level", polarimetric_camera_black_level));
             }
         }
-        else
+
+        void autoGainResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>::SharedFuture future)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_black_level");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_black_level", polarimetric_camera_black_level));
-        }
-    }
-    
-    void autoGainResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
-        {
-            int error = future.get()->error;
-            if (!error)
-                polarimetric_camera_auto_gain = this->get_parameter("polarimetric_camera_auto_gain").as_bool();
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_auto_gain = this->get_parameter("polarimetric_camera_auto_gain").as_bool();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain", polarimetric_camera_auto_gain));
+                }
+            }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_gain");
+                // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain", polarimetric_camera_auto_gain));
             }
         }
-        else
+
+        void autoGainRangeResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>::SharedFuture future)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_gain");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain", polarimetric_camera_auto_gain));
-        }
-    }
-    
-    void autoGainRangeResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
-        {
-            int error = future.get()->error;
-            if (!error)
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
             {
-                polarimetric_camera_auto_gain_range_minimum = this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double();
-                polarimetric_camera_auto_gain_range_maximum = this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double();
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameters changed successfully, save value
+                    polarimetric_camera_auto_gain_range_minimum = this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double();
+                    polarimetric_camera_auto_gain_range_maximum = this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameters could not be changed, reset parameters to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_minimum", polarimetric_camera_auto_gain_range_minimum));
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_maximum", polarimetric_camera_auto_gain_range_maximum));
+                }
             }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                // Service could not be called, reset parameters to value before change
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_gain_range");
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_minimum", polarimetric_camera_auto_gain_range_minimum));
-                // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_maximum", polarimetric_camera_auto_gain_range_maximum));
+                // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_maximum", polarimetric_camera_auto_gain_range_minimum));
             }
         }
-        else
+
+        void gainResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraGain>::SharedFuture future)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_gain_range");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_minimum", polarimetric_camera_auto_gain_range_minimum));
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_maximum", polarimetric_camera_auto_gain_range_minimum));
-        }
-    }
-    
-    void gainResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraGain>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
-        {
-            int error = future.get()->error;
-            if (!error)
-                polarimetric_camera_gain = this->get_parameter("polarimetric_camera_gain").as_double();
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_gain = this->get_parameter("polarimetric_camera_gain").as_double();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_gain", polarimetric_camera_gain));
+                }
+            }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_gain");
+                // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_gain", polarimetric_camera_gain));
             }
         }
-        else
+
+        void autoExposureTimeResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>::SharedFuture future)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_gain");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_gain", polarimetric_camera_gain));
-        }
-    }
-    
-    void autoExposureTimeResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
-        {
-            int error = future.get()->error;
-            if (!error)
-                polarimetric_camera_auto_exposure_time = this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool();
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_auto_exposure_time = this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time", polarimetric_camera_auto_exposure_time));
+                }
+            }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_exposure_time");
+                // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time", polarimetric_camera_auto_exposure_time));
             }
         }
-        else
+
+        void autoExposureTimeRangeResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>::SharedFuture future)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_exposure_time");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time", polarimetric_camera_auto_exposure_time));
-        }
-    }
-    
-    void autoExposureTimeRangeResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
-        {
-            int error = future.get()->error;
-            if (!error)
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
             {
-                polarimetric_camera_auto_exposure_time_range_minimum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double();
-                polarimetric_camera_auto_exposure_time_range_maximum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double();
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameters changed successfully, save value
+                    polarimetric_camera_auto_exposure_time_range_minimum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double();
+                    polarimetric_camera_auto_exposure_time_range_maximum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameters could not be changed, reset parameters to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_minimum", polarimetric_camera_auto_exposure_time_range_minimum));
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_maximum", polarimetric_camera_auto_exposure_time_range_maximum));
+                }
             }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_exposure_time_range");
+                // Service could not be called, reset parameters to value before change
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_minimum", polarimetric_camera_auto_exposure_time_range_minimum));
-                // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_maximum", polarimetric_camera_auto_exposure_time_range_maximum));
+                // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_maximum", polarimetric_camera_auto_exposure_time_range_minimum));
             }
         }
-        else
+
+        void exposureTimeResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>::SharedFuture future)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_exposure_time_range");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_minimum", polarimetric_camera_auto_exposure_time_range_minimum));
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_maximum", polarimetric_camera_auto_exposure_time_range_minimum));
-        }
-    }
-    
-    void exposureTimeResponseCallback(
-        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>::SharedFuture future)
-    {
-        auto status = future.wait_for(1s);
-        if (status == std::future_status::ready)
-        {
-            int error = future.get()->error;
-            if (!error)
-                polarimetric_camera_exposure_time = this->get_parameter("polarimetric_camera_exposure_time").as_double();
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_exposure_time = this->get_parameter("polarimetric_camera_exposure_time").as_double();
+                }
+                else
+                {
+                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    // this->set_parameter(rclcpp::Parameter("polarimetric_camera_exposure_time", polarimetric_camera_exposure_time));
+                }
+            }
             else
             {
-                RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_exposure_time");
+                // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("polarimetric_camera_exposure_time", polarimetric_camera_exposure_time));
             }
         }
-        else
+
+        void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
+                                        std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_exposure_time");
-            // this->set_parameter(rclcpp::Parameter("polarimetric_camera_exposure_time", polarimetric_camera_exposure_time));
+            ROS2_BMG_UNUSED(res);
+            if (req->code == 0)
+            {
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting cleanly.");
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
+            }
+            
+            rclcpp::shutdown();
         }
-    }
 
-    int polarimetric_camera_brightness;
-    double polarimetric_camera_black_level;
-    bool polarimetric_camera_auto_gain;
-    double polarimetric_camera_auto_gain_range_minimum;
-    double polarimetric_camera_auto_gain_range_maximum;
-    double polarimetric_camera_gain;
-    bool polarimetric_camera_auto_exposure_time;
-    double polarimetric_camera_auto_exposure_time_range_minimum;
-    double polarimetric_camera_auto_exposure_time_range_maximum;
-    double polarimetric_camera_exposure_time;
+        int polarimetric_camera_brightness;
+        double polarimetric_camera_black_level;
+        bool polarimetric_camera_auto_gain;
+        double polarimetric_camera_auto_gain_range_minimum;
+        double polarimetric_camera_auto_gain_range_maximum;
+        double polarimetric_camera_gain;
+        bool polarimetric_camera_auto_exposure_time;
+        double polarimetric_camera_auto_exposure_time_range_minimum;
+        double polarimetric_camera_auto_exposure_time_range_maximum;
+        double polarimetric_camera_exposure_time;
 
-    rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedPtr clientBrightness;
-    rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedPtr clientBlackLevel;
-    rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>::SharedPtr clientAutoGain;
-    rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>::SharedPtr clientAutoGainRange;
-    rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraGain>::SharedPtr clientGain;
-    rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>::SharedPtr clientAutoExposureTime;
-    rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>::SharedPtr clientAutoExposureTimeRange;
-    rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>::SharedPtr clientExposureTime;
+        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedPtr clientBrightness;
+        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedPtr clientBlackLevel;
+        rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>::SharedPtr clientAutoGain;
+        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>::SharedPtr clientAutoGainRange;
+        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraGain>::SharedPtr clientGain;
+        rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>::SharedPtr clientAutoExposureTime;
+        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>::SharedPtr clientAutoExposureTimeRange;
+        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>::SharedPtr clientExposureTime;
 
-    OnSetParametersCallbackHandle::SharedPtr callback_handle_;
-};
+        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
 
-int main(int argc, char ** argv)
+        OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+
+    }; // class PolarimetricConfiguration
+
+} // namespace l3cam_ros2
+
+int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    int error = L3CAM_OK;
-
-    std::shared_ptr<PolarimetricConfiguration> node = std::make_shared<PolarimetricConfiguration>();
+    std::shared_ptr<l3cam_ros2::PolarimetricConfiguration> node = std::make_shared<l3cam_ros2::PolarimetricConfiguration>();
 
     // Check if Polarimetric is available
-    rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors =
-        node->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
-
-    while (!clientGetSensors->wait_for_service(1s))
+    while (!node->clientGetSensors->wait_for_service(1s))
     {
         if (!rclcpp::ok())
         {
             RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
             return 0;
         }
-        //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
 
     auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
-    auto resultGetSensors = clientGetSensors->async_send_request(requestGetSensors);
+    auto resultGetSensors = node->clientGetSensors->async_send_request(requestGetSensors);
+
+    int error = L3CAM_OK;
     bool sensor_is_available = false;
+    // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
         error = resultGetSensors.get()->error;
@@ -553,7 +632,7 @@ int main(int argc, char ** argv)
             }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while checking sensor availability: " << getBeamErrorDescription(error));
             return 1;
         }
     }
@@ -564,9 +643,13 @@ int main(int argc, char ** argv)
     }
 
     if (sensor_is_available)
+    {
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Polarimetric camera configuration is available");
+    }
     else
+    {
         return 0;
+    }
 
     rclcpp::spin(node);
     rclcpp::shutdown();

@@ -56,16 +56,25 @@
 #include "l3cam_interfaces/msg/sensor.hpp"
 #include "l3cam_interfaces/srv/get_sensors_available.hpp"
 
+#include "l3cam_interfaces/srv/sensor_disconnected.hpp"
+
+#include "l3cam_ros2_node.hpp" // for ROS2_BMG_UNUSED
+
 using namespace std::chrono_literals;
 
 pthread_t stream_thread;
 
 bool g_listening = false;
 
-rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
+struct threadData
+{
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher;
+};
 
 void *ImageThread(void *functionData)
 {
+    threadData *data = (struct threadData *)functionData;
+
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
     std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
@@ -88,6 +97,7 @@ void *ImageThread(void *functionData)
         return 0;
     }
     // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket Pointcloud created");
+
     memset((char *)&m_socket, 0, sizeof(struct sockaddr_in));
     m_socket.sin_addr.s_addr = inet_addr((char *)m_address.c_str());
     m_socket.sin_family = AF_INET;
@@ -114,13 +124,13 @@ void *ImageThread(void *functionData)
     }
 
     g_listening = true;
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Point cloud streaming...");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Point cloud streaming.");
 
     while (g_listening)
     {
         int size_read = recvfrom(m_socket_descriptor, buffer, 64004, 0, (struct sockaddr *)&m_socket, &socket_len);
 
-        if (size_read == 17)
+        if (size_read == 17) // Header
         {
             memcpy(&m_pointcloud_size, &buffer[1], 4);
             m_pointcloud_data = (int32_t *)malloc(sizeof(int32_t) * (((m_pointcloud_size) * 5) + 1));
@@ -133,7 +143,7 @@ void *ImageThread(void *functionData)
             points_received = 0;
             pointcloud_index = 1;
         }
-        else if (size_read == 1)
+        else if (size_read == 1) // End, send point cloud
         {
             m_is_reading_pointcloud = false;
             int32_t *data_received = (int32_t *)malloc(sizeof(int32_t) * (m_pointcloud_size * 5) + 1);
@@ -172,17 +182,18 @@ void *ImageThread(void *functionData)
             sensor_msgs::convertPointCloudToPointCloud2(cloud_, PC2_msg);
             PC2_msg.header.frame_id = "lidar";
             // m_timestamp format: hhmmsszzz
-            PC2_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 + // hh
+            PC2_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                        (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
-                                       (uint32_t)((m_timestamp / 1000) % 100); // ss
-            PC2_msg.header.stamp.nanosec = m_timestamp % 1000; // zzz
-            publisher_->publish(PC2_msg);
+                                       (uint32_t)((m_timestamp / 1000) % 100);         // ss
+            PC2_msg.header.stamp.nanosec = m_timestamp % 1000;                         // zzz
+
+            data->publisher->publish(PC2_msg);
 
             free(m_pointcloud_data);
             points_received = 0;
             pointcloud_index = 1;
         }
-        else if (size_read > 0)
+        else if (size_read > 0) // Data
         {
             if (m_is_reading_pointcloud)
             {
@@ -202,55 +213,64 @@ void *ImageThread(void *functionData)
     }
 
     free(buffer);
+    free(m_pointcloud_data);
+
     shutdown(m_socket_descriptor, SHUT_RDWR);
     close(m_socket_descriptor);
+
     pthread_exit(0);
 }
 
-bool isSensorAvailable(rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors,
-                       std::shared_ptr<rclcpp::Node> node, sensorTypes sensor_type)
+namespace l3cam_ros2
 {
-    int error = L3CAM_OK;
-
-    auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
-    auto resultGetSensors = clientGetSensors->async_send_request(requestGetSensors);
-
-    if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
+    class PointCloudStream : public rclcpp::Node
     {
-        error = resultGetSensors.get()->error;
-
-        if (!error)
-            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
-            {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_type)
-                    return true;
-            }
-        else
+    public:
+        PointCloudStream() : Node("pointcloud_stream")
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
-            return false;
-        }
-    }
-    else
-    {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
-        return false;
-    }
+            clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
 
-    return false;
-}
+            srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
+                "pointcloud_stream_disconnected", std::bind(&PointCloudStream::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
+        }
+
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
+        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
+
+    private:
+        void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
+                                        std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
+        {
+            ROS2_BMG_UNUSED(res);
+            g_listening = false;
+            usleep(500000);
+
+            if (req->code == 0)
+            {
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting cleanly.");
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
+            }
+
+            rclcpp::shutdown();
+        }
+
+        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
+
+    }; // class PointCloudStream
+
+} // namespace l3cam_ros2
 
 int main(int argc, char const *argv[])
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("pointcloud_stream");
+    std::shared_ptr<l3cam_ros2::PointCloudStream> node = std::make_shared<l3cam_ros2::PointCloudStream>();
 
     // Check if LiDAR is available
-    rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors =
-        node->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
-
-    while (!clientGetSensors->wait_for_service(1s))
+    while (!node->clientGetSensors->wait_for_service(1s))
     {
         if (!rclcpp::ok())
         {
@@ -260,17 +280,54 @@ int main(int argc, char const *argv[])
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
 
-    if (!isSensorAvailable(clientGetSensors, node, sensor_lidar))
-        return 0;
+    auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
+    auto resultGetSensors = node->clientGetSensors->async_send_request(requestGetSensors);
 
-    publisher_ = node->create_publisher<sensor_msgs::msg::PointCloud2>("PC2_lidar", 10);
-
-    pthread_create(&stream_thread, NULL, &ImageThread, NULL);
-
-    while (rclcpp::ok() && isSensorAvailable(clientGetSensors, node, sensor_lidar))
+    int error = L3CAM_OK;
+    bool sensor_is_available = false;
+    // Shutdown if sensor is not available or if error returned
+    if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        rclcpp::spin_some(node);
+        error = resultGetSensors.get()->error;
+
+        if (!error)
+        {
+            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
+            {
+                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar)
+                {
+                    sensor_is_available = true;
+                }
+            }
+        }
+        else
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while checking sensor availability: " << getBeamErrorDescription(error));
+            return 1;
+        }
     }
+    else
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
+        return 1;
+    }
+
+    if (sensor_is_available)
+    {
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "LiDAR available for streaming");
+    }
+    else
+    {
+        return 0;
+    }
+
+    node->publisher_ = node->create_publisher<sensor_msgs::msg::PointCloud2>("PC2_lidar", 10);
+
+    threadData *data = (struct threadData *)malloc(sizeof(struct threadData));
+    data->publisher = node->publisher_;
+    pthread_create(&stream_thread, NULL, &ImageThread, (void *)data);
+
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }

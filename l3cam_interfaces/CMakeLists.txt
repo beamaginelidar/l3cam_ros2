@@ -94,6 +94,7 @@ set(srv_files
   "srv/GetAlliedCameraIntensityControllerRegion.srv"
   "srv/GetAlliedCameraIntensityControllerTarget.srv"
   "srv/GetAlliedCameraMaxDriverBuffersCount.srv"
+  "srv/SensorDisconnected.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

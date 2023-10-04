@@ -4,7 +4,7 @@
   <name>l3cam_interfaces</name>
   <version>0.0.0</version>
   <description>L3Cam interfaces</description>
-  <maintainer email="info@beamagine.com">Beamagine</maintainer>
+  <maintainer email="support@beamagine.com">Beamagine</maintainer>
   <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -4,7 +4,7 @@
   <name>l3cam_ros2</name>
   <version>0.0.0</version>
   <description>Package that integrates L3CAM sensors using L3CAM SDK </description>
-  <maintainer email="info@beamagine.com">Beamagine</maintainer>
+  <maintainer email="support@beamagine.com">Beamagine</maintainer>
   <license>BSD</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

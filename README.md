@@ -29,14 +29,16 @@ colcon build --packages-select l3cam_interfaces l3cam_ros2
 
 ## Operational Advice
 
-### MTU Size
+### Jumbo frames
 
-You will need to increase the MTU (Maximum Transmission Unit) on the network interface attached to the camera.
+You will need to enable jumbo frames on your ethernet adapter by increasing the MTU (Maximum Transmission Unit) on the network interface attached to the camera.
+
+A jumbo frame is an Ethernet frame that is larger than 1500 bytes. Most Ethernet adapters support jumbo frames, however it is usually turned off by default. Please note in order to set a 9000 byte packet size on the camera, the Ethernet adapter must support a jumbo frame size of 9000 bytes or higher.
 
 You can check what your current MTU setting is by running the following command:
 
 ```
-ip a | grep mtu
+ifconfig | grep mtu
 ```
 
 You should increase the MTU to `9000` to allow jumbo frames. If you use Network Manager, this can be done by opening the network interface settings and editing the "MTU" box under the "Identity" tab.
@@ -68,7 +70,7 @@ sudo sysctl -p
 
 | PROTOCOL | PORT                             | CONFIGURATION  |
 | -------- | -------------------------------- | -------------- |
-| TCP      | 6000                             | Fixed          |
+| TCP      | 6000 (L3CAM)                     | Fixed          |
 | UDP      | 6050 (LIDAR)                     | Fixed          |
 | UDP      | 6060 (Allied Wide, Polarimetric) | Fixed          |
 | UDP      | 6020 (Allied Narrow, RGB)        | Fixed          |
@@ -157,6 +159,10 @@ The allied_wide_configuration is a node that configures the Allied Wide camera p
 ### allied_narrow_configuration
 
 The allied_narrow_configuration is a node that configures the Allied Narrow camera parameters (if aan Allied Narrow sensor is available) by using dynamic reconfigure and the services to communicate with the l3cam_ros2_node. See the [allied narrow parameters](#allied-narrow-parameters) section for documentation regarding the various parameters that can be used to configure the Allied Narrow camera parameters of the L3Cam.
+
+**Note:**
+
+- When changing a parameter from a configuration node, if the parameter could not be changed, it will be set to its previous value. This might not take effect on the `rqt_reconfigure` node and might lead to misunderstandings. Please check for any RCLCPP messages, any parameter that could not be changed will be informed.
 
 ## Parameters
 
@@ -297,6 +303,20 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `allied_narrow_camera_intensity_controller_target`  | double | 50      | [10, 90]                            |
 | `allied_narrow_camera_max_driver_buffers_count`     | int    | 64      | [1, 4096]                           |
 
+**Note:**
+
+- The following parameters might not match the real value as they depend on another parameter to be able to be set, and getters for sensors parameters, except allied cameras, are not supported yet.
+  - `bias_value_right` depends on `auto_bias`
+  - `bias_value_left` depends on `auto_bias`
+  - `polarimetric_camera_auto_gain_range_minimum` depends on `polarimetric_camera_auto_gain`
+  - `polarimetric_camera_auto_gain_range_maximum` depends on `polarimetric_camera_auto_gain`
+  - `polarimetric_camera_gain` depends on `polarimetric_camera_auto_gain`
+  - `polarimetric_camera_auto_exposure_time_range_minimum` depends on `polarimetric_camera_auto_exposure_time`
+  - `polarimetric_camera_auto_exposure_time_range_maximum` depends on `polarimetric_camera_auto_exposure_time`
+  - `polarimetric_camera_exposure_time` depends on `polarimetric_camera_auto_exposure_time`
+  - `rgb_camera_white_balance` depends on `rgb_camera_auto_white_balance`
+  - `rgb_camera_exposure_time` depends on `rgb_camera_auto_exposure_time`
+
 ## Services
 
 Once the nodes are launched, the parameters can be changed through services. While streaming, some parameters cannot be changed, and the driver starts streaming when it connects to the L3Cam.
@@ -388,17 +408,18 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `get_allied_camera_intensity_controller_target`        | int allied_type                                                                         | int error, float intensity_controller_target                 |
 | `get_allied_camera_max_driver_buffers_count`           | int allied_type                                                                         | int error, int max_driver_buffers_count                      |
 
-**Note**: 
- - The arg index in the /change_bias_value service must be 1 por right or 2 for left. Any other value will return out of range error.
- - The arg allied_type must be 1 for Wide or 2 for Narrow. Any other value will return out of range error.
+**Note:**
+
+- The arg index in the /change_bias_value service must be 1 por right or 2 for left. Any other value will return out of range error.
+- The arg allied_type must be 1 for Wide or 2 for Narrow. Any other value will return out of range error.
 
 ### Sensor msg
 
 On `/get_sensors_available` a custom message is returned with the following structure:
 
-| Message | Data                                                                                              |
-| ------- | ------------------------------------------------------------------------------------------------- |
-| Sensor  | int32 protocol, int32 sensor_type, uint8 sensor_status, uint8 image_type, bool perception_enabled |
+| Message | Data                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Sensor  | int32 protocol, int32 sensor_type, uint8 sensor_status, uint8 image_type, bool perception_enabled, bool sensor_available |
 
 Being protocol a number contained in the enum `streamingProtocols` and sensor_type a number contained in the enum `sensorTypes`.
 

@@ -124,7 +124,7 @@ void *ImageThread(void *functionData)
     }
 
     g_listening = true;
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Point cloud streaming.");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "LiDAR streaming.");
 
     while (g_listening)
     {
@@ -274,7 +274,7 @@ int main(int argc, char const *argv[])
     {
         if (!rclcpp::ok())
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             return 0;
         }
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -294,7 +294,7 @@ int main(int argc, char const *argv[])
         {
             for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar)
+                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar && resultGetSensors.get()->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
                 }
@@ -302,13 +302,13 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while checking sensor availability: " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
             return 1;
         }
     }
     else
     {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
         return 1;
     }
 

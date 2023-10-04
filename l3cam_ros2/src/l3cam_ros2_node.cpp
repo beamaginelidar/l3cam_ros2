@@ -36,6 +36,8 @@
 
 #include "l3cam_interfaces/msg/sensor.hpp"
 
+#include <unistd.h>
+
 using namespace std::chrono_literals;
 
 namespace l3cam_ros2
@@ -48,7 +50,6 @@ namespace l3cam_ros2
         registerErrorCallback(errorNotification);
 
         declareParameters();
-        initializeServices();
 
         timer_ = this->create_wall_timer(500ms, std::bind(&L3Cam::timer_callback, this));
     }
@@ -60,20 +61,31 @@ namespace l3cam_ros2
 
         std::string local_address = this->get_parameter("local_address").as_string();
         std::string device_address = this->get_parameter("device_address").as_string();
-        error = INITIALIZE((local_address == "") ? NULL : &local_address[0], (device_address == "") ? NULL : &device_address[0]);
+
+        if (local_address == "" || device_address == "")
+        {
+            error = INITIALIZE(NULL, NULL);
+        }
+        else
+        {
+            error = INITIALIZE(&local_address[0], &device_address[0]);
+        }
+
         if (error)
             return error;
 
         num_devices = 0;
-        while (num_devices == 0)
+        while (num_devices == 0 && error == L3CAM_OK)
         {
             error = FIND_DEVICES(devices, &num_devices);
+            usleep(500000);
         }
         if (error)
             return error;
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Device found " << std::string(devices[0].ip_address)
                                                                          << ", model " << (int)devices[0].model
-                                                                         << ", serial number " << std::string(devices[0].serial_number));
+                                                                         << ", serial number " << std::string(devices[0].serial_number)
+                                                                         << ", app version " << std::string(devices[0].app_version));
 
         int status = 0;
         error = GET_DEVICE_STATUS(devices[0], &status);
@@ -112,6 +124,8 @@ namespace l3cam_ros2
         }
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), num_sensors << ((num_sensors == 1) ? " sensor" : " sensors") << " available");
+
+        initializeServices();
 
         return L3CAM_OK;
     }
@@ -486,444 +500,581 @@ namespace l3cam_ros2
             "stop_stream",
             std::bind(&L3Cam::stopStream, this, std::placeholders::_1, std::placeholders::_2));
 
-        srvChangePointcloudColor = this->create_service<l3cam_interfaces::srv::ChangePointcloudColor>(
-            "change_pointcloud_color",
-            std::bind(&L3Cam::changePointcloudColor, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangePointcloudColorRange = this->create_service<l3cam_interfaces::srv::ChangePointcloudColorRange>(
-            "change_pointcloud_color_range",
-            std::bind(&L3Cam::changePointcloudColorRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeDistanceRange = this->create_service<l3cam_interfaces::srv::ChangeDistanceRange>(
-            "change_distance_range",
-            std::bind(&L3Cam::changeDistanceRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnableAutoBias = this->create_service<l3cam_interfaces::srv::EnableAutoBias>(
-            "enable_auto_bias",
-            std::bind(&L3Cam::enableAutoBias, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeBiasValue = this->create_service<l3cam_interfaces::srv::ChangeBiasValue>(
-            "change_bias_value",
-            std::bind(&L3Cam::changeBiasValue, this, std::placeholders::_1, std::placeholders::_2));
+        if (m_lidar_sensor != NULL)
+        {
+            srvChangePointcloudColor = this->create_service<l3cam_interfaces::srv::ChangePointcloudColor>(
+                "change_pointcloud_color",
+                std::bind(&L3Cam::changePointcloudColor, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangePointcloudColorRange = this->create_service<l3cam_interfaces::srv::ChangePointcloudColorRange>(
+                "change_pointcloud_color_range",
+                std::bind(&L3Cam::changePointcloudColorRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeDistanceRange = this->create_service<l3cam_interfaces::srv::ChangeDistanceRange>(
+                "change_distance_range",
+                std::bind(&L3Cam::changeDistanceRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnableAutoBias = this->create_service<l3cam_interfaces::srv::EnableAutoBias>(
+                "enable_auto_bias",
+                std::bind(&L3Cam::enableAutoBias, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeBiasValue = this->create_service<l3cam_interfaces::srv::ChangeBiasValue>(
+                "change_bias_value",
+                std::bind(&L3Cam::changeBiasValue, this, std::placeholders::_1, std::placeholders::_2));
 
-        srvSetPolarimetricCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>(
-            "set_polarimetric_camera_default_settings",
-            std::bind(&L3Cam::setPolarimetricCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangePolarimetricCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>(
-            "change_polarimetric_camera_brightness",
-            std::bind(&L3Cam::changePolarimetricCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangePolarimetricCameraBlackLevel = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>(
-            "change_polarimetric_camera_black_level",
-            std::bind(&L3Cam::changePolarimetricCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnablePolarimetricCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>(
-            "enable_polarimetric_camera_auto_gain",
-            std::bind(&L3Cam::enablePolarimetricCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangePolarimetricCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>(
-            "change_polarimetric_camera_auto_gain_range",
-            std::bind(&L3Cam::changePolarimetricCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangePolarimetricCameraGain = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraGain>(
-            "change_polarimetric_camera_gain",
-            std::bind(&L3Cam::changePolarimetricCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnablePolarimetricCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>(
-            "enable_polarimetric_camera_auto_exposure_time",
-            std::bind(&L3Cam::enablePolarimetricCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangePolarimetricCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>(
-            "change_polarimetric_camera_auto_exposure_time_range",
-            std::bind(&L3Cam::changePolarimetricCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangePolarimetricCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>(
-            "change_polarimetric_camera_exposure_time",
-            std::bind(&L3Cam::changePolarimetricCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            clientPointCloudStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_stream_disconnected");
+            clientPointCloudConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_configuration_disconnected");
+        }
 
-        srvSetRgbCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetRgbCameraDefaultSettings>(
-            "set_rgb_camera_default_settings",
-            std::bind(&L3Cam::setRgbCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraBrightness>(
-            "change_rgb_camera_brightness",
-            std::bind(&L3Cam::changeRgbCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraContrast = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraContrast>(
-            "change_rgb_camera_contrast",
-            std::bind(&L3Cam::changeRgbCameraContrast, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSaturation>(
-            "change_rgb_camera_saturation",
-            std::bind(&L3Cam::changeRgbCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraSharpness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSharpness>(
-            "change_rgb_camera_sharpness",
-            std::bind(&L3Cam::changeRgbCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGamma>(
-            "change_rgb_camera_gamma",
-            std::bind(&L3Cam::changeRgbCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraGain = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGain>(
-            "change_rgb_camera_gain",
-            std::bind(&L3Cam::changeRgbCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnableRgbCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>(
-            "enable_rgb_camera_auto_white_balance",
-            std::bind(&L3Cam::enableRgbCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraWhiteBalance = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>(
-            "change_rgb_camera_white_balance",
-            std::bind(&L3Cam::changeRgbCameraWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnableRgbCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>(
-            "enable_rgb_camera_auto_exposure_time",
-            std::bind(&L3Cam::enableRgbCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeRgbCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>(
-            "change_rgb_camera_exposure_time",
-            std::bind(&L3Cam::changeRgbCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+        if (m_polarimetric_sensor != NULL)
+        {
+            srvSetPolarimetricCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>(
+                "set_polarimetric_camera_default_settings",
+                std::bind(&L3Cam::setPolarimetricCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangePolarimetricCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>(
+                "change_polarimetric_camera_brightness",
+                std::bind(&L3Cam::changePolarimetricCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangePolarimetricCameraBlackLevel = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>(
+                "change_polarimetric_camera_black_level",
+                std::bind(&L3Cam::changePolarimetricCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnablePolarimetricCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>(
+                "enable_polarimetric_camera_auto_gain",
+                std::bind(&L3Cam::enablePolarimetricCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangePolarimetricCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>(
+                "change_polarimetric_camera_auto_gain_range",
+                std::bind(&L3Cam::changePolarimetricCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangePolarimetricCameraGain = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraGain>(
+                "change_polarimetric_camera_gain",
+                std::bind(&L3Cam::changePolarimetricCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnablePolarimetricCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>(
+                "enable_polarimetric_camera_auto_exposure_time",
+                std::bind(&L3Cam::enablePolarimetricCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangePolarimetricCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>(
+                "change_polarimetric_camera_auto_exposure_time_range",
+                std::bind(&L3Cam::changePolarimetricCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangePolarimetricCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>(
+                "change_polarimetric_camera_exposure_time",
+                std::bind(&L3Cam::changePolarimetricCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
 
-        srvChangeThermalCameraColormap = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraColormap>(
-            "change_thermal_camera_colormap",
-            std::bind(&L3Cam::changeThermalCameraColormap, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>(
-            "change_thermal_camera_temperature_filter",
-            std::bind(&L3Cam::changeThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnableThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>(
-            "enable_thermal_camera_temperature_filter",
-            std::bind(&L3Cam::enableThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
+            clientPolWideStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_wide_stream_disconnected");
+            clientPolConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_configuration_disconnected");
+        }
 
-        srvChangeAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>(
-            "change_allied_camera_exposure_time",
-            std::bind(&L3Cam::changeAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnableAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>(
-            "enable_allied_camera_auto_exposure_time",
-            std::bind(&L3Cam::enableAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>(
-            "change_allied_camera_auto_exposure_time_range",
-            std::bind(&L3Cam::changeAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraGain = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGain>(
-            "change_allied_camera_gain",
-            std::bind(&L3Cam::changeAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnableAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>(
-            "enable_allied_camera_auto_gain",
-            std::bind(&L3Cam::enableAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>(
-            "change_allied_camera_auto_gain_range",
-            std::bind(&L3Cam::changeAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGamma>(
-            "change_allied_camera_gamma",
-            std::bind(&L3Cam::changeAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>(
-            "change_allied_camera_saturation",
-            std::bind(&L3Cam::changeAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraHue = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraHue>(
-            "change_allied_camera_hue",
-            std::bind(&L3Cam::changeAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>(
-            "change_allied_camera_intensity_auto_precedence",
-            std::bind(&L3Cam::changeAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
-        srvEnableAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>(
-            "enable_allied_camera_auto_white_balance",
-            std::bind(&L3Cam::enableAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>(
-            "change_allied_camera_balance_ratio_selector",
-            std::bind(&L3Cam::changeAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>(
-            "change_allied_camera_balance_ratio",
-            std::bind(&L3Cam::changeAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>(
-            "change_allied_camera_balance_white_auto_rate",
-            std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>(
-            "change_allied_camera_balance_white_auto_tolerance",
-            std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>(
-            "change_allied_camera_intensity_controller_region",
-            std::bind(&L3Cam::changeAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
-        srvChangeAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>(
-            "change_allied_camera_intensity_controller_target",
-            std::bind(&L3Cam::changeAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
+        if (m_rgb_sensor != NULL)
+        {
+            srvSetRgbCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetRgbCameraDefaultSettings>(
+                "set_rgb_camera_default_settings",
+                std::bind(&L3Cam::setRgbCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraBrightness>(
+                "change_rgb_camera_brightness",
+                std::bind(&L3Cam::changeRgbCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraContrast = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraContrast>(
+                "change_rgb_camera_contrast",
+                std::bind(&L3Cam::changeRgbCameraContrast, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSaturation>(
+                "change_rgb_camera_saturation",
+                std::bind(&L3Cam::changeRgbCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraSharpness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSharpness>(
+                "change_rgb_camera_sharpness",
+                std::bind(&L3Cam::changeRgbCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGamma>(
+                "change_rgb_camera_gamma",
+                std::bind(&L3Cam::changeRgbCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraGain = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGain>(
+                "change_rgb_camera_gain",
+                std::bind(&L3Cam::changeRgbCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnableRgbCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>(
+                "enable_rgb_camera_auto_white_balance",
+                std::bind(&L3Cam::enableRgbCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraWhiteBalance = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>(
+                "change_rgb_camera_white_balance",
+                std::bind(&L3Cam::changeRgbCameraWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnableRgbCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>(
+                "enable_rgb_camera_auto_exposure_time",
+                std::bind(&L3Cam::enableRgbCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeRgbCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>(
+                "change_rgb_camera_exposure_time",
+                std::bind(&L3Cam::changeRgbCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
 
-        srvGetAlliedCameraBlackLevel = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>(
-            "get_allied_camera_black_level",
-            std::bind(&L3Cam::getAlliedCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>(
-            "get_allied_camera_exposure_time",
-            std::bind(&L3Cam::getAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>(
-            "get_allied_camera_auto_exposure_time",
-            std::bind(&L3Cam::getAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>(
-            "get_allied_camera_auto_exposure_time_range",
-            std::bind(&L3Cam::getAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGain>(
-            "get_allied_camera_gain",
-            std::bind(&L3Cam::getAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>(
-            "get_allied_camera_auto_gain",
-            std::bind(&L3Cam::getAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>(
-            "get_allied_camera_auto_gain_range",
-            std::bind(&L3Cam::getAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGamma>(
-            "get_allied_camera_gamma",
-            std::bind(&L3Cam::getAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSaturation>(
-            "get_allied_camera_saturation",
-            std::bind(&L3Cam::getAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraSharpness = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSharpness>(
-            "get_allied_camera_sharpness",
-            std::bind(&L3Cam::getAlliedCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraHue = this->create_service<l3cam_interfaces::srv::GetAlliedCameraHue>(
-            "get_allied_camera_hue",
-            std::bind(&L3Cam::getAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>(
-            "get_allied_camera_intensity_auto_precedence",
-            std::bind(&L3Cam::getAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>(
-            "get_allied_camera_auto_white_balance",
-            std::bind(&L3Cam::getAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>(
-            "get_allied_camera_balance_ratio_selector",
-            std::bind(&L3Cam::getAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>(
-            "get_allied_camera_balance_ratio",
-            std::bind(&L3Cam::getAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>(
-            "get_allied_camera_balance_white_auto_rate",
-            std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>(
-            "get_allied_camera_balance_white_auto_tolerance",
-            std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraAutoModeRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>(
-            "get_allied_camera_auto_mode_region",
-            std::bind(&L3Cam::getAlliedCameraAutoModeRegion, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>(
-            "get_allied_camera_intensity_controller_region",
-            std::bind(&L3Cam::getAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>(
-            "get_allied_camera_intensity_controller_target",
-            std::bind(&L3Cam::getAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
-        srvGetAlliedCameraMaxDriverBuffersCount = this->create_service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>(
-            "get_allied_camera_max_driver_buffers_count",
-            std::bind(&L3Cam::getAlliedCameraMaxDriverBuffersCount, this, std::placeholders::_1, std::placeholders::_2));
+            clientRgbNarrowStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_narrow_stream_disconnected");
+            clientRgbConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_configuration_disconnected");
+        }
 
-        // Disconnection service clients
-        clientPointCloudStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_stream_disconnected");
-        clientPointCloudConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_configuration_disconnected");
-        clientPolWideStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_wide_stream_disconnected");
-        clientPolConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_configuration_disconnected");
-        clientRgbNarrowStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_narrow_stream_disconnected");
-        clientRgbConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_configuration_disconnected");
-        clientThermalStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_stream_disconnected");
-        clientThermalConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_configuration_disconnected");
-        clientWideConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_wide_configuration_disconnected");
-        clientNarrowConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_narrow_configuration_disconnected");
+        if (m_thermal_sensor != NULL)
+        {
+            srvChangeThermalCameraColormap = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraColormap>(
+                "change_thermal_camera_colormap",
+                std::bind(&L3Cam::changeThermalCameraColormap, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>(
+                "change_thermal_camera_temperature_filter",
+                std::bind(&L3Cam::changeThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnableThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>(
+                "enable_thermal_camera_temperature_filter",
+                std::bind(&L3Cam::enableThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
+
+            clientThermalStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_stream_disconnected");
+            clientThermalConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_configuration_disconnected");
+        }
+
+        if (m_allied_wide_sensor != NULL)
+        {
+            srvChangeAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>(
+                "change_allied_camera_exposure_time",
+                std::bind(&L3Cam::changeAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnableAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>(
+                "enable_allied_camera_auto_exposure_time",
+                std::bind(&L3Cam::enableAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>(
+                "change_allied_camera_auto_exposure_time_range",
+                std::bind(&L3Cam::changeAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraGain = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGain>(
+                "change_allied_camera_gain",
+                std::bind(&L3Cam::changeAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnableAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>(
+                "enable_allied_camera_auto_gain",
+                std::bind(&L3Cam::enableAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>(
+                "change_allied_camera_auto_gain_range",
+                std::bind(&L3Cam::changeAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGamma>(
+                "change_allied_camera_gamma",
+                std::bind(&L3Cam::changeAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>(
+                "change_allied_camera_saturation",
+                std::bind(&L3Cam::changeAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraHue = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraHue>(
+                "change_allied_camera_hue",
+                std::bind(&L3Cam::changeAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>(
+                "change_allied_camera_intensity_auto_precedence",
+                std::bind(&L3Cam::changeAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
+            srvEnableAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>(
+                "enable_allied_camera_auto_white_balance",
+                std::bind(&L3Cam::enableAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>(
+                "change_allied_camera_balance_ratio_selector",
+                std::bind(&L3Cam::changeAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>(
+                "change_allied_camera_balance_ratio",
+                std::bind(&L3Cam::changeAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>(
+                "change_allied_camera_balance_white_auto_rate",
+                std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>(
+                "change_allied_camera_balance_white_auto_tolerance",
+                std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>(
+                "change_allied_camera_intensity_controller_region",
+                std::bind(&L3Cam::changeAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
+            srvChangeAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>(
+                "change_allied_camera_intensity_controller_target",
+                std::bind(&L3Cam::changeAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
+
+            clientPolWideStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_wide_stream_disconnected");
+            clientWideConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_wide_configuration_disconnected");
+        }
+
+        if (m_allied_narrow_sensor != NULL)
+        {
+            srvGetAlliedCameraBlackLevel = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>(
+                "get_allied_camera_black_level",
+                std::bind(&L3Cam::getAlliedCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>(
+                "get_allied_camera_exposure_time",
+                std::bind(&L3Cam::getAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>(
+                "get_allied_camera_auto_exposure_time",
+                std::bind(&L3Cam::getAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>(
+                "get_allied_camera_auto_exposure_time_range",
+                std::bind(&L3Cam::getAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGain>(
+                "get_allied_camera_gain",
+                std::bind(&L3Cam::getAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>(
+                "get_allied_camera_auto_gain",
+                std::bind(&L3Cam::getAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>(
+                "get_allied_camera_auto_gain_range",
+                std::bind(&L3Cam::getAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGamma>(
+                "get_allied_camera_gamma",
+                std::bind(&L3Cam::getAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSaturation>(
+                "get_allied_camera_saturation",
+                std::bind(&L3Cam::getAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraSharpness = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSharpness>(
+                "get_allied_camera_sharpness",
+                std::bind(&L3Cam::getAlliedCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraHue = this->create_service<l3cam_interfaces::srv::GetAlliedCameraHue>(
+                "get_allied_camera_hue",
+                std::bind(&L3Cam::getAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>(
+                "get_allied_camera_intensity_auto_precedence",
+                std::bind(&L3Cam::getAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>(
+                "get_allied_camera_auto_white_balance",
+                std::bind(&L3Cam::getAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>(
+                "get_allied_camera_balance_ratio_selector",
+                std::bind(&L3Cam::getAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>(
+                "get_allied_camera_balance_ratio",
+                std::bind(&L3Cam::getAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>(
+                "get_allied_camera_balance_white_auto_rate",
+                std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>(
+                "get_allied_camera_balance_white_auto_tolerance",
+                std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraAutoModeRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>(
+                "get_allied_camera_auto_mode_region",
+                std::bind(&L3Cam::getAlliedCameraAutoModeRegion, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>(
+                "get_allied_camera_intensity_controller_region",
+                std::bind(&L3Cam::getAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>(
+                "get_allied_camera_intensity_controller_target",
+                std::bind(&L3Cam::getAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
+            srvGetAlliedCameraMaxDriverBuffersCount = this->create_service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>(
+                "get_allied_camera_max_driver_buffers_count",
+                std::bind(&L3Cam::getAlliedCameraMaxDriverBuffersCount, this, std::placeholders::_1, std::placeholders::_2));
+
+            clientRgbNarrowStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_narrow_stream_disconnected");
+            clientNarrowConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_narrow_configuration_disconnected");
+        }
 
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Services ready");
     }
 
-    inline void L3Cam::printDefaultError(int error)
+    inline void L3Cam::printDefaultError(int error, std::string param)
     {
         if (error != L3CAM_OK)
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"),
-                                "ERROR " << error << " while setting default parameter: " << getBeamErrorDescription(error));
+                                "ERROR " << error << " while setting default parameter " << param << ": "
+                                         << getBeamErrorDescription(error));
         }
     }
 
     void L3Cam::loadDefaultParams()
     {
-        /*std::string ip_address = this->get_parameter("ip_address").as_string().data();
-        std::string netmask = this->get_parameter("netmask").as_string().data();
-        std::string gateway = this->get_parameter("gateway").as_string().data();
-        printDefaultError(CHANGE_NETWORK_CONFIGURATION(devices[0],
-                &ip_address[0],
-                &netmask[0],
-                &gateway[0],
-                this->get_parameter("dhcp").as_bool()));*/
-        if (m_lidar_sensor != NULL)
+        char *ip_address = NULL;
+        char *netmask = NULL;
+        char *gateway = NULL;
+        int error = GET_NETWORK_CONFIGURATION(devices[0], &ip_address, &netmask, &gateway);
+        if (!error)
         {
-            printDefaultError(CHANGE_POINT_CLOUD_COLOR(devices[0],
-                                                       this->get_parameter("pointcloud_color").as_int()));
-            printDefaultError(CHANGE_POINT_CLOUD_COLOR_RANGE(devices[0],
-                                                             this->get_parameter("pointcloud_color_range_minimum").as_int(),
-                                                             this->get_parameter("pointcloud_color_range_maximum").as_int()));
-            printDefaultError(CHANGE_DISTANCE_RANGE(devices[0],
-                                                    this->get_parameter("distance_range_minimum").as_int(),
-                                                    this->get_parameter("distance_range_maximum").as_int()));
-            ENABLE_AUTO_BIAS(devices[0], this->get_parameter("auto_bias").as_bool());
-            if (!this->get_parameter("auto_bias").as_bool())
-            { //! Values might not match after disabling auto_bias
-                CHANGE_BIAS_VALUE(devices[0], 1, this->get_parameter("bias_value_right").as_int());
-                CHANGE_BIAS_VALUE(devices[0], 2, this->get_parameter("bias_value_left").as_int());
-            }
+            node->set_parameter(rclcpp::Parameter("ip_address", std::string(ip_address)));
+            node->set_parameter(rclcpp::Parameter("netmask", std::string(netmask)));
+            node->set_parameter(rclcpp::Parameter("gateway", std::string(gateway)));
         }
-        if (m_polarimetric_sensor != NULL)
+        if (m_lidar_sensor != NULL) // if lidar should be available in the L3Cam
         {
-            printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BRIGHTNESS(devices[0],
-                                                                    this->get_parameter("polarimetric_camera_brightness").as_int()));
-            printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BLACK_LEVEL(devices[0],
-                                                                     this->get_parameter("polarimetric_camera_black_level").as_double()));
-            printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_GAIN(devices[0],
-                                                                   this->get_parameter("polarimetric_camera_auto_gain").as_bool()));
-            if (this->get_parameter("polarimetric_camera_auto_gain").as_bool())
-            { //! Values might not match after enabling polarimetric_camera_auto_gain
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_GAIN_RANGE(devices[0],
-                                                                             this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double(),
-                                                                             this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double()));
+            if (m_lidar_sensor->sensor_available) // if lidar is available
+            {
+                printDefaultError(CHANGE_POINT_CLOUD_COLOR(devices[0],
+                                                           this->get_parameter("pointcloud_color").as_int()),
+                                  "pointcloud_color");
+                printDefaultError(CHANGE_POINT_CLOUD_COLOR_RANGE(devices[0],
+                                                                 this->get_parameter("pointcloud_color_range_minimum").as_int(),
+                                                                 this->get_parameter("pointcloud_color_range_maximum").as_int()),
+                                  "pointcloud_color_range");
+                printDefaultError(CHANGE_DISTANCE_RANGE(devices[0],
+                                                        this->get_parameter("distance_range_minimum").as_int(),
+                                                        this->get_parameter("distance_range_maximum").as_int()),
+                                  "distance_range");
+                ENABLE_AUTO_BIAS(devices[0], this->get_parameter("auto_bias").as_bool());
+                if (!this->get_parameter("auto_bias").as_bool())
+                { //! Values might not match after disabling auto_bias
+                    CHANGE_BIAS_VALUE(devices[0], 1, this->get_parameter("bias_value_right").as_int());
+                    CHANGE_BIAS_VALUE(devices[0], 2, this->get_parameter("bias_value_left").as_int());
+                }
             }
             else
-            { //! Values might not match after disabling polarimetric_camera_auto_gain
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_GAIN(devices[0],
-                                                                  this->get_parameter("polarimetric_camera_gain").as_double()));
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: LiDAR not available.");
             }
-            printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME(devices[0],
-                                                                            this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool()));
-            if (this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool())
-            { //! Values might not match after enabling polarimetric_camera_auto_exposure_time
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0],
-                                                                                      this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double(),
-                                                                                      this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double()));
+        }
+        if (m_polarimetric_sensor != NULL) // if polarimetric should be available in the L3Cam
+        {
+            if (m_polarimetric_sensor->sensor_available) // if polarimetric is available
+            {
+                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BRIGHTNESS(devices[0],
+                                                                        this->get_parameter("polarimetric_camera_brightness").as_int()),
+                                  "polarimetric_camera_brightness");
+                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_BLACK_LEVEL(devices[0],
+                                                                         this->get_parameter("polarimetric_camera_black_level").as_double()),
+                                  "polarimetric_camera_black_level");
+                printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_GAIN(devices[0],
+                                                                       this->get_parameter("polarimetric_camera_auto_gain").as_bool()),
+                                  "polarimetric_camera_auto_gain");
+                if (this->get_parameter("polarimetric_camera_auto_gain").as_bool())
+                { //! Values might not match after enabling polarimetric_camera_auto_gain
+                    printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_GAIN_RANGE(devices[0],
+                                                                                 this->get_parameter("polarimetric_camera_auto_gain_range_minimum").as_double(),
+                                                                                 this->get_parameter("polarimetric_camera_auto_gain_range_maximum").as_double()),
+                                      "polarimetric_camera_auto_gain_range");
+                }
+                else
+                { //! Values might not match after disabling polarimetric_camera_auto_gain
+                    printDefaultError(CHANGE_POLARIMETRIC_CAMERA_GAIN(devices[0],
+                                                                      this->get_parameter("polarimetric_camera_gain").as_double()),
+                                      "polarimetric_camera_gain");
+                }
+                printDefaultError(ENABLE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME(devices[0],
+                                                                                this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool()),
+                                  "polarimetric_camera_auto_exposure_time");
+                if (this->get_parameter("polarimetric_camera_auto_exposure_time").as_bool())
+                { //! Values might not match after enabling polarimetric_camera_auto_exposure_time
+                    printDefaultError(CHANGE_POLARIMETRIC_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0],
+                                                                                          this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double(),
+                                                                                          this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double()),
+                                      "polarimetric_camera_auto_exposure_time_range");
+                }
+                else
+                { //! Values might not match after disabling polarimetric_camera_auto_exposure_time
+                    printDefaultError(CHANGE_POLARIMETRIC_CAMERA_EXPOSURE_TIME(devices[0],
+                                                                               this->get_parameter("polarimetric_camera_exposure_time").as_double()),
+                                      "polarimetric_camera_exposure_time");
+                }
             }
             else
-            { //! Values might not match after disabling polarimetric_camera_auto_exposure_time
-                printDefaultError(CHANGE_POLARIMETRIC_CAMERA_EXPOSURE_TIME(devices[0],
-                                                                           this->get_parameter("polarimetric_camera_exposure_time").as_double()));
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Polarimetric camera not available.");
             }
         }
-        if (m_rgb_sensor != NULL)
+        if (m_rgb_sensor != NULL) // if rgb should be available in the L3Cam
         {
-            printDefaultError(CHANGE_RGB_CAMERA_BRIGHTNESS(devices[0],
-                                                           this->get_parameter("rgb_camera_brightness").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_CONTRAST(devices[0],
-                                                         this->get_parameter("rgb_camera_contrast").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_SATURATION(devices[0],
-                                                           this->get_parameter("rgb_camera_saturation").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_SHARPNESS(devices[0],
-                                                          this->get_parameter("rgb_camera_sharpness").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_GAMMA(devices[0],
-                                                      this->get_parameter("rgb_camera_gamma").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_GAIN(devices[0],
-                                                     this->get_parameter("rgb_camera_gain").as_int()));
-            printDefaultError(ENABLE_RGB_CAMERA_AUTO_WHITE_BALANCE(devices[0],
-                                                                   this->get_parameter("rgb_camera_auto_white_balance").as_bool()));
-            if (!this->get_parameter("rgb_camera_auto_white_balance").as_bool())
-            { //! Values might not match after disabling rgb_camera_auto_white_balance
-                printDefaultError(CHANGE_RGB_CAMERA_WHITE_BALANCE(devices[0],
-                                                                  this->get_parameter("rgb_camera_white_balance").as_int()));
+            if (m_rgb_sensor->sensor_available) // if rgb is available
+            {
+                printDefaultError(CHANGE_RGB_CAMERA_BRIGHTNESS(devices[0],
+                                                               this->get_parameter("rgb_camera_brightness").as_int()),
+                                  "rgb_camera_brightness");
+                printDefaultError(CHANGE_RGB_CAMERA_CONTRAST(devices[0],
+                                                             this->get_parameter("rgb_camera_contrast").as_int()),
+                                  "rgb_camera_contrast");
+                printDefaultError(CHANGE_RGB_CAMERA_SATURATION(devices[0],
+                                                               this->get_parameter("rgb_camera_saturation").as_int()),
+                                  "rgb_camera_saturation");
+                printDefaultError(CHANGE_RGB_CAMERA_SHARPNESS(devices[0],
+                                                              this->get_parameter("rgb_camera_sharpness").as_int()),
+                                  "rgb_camera_sharpness");
+                printDefaultError(CHANGE_RGB_CAMERA_GAMMA(devices[0],
+                                                          this->get_parameter("rgb_camera_gamma").as_int()),
+                                  "rgb_camera_gamma");
+                printDefaultError(CHANGE_RGB_CAMERA_GAIN(devices[0],
+                                                         this->get_parameter("rgb_camera_gain").as_int()),
+                                  "rgb_camera_gain");
+                printDefaultError(ENABLE_RGB_CAMERA_AUTO_WHITE_BALANCE(devices[0],
+                                                                       this->get_parameter("rgb_camera_auto_white_balance").as_bool()),
+                                  "rgb_camera_auto_white_balance");
+                if (!this->get_parameter("rgb_camera_auto_white_balance").as_bool())
+                { //! Values might not match after disabling rgb_camera_auto_white_balance
+                    printDefaultError(CHANGE_RGB_CAMERA_WHITE_BALANCE(devices[0],
+                                                                      this->get_parameter("rgb_camera_white_balance").as_int()),
+                                      "rgb_camera_white_balance");
+                }
+                printDefaultError(ENABLE_RGB_CAMERA_AUTO_EXPOSURE_TIME(devices[0],
+                                                                       this->get_parameter("rgb_camera_auto_exposure_time").as_bool()),
+                                  "rgb_camera_auto_exposure_time");
+                if (!this->get_parameter("rgb_camera_auto_exposure_time").as_bool())
+                { //! Values might not match after disabling rgb_camera_auto_exposure_time
+                    printDefaultError(CHANGE_RGB_CAMERA_EXPOSURE_TIME(devices[0],
+                                                                      this->get_parameter("rgb_camera_exposure_time").as_int()),
+                                      "rgb_camera_exposure_time");
+                }
+                printDefaultError(CHANGE_RGB_CAMERA_RESOLUTION(devices[0],
+                                                               (econResolutions)this->get_parameter("rgb_camera_resolution").as_int()),
+                                  "rgb_camera_resolution");
+                printDefaultError(CHANGE_RGB_CAMERA_FRAMERATE(devices[0],
+                                                              this->get_parameter("rgb_camera_framerate").as_int()),
+                                  "rgb_camera_framerate");
             }
-            printDefaultError(ENABLE_RGB_CAMERA_AUTO_EXPOSURE_TIME(devices[0],
-                                                                   this->get_parameter("rgb_camera_auto_exposure_time").as_bool()));
-            if (!this->get_parameter("rgb_camera_auto_exposure_time").as_bool())
-            { //! Values might not match after disabling rgb_camera_auto_exposure_time
-                printDefaultError(CHANGE_RGB_CAMERA_EXPOSURE_TIME(devices[0],
-                                                                  this->get_parameter("rgb_camera_exposure_time").as_int()));
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: RGB camera not available.");
             }
-            printDefaultError(CHANGE_RGB_CAMERA_RESOLUTION(devices[0],
-                                                           (econResolutions)this->get_parameter("rgb_camera_resolution").as_int()));
-            printDefaultError(CHANGE_RGB_CAMERA_FRAMERATE(devices[0],
-                                                          this->get_parameter("rgb_camera_framerate").as_int()));
         }
-        if (m_thermal_sensor != NULL)
+        if (m_thermal_sensor != NULL) // if thermal should be available in the L3Cam
         {
-            printDefaultError(CHANGE_THERMAL_CAMERA_COLORMAP(devices[0],
-                                                             (thermalTypes)this->get_parameter("thermal_camera_colormap").as_int()));
-            printDefaultError(ENABLE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0],
-                                                                       this->get_parameter("thermal_camera_temperature_filter").as_bool()));
-            printDefaultError(CHANGE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0],
-                                                                       this->get_parameter("thermal_camera_temperature_filter_min").as_int(),
-                                                                       this->get_parameter("thermal_camera_temperature_filter_max").as_int()));
+            if (m_thermal_sensor->sensor_available) // if thermal is available
+            {
+                printDefaultError(CHANGE_THERMAL_CAMERA_COLORMAP(devices[0],
+                                                                 (thermalTypes)this->get_parameter("thermal_camera_colormap").as_int()),
+                                  "thermal_camera_colormap");
+                printDefaultError(ENABLE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0],
+                                                                           this->get_parameter("thermal_camera_temperature_filter").as_bool()),
+                                  "thermal_camera_temperature_filter");
+                printDefaultError(CHANGE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0],
+                                                                           this->get_parameter("thermal_camera_temperature_filter_min").as_int(),
+                                                                           this->get_parameter("thermal_camera_temperature_filter_max").as_int()),
+                                  "thermal_camera_temperature_filter");
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Thermal camera not available.");
+            }
         }
-        if (m_allied_wide_sensor != NULL)
+        if (m_allied_wide_sensor != NULL) // if allied wide should be available in the L3Cam
         {
-            printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_wide_sensor,
-                                                               this->get_parameter("allied_wide_camera_black_level").as_double()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_wide_sensor,
-                                                                      this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_wide_sensor,
-                                                                            this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double(),
-                                                                            this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double()));
-            if (!this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool())
-            { //! Values might not match after disabling allied_wide_camera_auto_exposure_time
-                printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_wide_sensor,
-                                                                        this->get_parameter("allied_wide_camera_exposure_time").as_double()));
+            if (m_allied_wide_sensor->sensor_available) // if allied wide is available
+            {
+                printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_wide_sensor,
+                                                                   this->get_parameter("allied_wide_camera_black_level").as_double()),
+                                  "allied_wide_camera_black_level");
+                printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_wide_sensor,
+                                                                          this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool()),
+                                  "allied_wide_camera_auto_exposure_time");
+                printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_wide_sensor,
+                                                                                this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double(),
+                                                                                this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double()),
+                                  "allied_wide_camera_auto_exposure_time_range");
+                if (!this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool())
+                {
+                    printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_wide_sensor,
+                                                                            this->get_parameter("allied_wide_camera_exposure_time").as_double()),
+                                      "allied_wide_camera_exposure_time");
+                }
+                printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_wide_sensor,
+                                                                 this->get_parameter("allied_wide_camera_auto_gain").as_bool()),
+                                  "allied_wide_camera_auto_gain");
+                printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_wide_sensor,
+                                                                       (float)this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double(),
+                                                                       (float)this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double()),
+                                  "allied_wide_camera_auto_gain_range");
+                if (!this->get_parameter("allied_wide_camera_auto_gain").as_bool())
+                {
+                    printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_wide_sensor,
+                                                                this->get_parameter("allied_wide_camera_gain").as_double()),
+                                      "allied_wide_camera_gain");
+                }
+                printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_wide_sensor,
+                                                             this->get_parameter("allied_wide_camera_gamma").as_double()),
+                                  "allied_wide_camera_gamma");
+                printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_wide_sensor,
+                                                                  this->get_parameter("allied_wide_camera_saturation").as_double()),
+                                  "allied_wide_camera_saturation");
+                printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_wide_sensor,
+                                                                 this->get_parameter("allied_wide_camera_sharpness").as_double()),
+                                  "allied_wide_camera_sharpness");
+                printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_wide_sensor,
+                                                           this->get_parameter("allied_wide_camera_hue").as_double()),
+                                  "allied_wide_camera_hue");
+                printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_wide_sensor,
+                                                                                 this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int()),
+                                  "allied_wide_camera_intensity_auto_precedence");
+                printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_wide_sensor,
+                                                                          this->get_parameter("allied_wide_camera_auto_white_balance").as_bool()),
+                                  "allied_wide_camera_auto_white_balance");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_wide_sensor,
+                                                                              this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int()),
+                                  "allied_wide_camera_balance_ratio_selector");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_wide_sensor,
+                                                                     this->get_parameter("allied_wide_camera_balance_ratio").as_double()),
+                                  "allied_wide_camera_balance_ratio");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_wide_sensor,
+                                                                               this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double()),
+                                  "allied_wide_camera_balance_white_auto_rate");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_wide_sensor,
+                                                                                    this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double()),
+                                  "allied_wide_camera_balance_white_auto_tolerance");
+                printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_wide_sensor,
+                                                                        this->get_parameter("allied_wide_camera_auto_mode_region_height").as_int(),
+                                                                        this->get_parameter("allied_wide_camera_auto_mode_region_width").as_int()),
+                                  "allied_wide_camera_auto_mode_region");
+                printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_wide_sensor,
+                                                                                   this->get_parameter("allied_wide_camera_intensity_controller_region").as_int()),
+                                  "allied_wide_camera_intensity_controller_region");
+                printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_wide_sensor,
+                                                                                   this->get_parameter("allied_wide_camera_intensity_controller_target").as_double()),
+                                  "allied_wide_camera_intensity_controller_target");
+                printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_wide_sensor,
+                                                                                this->get_parameter("allied_wide_camera_max_driver_buffers_count").as_int()),
+                                  "allied_wide_camera_max_driver_buffers_count");
             }
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_wide_sensor,
-                                                             this->get_parameter("allied_wide_camera_auto_gain").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_wide_sensor,
-                                                                   (float)this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double(),
-                                                                   (float)this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double()));
-            if (!this->get_parameter("allied_wide_camera_auto_gain").as_bool())
-            { //! Values might not match after disabling allied_wide_camera_auto_gain
-                printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_wide_sensor,
-                                                            this->get_parameter("allied_wide_camera_gain").as_double()));
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Allied Wide camera not available.");
             }
-            printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_wide_sensor,
-                                                         this->get_parameter("allied_wide_camera_gamma").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_wide_sensor,
-                                                              this->get_parameter("allied_wide_camera_saturation").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_wide_sensor,
-                                                             this->get_parameter("allied_wide_camera_sharpness").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_wide_sensor,
-                                                       this->get_parameter("allied_wide_camera_hue").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_wide_sensor,
-                                                                             this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_wide_sensor,
-                                                                      this->get_parameter("allied_wide_camera_auto_white_balance").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_wide_sensor,
-                                                                          this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_wide_sensor,
-                                                                 this->get_parameter("allied_wide_camera_balance_ratio").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_wide_sensor,
-                                                                           this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_wide_sensor,
-                                                                                this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_wide_sensor,
-                                                                    this->get_parameter("allied_wide_camera_auto_mode_region_height").as_int(),
-                                                                    this->get_parameter("allied_wide_camera_auto_mode_region_width").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_wide_sensor,
-                                                                               this->get_parameter("allied_wide_camera_intensity_controller_region").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_wide_sensor,
-                                                                               this->get_parameter("allied_wide_camera_intensity_controller_target").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_wide_sensor,
-                                                                            this->get_parameter("allied_wide_camera_max_driver_buffers_count").as_int()));
         }
-        if (m_allied_narrow_sensor != NULL)
+        if (m_allied_narrow_sensor != NULL) // if allied narrow should be available in the L3Cam
         {
-            printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_narrow_sensor,
-                                                               this->get_parameter("allied_narrow_camera_black_level").as_double()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_narrow_sensor,
-                                                                      this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_narrow_sensor,
-                                                                            this->get_parameter("allied_narrow_camera_auto_exposure_time_range_min").as_double(),
-                                                                            this->get_parameter("allied_narrow_camera_auto_exposure_time_range_max").as_double()));
-            if (!this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool())
-            { //! Values might not match after disabling allied_narrow_camera_auto_exposure_time
-                printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_narrow_sensor,
-                                                                        this->get_parameter("allied_narrow_camera_exposure_time").as_double()));
+            if (m_allied_narrow_sensor->sensor_available) // if allied narrow is available
+            {
+                printDefaultError(CHANGE_ALLIED_CAMERA_BLACK_LEVEL(devices[0], *m_allied_narrow_sensor,
+                                                                   this->get_parameter("allied_narrow_camera_black_level").as_double()),
+                                  "allied_narrow_camera_black_level");
+                printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME(devices[0], *m_allied_narrow_sensor,
+                                                                          this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool()),
+                                  "allied_narrow_camera_auto_exposure_time");
+                printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_EXPOSURE_TIME_RANGE(devices[0], *m_allied_narrow_sensor,
+                                                                                this->get_parameter("allied_narrow_camera_auto_exposure_time_range_min").as_double(),
+                                                                                this->get_parameter("allied_narrow_camera_auto_exposure_time_range_max").as_double()),
+                                  "allied_narrow_camera_auto_exposure_time_range");
+                if (!this->get_parameter("allied_narrow_camera_auto_exposure_time").as_bool())
+                {
+                    printDefaultError(CHANGE_ALLIED_CAMERA_EXPOSURE_TIME_US(devices[0], *m_allied_narrow_sensor,
+                                                                            this->get_parameter("allied_narrow_camera_exposure_time").as_double()),
+                                      "allied_narrow_camera_exposure_time");
+                }
+                printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_narrow_sensor,
+                                                                 this->get_parameter("allied_narrow_camera_auto_gain").as_bool()),
+                                  "allied_narrow_camera_auto_gain");
+                printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_narrow_sensor,
+                                                                       (float)this->get_parameter("allied_narrow_camera_auto_gain_range_min").as_double(),
+                                                                       (float)this->get_parameter("allied_narrow_camera_auto_gain_range_max").as_double()),
+                                  "allied_narrow_camera_auto_gain_range");
+                if (!this->get_parameter("allied_narrow_camera_auto_gain").as_bool())
+                {
+                    printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_narrow_sensor,
+                                                                this->get_parameter("allied_narrow_camera_gain").as_double()),
+                                      "allied_narrow_camera_gain");
+                }
+                printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_narrow_sensor,
+                                                             this->get_parameter("allied_narrow_camera_gamma").as_double()),
+                                  "allied_narrow_camera_gamma");
+                printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_narrow_sensor,
+                                                                  this->get_parameter("allied_narrow_camera_saturation").as_double()),
+                                  "allied_narrow_camera_saturation");
+                printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_narrow_sensor,
+                                                                 this->get_parameter("allied_narrow_camera_sharpness").as_double()),
+                                  "allied_narrow_camera_sharpness");
+                printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_narrow_sensor,
+                                                           this->get_parameter("allied_narrow_camera_hue").as_double()),
+                                  "allied_narrow_camera_hue");
+                printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_narrow_sensor,
+                                                                                 this->get_parameter("allied_narrow_camera_intensity_auto_precedence").as_int()),
+                                  "allied_narrow_camera_intensity_auto_precedence");
+                printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_narrow_sensor,
+                                                                          this->get_parameter("allied_narrow_camera_auto_white_balance").as_bool()),
+                                  "allied_narrow_camera_auto_white_balance");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_narrow_sensor,
+                                                                              this->get_parameter("allied_narrow_camera_balance_ratio_selector").as_int()),
+                                  "allied_narrow_camera_balance_ratio_selector");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_narrow_sensor,
+                                                                     this->get_parameter("allied_narrow_camera_balance_ratio").as_double()),
+                                  "allied_narrow_camera_balance_ratio");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_narrow_sensor,
+                                                                               this->get_parameter("allied_narrow_camera_balance_white_auto_rate").as_double()),
+                                  "allied_narrow_camera_balance_white_auto_rate");
+                printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_narrow_sensor,
+                                                                                    this->get_parameter("allied_narrow_camera_balance_white_auto_tolerance").as_double()),
+                                  "allied_narrow_camera_balance_white_auto_tolerance");
+                printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_narrow_sensor,
+                                                                        this->get_parameter("allied_narrow_camera_auto_mode_region_height").as_int(),
+                                                                        this->get_parameter("allied_narrow_camera_auto_mode_region_width").as_int()),
+                                  "allied_narrow_camera_auto_mode_region");
+                printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_narrow_sensor,
+                                                                                   this->get_parameter("allied_narrow_camera_intensity_controller_region").as_int()),
+                                  "allied_narrow_camera_intensity_controller_region");
+                printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_narrow_sensor,
+                                                                                   this->get_parameter("allied_narrow_camera_intensity_controller_target").as_double()),
+                                  "allied_narrow_camera_intensity_controller_target");
+                printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_narrow_sensor,
+                                                                                this->get_parameter("allied_narrow_camera_max_driver_buffers_count").as_int()),
+                                  "allied_narrow_camera_max_driver_buffers_count");
             }
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_GAIN(devices[0], *m_allied_narrow_sensor,
-                                                             this->get_parameter("allied_narrow_camera_auto_gain").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_GAIN_RANGE(devices[0], *m_allied_narrow_sensor,
-                                                                   (float)this->get_parameter("allied_narrow_camera_auto_gain_range_min").as_double(),
-                                                                   (float)this->get_parameter("allied_narrow_camera_auto_gain_range_max").as_double()));
-            if (!this->get_parameter("allied_narrow_camera_auto_gain").as_bool())
-            { //! Values might not match after disabling allied_narrow_camera_auto_gain
-                printDefaultError(CHANGE_ALLIED_CAMERA_GAIN(devices[0], *m_allied_narrow_sensor,
-                                                            this->get_parameter("allied_narrow_camera_gain").as_double()));
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Allied Narrow camera not available.");
             }
-            printDefaultError(CHANGE_ALLIED_CAMERA_GAMMA(devices[0], *m_allied_narrow_sensor,
-                                                         this->get_parameter("allied_narrow_camera_gamma").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SATURATION(devices[0], *m_allied_narrow_sensor,
-                                                              this->get_parameter("allied_narrow_camera_saturation").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_SHARPNESS(devices[0], *m_allied_narrow_sensor,
-                                                             this->get_parameter("allied_narrow_camera_sharpness").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_HUE(devices[0], *m_allied_narrow_sensor,
-                                                       this->get_parameter("allied_narrow_camera_hue").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_AUTO_PRECEDENCE(devices[0], *m_allied_narrow_sensor,
-                                                                             this->get_parameter("allied_narrow_camera_intensity_auto_precedence").as_int()));
-            printDefaultError(ENABLE_ALLIED_CAMERA_AUTO_WHITE_BALANCE(devices[0], *m_allied_narrow_sensor,
-                                                                      this->get_parameter("allied_narrow_camera_auto_white_balance").as_bool()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO_SELECTOR(devices[0], *m_allied_narrow_sensor,
-                                                                          this->get_parameter("allied_narrow_camera_balance_ratio_selector").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_RATIO(devices[0], *m_allied_narrow_sensor,
-                                                                 this->get_parameter("allied_narrow_camera_balance_ratio").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_RATE(devices[0], *m_allied_narrow_sensor,
-                                                                           this->get_parameter("allied_narrow_camera_balance_white_auto_rate").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_BALANCE_WHITE_AUTO_TOLERANCE(devices[0], *m_allied_narrow_sensor,
-                                                                                this->get_parameter("allied_narrow_camera_balance_white_auto_tolerance").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_AUTO_MODE_REGION(devices[0], *m_allied_narrow_sensor,
-                                                                    this->get_parameter("allied_narrow_camera_auto_mode_region_height").as_int(),
-                                                                    this->get_parameter("allied_narrow_camera_auto_mode_region_width").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_REGION(devices[0], *m_allied_narrow_sensor,
-                                                                               this->get_parameter("allied_narrow_camera_intensity_controller_region").as_int()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_INTENSITY_CONTROLLER_TARGET(devices[0], *m_allied_narrow_sensor,
-                                                                               this->get_parameter("allied_narrow_camera_intensity_controller_target").as_double()));
-            printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_narrow_sensor,
-                                                                            this->get_parameter("allied_narrow_camera_max_driver_buffers_count").as_int()));
         }
 
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Default parameters loaded");
@@ -934,7 +1085,7 @@ namespace l3cam_ros2
         int error = FIND_DEVICES(devices, &num_devices);
         if (error)
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while finding devices: " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while finding devices: " << getBeamErrorDescription(error));
             STOP_STREAM(devices[0]);
             STOP_DEVICE(devices[0]);
             TERMINATE(devices[0]);
@@ -1006,6 +1157,7 @@ namespace l3cam_ros2
             res->sensors[i].sensor_status = av_sensors[i].sensor_status;
             res->sensors[i].image_type = av_sensors[i].image_type;
             res->sensors[i].perception_enabled = av_sensors[i].perception_enabled;
+            res->sensors[i].sensor_available = av_sensors[i].sensor_available;
         }
     }
 
@@ -1017,17 +1169,15 @@ namespace l3cam_ros2
         char *netmask = NULL;
         char *gateway = NULL;
         res->error = GET_NETWORK_CONFIGURATION(devices[0], &ip_address, &netmask, &gateway);
-        res->ip_address = ip_address;
-        res->netmask = netmask;
-        res->gateway = gateway;
+        res->ip_address = std::string(ip_address);
+        res->netmask = std::string(netmask);
+        res->gateway = std::string(gateway);
     }
 
     void L3Cam::changeNetworkConfiguration(const std::shared_ptr<l3cam_interfaces::srv::ChangeNetworkConfiguration::Request> req,
                                            std::shared_ptr<l3cam_interfaces::srv::ChangeNetworkConfiguration::Response> res)
     {
-        ROS2_BMG_UNUSED(req);
-        ROS2_BMG_UNUSED(res);
-        /*if (req->enable_dhcp)
+        if (req->enable_dhcp)
             res->error = CHANGE_NETWORK_CONFIGURATION(devices[0], NULL, NULL, NULL, true);
         else
         {
@@ -1036,9 +1186,6 @@ namespace l3cam_ros2
             std::string gateway = req->gateway;
             res->error = CHANGE_NETWORK_CONFIGURATION(devices[0], (char *)ip_address.data(), (char *)netmask.data(), (char *)gateway.data(), false);
         }
-
-        // TODO: Terminate, Initialize, etc.
-        */
     }
 
     void L3Cam::powerOffDevice(const std::shared_ptr<l3cam_interfaces::srv::PowerOffDevice::Request> req,
@@ -1870,7 +2017,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -1886,7 +2033,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -1905,7 +2052,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -1921,7 +2068,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -1940,7 +2087,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -1956,7 +2103,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -1975,7 +2122,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -1991,7 +2138,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -2010,7 +2157,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -2026,7 +2173,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -2045,7 +2192,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -2061,7 +2208,7 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
             // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");

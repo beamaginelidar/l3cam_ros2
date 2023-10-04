@@ -140,13 +140,13 @@ namespace l3cam_ros2
             for (const auto &param : parameters)
             {
                 std::string param_name = param.get_name();
-                if (param_name == "pointcloud_color")
+                if (param_name == "pointcloud_color" && param.as_int() != pointcloud_color)
                 {
                     while (!clientColor->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -158,13 +158,13 @@ namespace l3cam_ros2
                     auto resultColor = clientColor->async_send_request(
                         requestColor, std::bind(&PointCloudConfiguration::colorResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "pointcloud_color_range_minimum")
+                if (param_name == "pointcloud_color_range_minimum" && param.as_int() != pointcloud_color_range_minimum)
                 {
                     while (!clientColorRange->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -177,13 +177,13 @@ namespace l3cam_ros2
                     auto resultColorRange = clientColorRange->async_send_request(
                         requestColorRange, std::bind(&PointCloudConfiguration::colorRangeResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "pointcloud_color_range_maximum")
+                if (param_name == "pointcloud_color_range_maximum" && param.as_int() != pointcloud_color_range_maximum)
                 {
                     while (!clientColorRange->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -196,13 +196,13 @@ namespace l3cam_ros2
                     auto resultColorRange = clientColorRange->async_send_request(
                         requestColorRange, std::bind(&PointCloudConfiguration::colorRangeResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "distance_range_minimum")
+                if (param_name == "distance_range_minimum" && param.as_int() != distance_range_minimum)
                 {
                     while (!clientDistanceRange->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -215,13 +215,13 @@ namespace l3cam_ros2
                     auto resultDistanceRange = clientDistanceRange->async_send_request(
                         requestDistanceRange, std::bind(&PointCloudConfiguration::distanceRangeResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "distance_range_maximum")
+                if (param_name == "distance_range_maximum" && param.as_int() != distance_range_maximum)
                 {
                     while (!clientDistanceRange->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -234,13 +234,13 @@ namespace l3cam_ros2
                     auto resultDistanceRange = clientDistanceRange->async_send_request(
                         requestDistanceRange, std::bind(&PointCloudConfiguration::distanceRangeResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "auto_bias")
+                if (param_name == "auto_bias" && param.as_bool() != auto_bias)
                 {
                     while (!clientAutoBias->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -252,13 +252,13 @@ namespace l3cam_ros2
                     auto resultAutoBias = clientAutoBias->async_send_request(
                         requestAutoBias, std::bind(&PointCloudConfiguration::autoBiasResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "bias_value_right")
+                if (param_name == "bias_value_right" && param.as_int() != bias_value_right)
                 {
                     while (!clientBiasValue->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -271,13 +271,13 @@ namespace l3cam_ros2
                     auto resultBiasValueRight = clientBiasValue->async_send_request(
                         requestBiasValueRight, std::bind(&PointCloudConfiguration::biasValueRightResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "bias_value_left")
+                if (param_name == "bias_value_left" && param.as_int() != bias_value_left)
                 {
                     while (!clientBiasValue->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -309,14 +309,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     // this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
                 }
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color");
                 // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
             }
@@ -337,7 +337,7 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
                     // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
                     // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
@@ -345,7 +345,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color_range");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color_range");
                 // Service could not be called, reset parameters to value before change
                 // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
                 // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
@@ -367,7 +367,7 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
                     // this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
                     // this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
@@ -375,7 +375,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_distance_range");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_distance_range");
                 // Service could not be called, reset parameters to value before change
                 // this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
                 // this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
@@ -393,7 +393,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service enable_auto_bias");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_auto_bias");
                 // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("auto_bias", auto_bias));
             }
@@ -410,7 +410,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
                 // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("bias_value_right", bias_value_right));
             }
@@ -427,7 +427,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
                 // Service could not be called, reset parameter to value before change
                 // this->set_parameter(rclcpp::Parameter("bias_value_left", bias_value_left));
             }
@@ -483,7 +483,7 @@ int main(int argc, char **argv)
     {
         if (!rclcpp::ok())
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             return 0;
         }
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -503,19 +503,19 @@ int main(int argc, char **argv)
         {
             for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar)
+                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar && resultGetSensors.get()->sensors[i].sensor_available)
                     sensor_is_available = true;
             }
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while checking sensor availability: " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
             return 1;
         }
     }
     else
     {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
         return 1;
     }
 

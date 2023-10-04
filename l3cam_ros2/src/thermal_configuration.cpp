@@ -129,13 +129,13 @@ namespace l3cam_ros2
             for (const auto &param : parameters)
             {
                 std::string param_name = param.get_name();
-                if (param_name == "thermal_camera_colormap")
+                if (param_name == "thermal_camera_colormap" && param.as_int() != thermal_camera_colormap)
                 {
                     while (!clientColormap->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -147,13 +147,13 @@ namespace l3cam_ros2
                     auto resultColormap = clientColormap->async_send_request(
                         requestColormap, std::bind(&ThermalConfiguration::colormapResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "thermal_camera_temperature_filter")
+                if (param_name == "thermal_camera_temperature_filter" && param.as_bool() != thermal_camera_temperature_filter)
                 {
                     while (!clientTemperatureFilter->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -165,13 +165,13 @@ namespace l3cam_ros2
                     auto resultTemperatureFilter = clientTemperatureFilter->async_send_request(
                         requestTemperatureFilter, std::bind(&ThermalConfiguration::temperatureFilterResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "thermal_camera_temperature_filter_min")
+                if (param_name == "thermal_camera_temperature_filter_min" && param.as_int() != thermal_camera_temperature_filter_min)
                 {
                     while (!clientTemperatureFilterRange->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -184,13 +184,13 @@ namespace l3cam_ros2
                     auto resultTemperatureFilterRange = clientTemperatureFilterRange->async_send_request(
                         requestTemperatureFilterRange, std::bind(&ThermalConfiguration::temperatureFilterRangeResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "thermal_camera_temperature_filter_max")
+                if (param_name == "thermal_camera_temperature_filter_max" && param.as_int() != thermal_camera_temperature_filter_max)
                 {
                     while (!clientTemperatureFilterRange->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -222,16 +222,16 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    // this->set_parameter(rclcpp::Parameter("thermal_camera_colormap", thermal_camera_colormap));
+                    this->set_parameter(rclcpp::Parameter("thermal_camera_colormap", thermal_camera_colormap));
                 }
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_thermal_camera_colormap");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_thermal_camera_colormap");
                 // Service could not be called, reset parameter to value before change
-                // this->set_parameter(rclcpp::Parameter("thermal_camera_colormap", thermal_camera_colormap));
+                this->set_parameter(rclcpp::Parameter("thermal_camera_colormap", thermal_camera_colormap));
             }
         }
 
@@ -249,16 +249,16 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    // this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter", thermal_camera_temperature_filter));
+                    this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter", thermal_camera_temperature_filter));
                 }
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service enable_thermal_camera_temperature_filter");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_thermal_camera_temperature_filter");
                 // Service could not be called, reset parameter to value before change
-                // this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter", thermal_camera_temperature_filter));
+                this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter", thermal_camera_temperature_filter));
             }
         }
 
@@ -277,18 +277,18 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while changing parameter: " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
-                    // this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_min", thermal_camera_temperature_filter_min));
-                    // this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_max", thermal_camera_temperature_filter_max));
+                    this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_min", thermal_camera_temperature_filter_min));
+                    this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_max", thermal_camera_temperature_filter_max));
                 }
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_thermal_camera_temperature_filter_min");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_thermal_camera_temperature_filter_min");
                 // Service could not be called, reset parameters to value before change
-                // this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_min", thermal_camera_temperature_filter_min));
-                // this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_max", thermal_camera_temperature_filter_max));
+                this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_min", thermal_camera_temperature_filter_min));
+                this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_filter_max", thermal_camera_temperature_filter_max));
             }
         }
 
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
     {
         if (!rclcpp::ok())
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             return 0;
         }
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -356,19 +356,19 @@ int main(int argc, char **argv)
         {
             for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_thermal)
+                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_thermal && resultGetSensors.get()->sensors[i].sensor_available)
                     sensor_is_available = true;
             }
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while checking sensor availability: " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
             return 1;
         }
     }
     else
     {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
         return 1;
     }
 

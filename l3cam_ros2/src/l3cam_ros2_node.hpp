@@ -132,12 +132,12 @@ namespace l3cam_ros2
         int startDeviceStream();
 
         l3cam devices[1];
-    
+
     private:
         void declareParameters();
         void initializeServices();
 
-        inline void printDefaultError(int error);
+        inline void printDefaultError(int error, std::string param);
         void loadDefaultParams();
 
         void timer_callback();
@@ -222,7 +222,7 @@ namespace l3cam_ros2
         void getAlliedCameraIntensityControllerRegion(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion::Response> res);
         void getAlliedCameraIntensityControllerTarget(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Response> res);
         void getAlliedCameraMaxDriverBuffersCount(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Response> res);
-        
+
         void lidarDisconnected(int code);
         void polDisconnected(int code);
         void rgbDisconnected(int code);

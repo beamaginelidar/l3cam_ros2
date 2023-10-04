@@ -51,13 +51,13 @@ namespace l3cam_ros2
             this->declare_parameter("gateway", "0.0.0.0");
             this->declare_parameter("dhcp", false);
 
-            // Get and save parameters
-            dhcp = this->get_parameter("dhcp").as_bool();
-
             // Create service clients
             clientGetNetwork = this->create_client<l3cam_interfaces::srv::GetNetworkConfiguration>("get_network_configuration");
             clientNetwork = this->create_client<l3cam_interfaces::srv::ChangeNetworkConfiguration>("change_network_configuration");
+        }
 
+        void handleParamsCallback()
+        {
             // Callback on parameters changed
             callback_handle_ = this->add_on_set_parameters_callback(
                 std::bind(&NetworkConfiguration::parametersCallback, this, std::placeholders::_1));
@@ -78,13 +78,13 @@ namespace l3cam_ros2
             for (const auto &param : parameters)
             {
                 std::string param_name = param.get_name();
-                if (param_name == "ip_address")
+                if (param_name == "ip_address" && param.as_string() != ip_address)
                 {
                     while (!clientNetwork->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -99,13 +99,13 @@ namespace l3cam_ros2
                     auto resultBrightness = clientNetwork->async_send_request(
                         requestNetwork, std::bind(&NetworkConfiguration::networkResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "netmask")
+                if (param_name == "netmask" && param.as_string() != netmask)
                 {
                     while (!clientNetwork->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -120,13 +120,13 @@ namespace l3cam_ros2
                     auto resultBrightness = clientNetwork->async_send_request(
                         requestNetwork, std::bind(&NetworkConfiguration::networkResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "gateway")
+                if (param_name == "gateway" && param.as_string() != gateway)
                 {
                     while (!clientNetwork->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -141,13 +141,13 @@ namespace l3cam_ros2
                     auto resultBrightness = clientNetwork->async_send_request(
                         requestNetwork, std::bind(&NetworkConfiguration::networkResponseCallback, this, std::placeholders::_1));
                 }
-                if (param_name == "dhcp")
+                if (param_name == "dhcp" && param.as_bool() != dhcp)
                 {
                     while (!clientNetwork->wait_for_service(1s))
                     {
                         if (!rclcpp::ok())
                         {
-                            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                             break;
                         }
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -181,25 +181,27 @@ namespace l3cam_ros2
                     netmask = this->get_parameter("netmask").as_string();
                     gateway = this->get_parameter("gateway").as_string();
                     dhcp = this->get_parameter("dhcp").as_bool();
+
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The network configuration changes will take effect once the device is restarted.");
                 }
                 else
                 {
-                    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), '(' << error << ") " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing network configuration in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
-                    // this->set_parameter(rclcpp::Parameter("ip_address", ip_address));
-                    // this->set_parameter(rclcpp::Parameter("netmask", netmask));
-                    // this->set_parameter(rclcpp::Parameter("gateway", gateway));
-                    // this->set_parameter(rclcpp::Parameter("dhcp", dhcp));
+                    this->set_parameter(rclcpp::Parameter("ip_address", ip_address));
+                    this->set_parameter(rclcpp::Parameter("netmask", netmask));
+                    this->set_parameter(rclcpp::Parameter("gateway", gateway));
+                    this->set_parameter(rclcpp::Parameter("dhcp", dhcp));
                 }
             }
             else
             {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service change_network_configuration");
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_network_configuration");
                 // Service could not be called, reset parameters to value before change
-                // this->set_parameter(rclcpp::Parameter("ip_address", ip_address));
-                // this->set_parameter(rclcpp::Parameter("netmask", netmask));
-                // this->set_parameter(rclcpp::Parameter("gateway", gateway));
-                // this->set_parameter(rclcpp::Parameter("dhcp", dhcp));
+                this->set_parameter(rclcpp::Parameter("ip_address", ip_address));
+                this->set_parameter(rclcpp::Parameter("netmask", netmask));
+                this->set_parameter(rclcpp::Parameter("gateway", gateway));
+                this->set_parameter(rclcpp::Parameter("dhcp", dhcp));
             }
         }
 
@@ -226,7 +228,7 @@ int main(int argc, char **argv)
     {
         if (!rclcpp::ok())
         {
-            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service. Exiting.");
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             break;
         }
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
@@ -236,7 +238,6 @@ int main(int argc, char **argv)
     auto resultGetNetwork = node->clientGetNetwork->async_send_request(requestGetNetwork);
 
     int error = L3CAM_OK;
-    bool sensor_is_available = false;
     // Shutdown if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetNetwork) == rclcpp::FutureReturnCode::SUCCESS)
     {
@@ -247,16 +248,17 @@ int main(int argc, char **argv)
             node->set_parameter(rclcpp::Parameter("ip_address", resultGetNetwork.get()->ip_address));
             node->set_parameter(rclcpp::Parameter("netmask", resultGetNetwork.get()->netmask));
             node->set_parameter(rclcpp::Parameter("gateway", resultGetNetwork.get()->gateway));
+            node->handleParamsCallback();
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " while getting network configuration: " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting network configuration in " << __func__ << ": " << getBeamErrorDescription(error));
             return 1;
         }
     }
     else
     {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service get_network_configuration");
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_network_configuration");
         return 1;
     }
 

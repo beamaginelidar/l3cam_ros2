@@ -6,10 +6,6 @@
     <arg name="rqt_reconfigure" default="false" />
 
     <!-- Network configuration -->
-    <arg name="ip_address" default="192.168.1.250" />
-    <arg name="netmask" default="255.255.255.0" />
-    <arg name="gateway" default="0.0.0.0" />
-    <arg name="dhcp" default="false" />
     <arg name="local_address" default="" />
     <arg name="device_address" default="" />
 
@@ -204,11 +200,6 @@
     <!-- Start dyanmic reconfigure -->
     <include file="$(dirname)/configure_l3cam_launch.xml">
         <arg name="rqt_reconfigure" value="$(var rqt_reconfigure)" />
-
-        <arg name="ip_address" value="$(var ip_address)" />
-        <arg name="netmask" value="$(var netmask)" />
-        <arg name="gateway" value="$(var gateway)" />
-        <arg name="dhcp" value="$(var dhcp)" />
 
         <arg name="pointcloud_color" value="$(var pointcloud_color)" />
         <arg name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" />

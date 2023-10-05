@@ -164,7 +164,7 @@ namespace l3cam_ros2
         this->declare_parameter("local_address", "");
         this->declare_parameter("device_address", "");
         // Point Cloud
-        intRange.set__from_value(0).set__to_value(13); // TODO: enumerate pointCloudColor
+        intRange.set__from_value(0).set__to_value(13); // TODO: dynamic reconfigure enumerate pointCloudColor
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be: (pointCloudColor)\n"
@@ -262,7 +262,7 @@ namespace l3cam_ros2
         descriptor.integer_range = {intRange};
         this->declare_parameter("rgb_camera_framerate", 10, descriptor); // 1 - 16
         // Thermal
-        intRange.set__from_value(1).set__to_value(108); // TODO: enumerate thermalTypes
+        intRange.set__from_value(1).set__to_value(108); // TODO: dynamic reconfigure enumerate thermalTypes
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be: (thermalTypes)\n"
@@ -326,7 +326,7 @@ namespace l3cam_ros2
         floatRange.set__from_value(-40).set__to_value(40.0);
         descriptor.floating_point_range = {floatRange};
         this->declare_parameter("allied_wide_camera_hue", 0.0, descriptor); // -40 - 40
-        intRange.set__from_value(0).set__to_value(1);          // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(1);                       // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"
@@ -335,7 +335,7 @@ namespace l3cam_ros2
         this->declare_parameter("allied_wide_camera_intensity_auto_precedence", 0, descriptor); // 0(MinimizeNoise) or 1(MinimizeBlur)
         descriptor.description = "";
         this->declare_parameter("allied_wide_camera_auto_white_balance", false);
-        intRange.set__from_value(0).set__to_value(1); // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(1); // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"
@@ -358,7 +358,7 @@ namespace l3cam_ros2
         intRange.set__from_value(0).set__to_value(1232);
         descriptor.integer_range = {intRange};
         this->declare_parameter("allied_wide_camera_auto_mode_region_width", 1232, descriptor); // 0 - 1232
-        intRange.set__from_value(0).set__to_value(4);                              // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(4);                                           // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"
@@ -406,7 +406,7 @@ namespace l3cam_ros2
         floatRange.set__from_value(-40).set__to_value(40.0);
         descriptor.floating_point_range = {floatRange};
         this->declare_parameter("allied_narrow_camera_hue", 0.0, descriptor); // -40 - 40
-        intRange.set__from_value(0).set__to_value(1);            // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(1);                         // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"
@@ -415,7 +415,7 @@ namespace l3cam_ros2
         this->declare_parameter("allied_narrow_camera_intensity_auto_precedence", 0, descriptor); // 0(MinimizeNoise) or 1(MinimizeBlur)
         descriptor.description = "";
         this->declare_parameter("allied_narrow_camera_auto_white_balance", false);
-        intRange.set__from_value(0).set__to_value(1); // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(1); // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"
@@ -438,7 +438,7 @@ namespace l3cam_ros2
         intRange.set__from_value(0).set__to_value(2464);
         descriptor.integer_range = {intRange};
         this->declare_parameter("allied_narrow_camera_auto_mode_region_width", 2464, descriptor); // 0 - 2464
-        intRange.set__from_value(0).set__to_value(4);                                // TODO: enumerate
+        intRange.set__from_value(0).set__to_value(4);                                             // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"

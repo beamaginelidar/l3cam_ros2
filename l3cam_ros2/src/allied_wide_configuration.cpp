@@ -110,7 +110,6 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
-            // this->declare_parameter("allied_wide_camera_black_level", 0.0); // 0 - 4095
             floatRange.set__from_value(63.0).set__to_value(10000000.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_exposure_time", 4992.4, descriptor); // 63 - 10000000
@@ -137,11 +136,10 @@ namespace l3cam_ros2
             floatRange.set__from_value(0.0).set__to_value(2.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_saturation", 1.0, descriptor); // 0 - 2
-            // this->declare_parameter("allied_wide_camera_sharpness", 0.0); // -12 - 12
             floatRange.set__from_value(-40).set__to_value(40.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_hue", 0.0, descriptor); // -40 - 40
-            intRange.set__from_value(0).set__to_value(1);          // TODO: dropdown menu
+            intRange.set__from_value(0).set__to_value(1);                       // TODO: dynamic reconfigure dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -150,7 +148,7 @@ namespace l3cam_ros2
             this->declare_parameter("allied_wide_camera_intensity_auto_precedence", 0, descriptor); // 0(MinimizeNoise) or 1(MinimizeBlur)
             descriptor.description = "";
             this->declare_parameter("allied_wide_camera_auto_white_balance", false);
-            intRange.set__from_value(0).set__to_value(1); // TODO: dropdown menu
+            intRange.set__from_value(0).set__to_value(1); // TODO: dynamic reconfigure dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -167,9 +165,7 @@ namespace l3cam_ros2
             floatRange.set__from_value(0.0).set__to_value(50.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_balance_white_auto_tolerance", 5.0, descriptor); // 0 - 50
-            // this->declare_parameter("allied_wide_camera_auto_mode_region_height", 1280); // 0 - 1028
-            // this->declare_parameter("allied_wide_camera_auto_mode_region_width", 1232); // 0 - 1232
-            intRange.set__from_value(0).set__to_value(4); // TODO: dropdown menu
+            intRange.set__from_value(0).set__to_value(4);                                                // TODO: dynamic reconfigure dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -180,7 +176,6 @@ namespace l3cam_ros2
             floatRange.set__from_value(10).set__to_value(90);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_intensity_controller_target", 50.0, descriptor); // 10 - 90
-            // this->declare_parameter("allied_wide_camera_max_driver_buffers_count", 64); // 1 - 4096
 
             // Get and save parameters
             allied_wide_camera_exposure_time = this->get_parameter("allied_wide_camera_exposure_time").as_double();
@@ -606,9 +601,9 @@ namespace l3cam_ros2
                 {
                     // Parameter changed successfully
                     allied_wide_camera_auto_exposure_time = this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool();
-                    
+
                     // If auto exposure time deactivated we have to get the actual exposure time to know its value
-                    if(!allied_wide_camera_auto_exposure_time)
+                    if (!allied_wide_camera_auto_exposure_time)
                     {
                         while (!clientGetExposureTime->wait_for_service(1s))
                         {
@@ -710,9 +705,9 @@ namespace l3cam_ros2
                 {
                     // Parameter changed successfully
                     allied_wide_camera_auto_gain = this->get_parameter("allied_wide_camera_auto_gain").as_bool();
-                    
+
                     // If auto gain deactivated we have to get the actual gain to know its value
-                    if(!allied_wide_camera_auto_gain)
+                    if (!allied_wide_camera_auto_gain)
                     {
                         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Getting gain value");
                         while (!clientGetGain->wait_for_service(1s))

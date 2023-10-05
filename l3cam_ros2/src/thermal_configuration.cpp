@@ -78,7 +78,7 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            range.set__from_value(1).set__to_value(108); // TODO: dropdown menu thermalTypes
+            range.set__from_value(1).set__to_value(108); // TODO: dynamic reconfigure dropdown menu thermalTypes
             descriptor.integer_range = {range};
             descriptor.description =
                 "Value must be: (thermalTypes)\n"

@@ -83,7 +83,7 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            range.set__from_value(0).set__to_value(13); // TODO: dropdown menu pointCloudColor
+            range.set__from_value(0).set__to_value(13); // TODO: dynamic reconfigure dropdown menu pointCloudColor
             descriptor.integer_range = {range};
             descriptor.description =
                 "Value must be: (pointCloudColor)\n"
@@ -311,14 +311,14 @@ namespace l3cam_ros2
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    // this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
+                    this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color");
                 // Service could not be called, reset parameter to value before change
-                // this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
+                this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color));
             }
         }
 
@@ -339,16 +339,16 @@ namespace l3cam_ros2
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
-                    // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
-                    // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
+                    this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
+                    this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_pointcloud_color_range");
                 // Service could not be called, reset parameters to value before change
-                // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
-                // this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
+                this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum));
+                this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum));
             }
         }
 
@@ -369,16 +369,16 @@ namespace l3cam_ros2
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
-                    // this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
-                    // this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
+                    this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
+                    this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_distance_range");
                 // Service could not be called, reset parameters to value before change
-                // this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
-                // this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
+                this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum));
+                this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum));
             }
         }
 
@@ -395,7 +395,7 @@ namespace l3cam_ros2
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_auto_bias");
                 // Service could not be called, reset parameter to value before change
-                // this->set_parameter(rclcpp::Parameter("auto_bias", auto_bias));
+                this->set_parameter(rclcpp::Parameter("auto_bias", auto_bias));
             }
         }
 
@@ -412,7 +412,7 @@ namespace l3cam_ros2
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
                 // Service could not be called, reset parameter to value before change
-                // this->set_parameter(rclcpp::Parameter("bias_value_right", bias_value_right));
+                this->set_parameter(rclcpp::Parameter("bias_value_right", bias_value_right));
             }
         }
 
@@ -429,7 +429,7 @@ namespace l3cam_ros2
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service bias_value");
                 // Service could not be called, reset parameter to value before change
-                // this->set_parameter(rclcpp::Parameter("bias_value_left", bias_value_left));
+                this->set_parameter(rclcpp::Parameter("bias_value_left", bias_value_left));
             }
         }
 

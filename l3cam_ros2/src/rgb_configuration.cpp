@@ -111,20 +111,11 @@ namespace l3cam_ros2
             this->declare_parameter("rgb_camera_auto_white_balance", true);
             range.set__from_value(1000).set__to_value(10000);
             descriptor.integer_range = {range};
-            // descriptor.read_only = this->get_parameter("rgb_camera_auto_white_balance").as_bool();
             this->declare_parameter("rgb_camera_white_balance", 5000, descriptor); // 1000 - 10000
             this->declare_parameter("rgb_camera_auto_exposure_time", true);
             range.set__from_value(1).set__to_value(10000);
             descriptor.integer_range = {range};
-            // descriptor.read_only = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
             this->declare_parameter("rgb_camera_exposure_time", 156, descriptor); // 1 - 10000
-
-            /*range.set__from_value(1).set__to_value(3);
-            descriptor.integer_range = {range};
-            this->declare_parameter("rgb_camera_resolution", 3, descriptor); // see econResolutions
-            range.set__from_value(1).set__to_value(16);
-            descriptor.integer_range = {range};
-            this->declare_parameter("rgb_camera_framerate", 10, descriptor); // 1 - 16*/
 
             // Get and save parameters
             rgb_camera_brightness = this->get_parameter("rgb_camera_brightness").as_int();
@@ -137,9 +128,6 @@ namespace l3cam_ros2
             rgb_camera_white_balance = this->get_parameter("rgb_camera_white_balance").as_int();
             rgb_camera_auto_exposure_time = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
             rgb_camera_exposure_time = this->get_parameter("rgb_camera_exposure_time").as_int();
-
-            // rgb_camera_resolution = (econResolutions)this->get_parameter("rgb_camera_resolution").as_int();
-            // rgb_camera_framerate = this->get_parameter("rgb_camera_framerate").as_int();
         }
 
         rcl_interfaces::msg::SetParametersResult parametersCallback(

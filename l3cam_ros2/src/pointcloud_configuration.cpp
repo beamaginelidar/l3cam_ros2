@@ -83,7 +83,7 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            range.set__from_value(0).set__to_value(13).set__step(1); // TODO: dropdown menu pointCloudColor
+            range.set__from_value(0).set__to_value(13); // TODO: dropdown menu pointCloudColor
             descriptor.integer_range = {range};
             descriptor.description =
                 "Value must be: (pointCloudColor)\n"
@@ -99,20 +99,20 @@ namespace l3cam_ros2
                 "\tALLIED_WIDE_FUSION = 13";
             this->declare_parameter("pointcloud_color", 0, descriptor); // see pointCloudColor
             descriptor.description = "";
-            range.set__from_value(0).set__to_value(400000).set__step(1);
+            range.set__from_value(0).set__to_value(400000);
             descriptor.integer_range = {range};
             this->declare_parameter("pointcloud_color_range_minimum", 0, descriptor); // 0 - 400000
-            range.set__from_value(0).set__to_value(400000).set__step(1);
+            range.set__from_value(0).set__to_value(400000);
             descriptor.integer_range = {range};
             this->declare_parameter("pointcloud_color_range_maximum", 400000, descriptor); // 0 - 400000
-            range.set__from_value(0).set__to_value(400000).set__step(1);
+            range.set__from_value(0).set__to_value(400000);
             descriptor.integer_range = {range};
             this->declare_parameter("distance_range_minimum", 0, descriptor); // 0 - 400000
-            range.set__from_value(0).set__to_value(400000).set__step(1);
+            range.set__from_value(0).set__to_value(400000);
             descriptor.integer_range = {range};
             this->declare_parameter("distance_range_maximum", 400000, descriptor); // 0 - 400000
             this->declare_parameter("auto_bias", true);
-            range.set__from_value(700).set__to_value(3500).set__step(1);
+            range.set__from_value(700).set__to_value(3500);
             descriptor.integer_range = {range};
             this->declare_parameter("bias_value_right", 1580, descriptor); // 700 - 3500
             this->declare_parameter("bias_value_left", 1380, descriptor);  // 700 - 3500

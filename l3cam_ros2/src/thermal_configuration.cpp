@@ -78,7 +78,7 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            range.set__from_value(1).set__to_value(108).set__step(1); // TODO: dropdown menu thermalTypes
+            range.set__from_value(1).set__to_value(108); // TODO: dropdown menu thermalTypes
             descriptor.integer_range = {range};
             descriptor.description =
                 "Value must be: (thermalTypes)\n"
@@ -103,10 +103,10 @@ namespace l3cam_ros2
             this->declare_parameter("thermal_camera_colormap", 1, descriptor); // see thermalTypes
             descriptor.description = "";
             this->declare_parameter("thermal_camera_temperature_filter", false);
-            range.set__from_value(-40).set__to_value(200).set__step(1);
+            range.set__from_value(-40).set__to_value(200);
             descriptor.integer_range = {range};
             this->declare_parameter("thermal_camera_temperature_filter_min", 0, descriptor); // -40 - 200
-            range.set__from_value(-40).set__to_value(200).set__step(1);
+            range.set__from_value(-40).set__to_value(200);
             descriptor.integer_range = {range};
             this->declare_parameter("thermal_camera_temperature_filter_max", 50, descriptor); // -40 - 200
 

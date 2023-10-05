@@ -112,37 +112,37 @@ namespace l3cam_ros2
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
             // this->declare_parameter("allied_narrow_camera_black_level", 0.0); // 0 - 4095
-            floatRange.set__from_value(63.0).set__to_value(10000000.0).set__step(0.1);
+            floatRange.set__from_value(63.0).set__to_value(10000000.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_exposure_time", 4992.4, descriptor); // 63 - 10000000
             this->declare_parameter("allied_narrow_camera_auto_exposure_time", false);
-            floatRange.set__from_value(63.1).set__to_value(8999990.0).set__step(0.1);
+            floatRange.set__from_value(63.1).set__to_value(8999990.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_auto_exposure_time_range_min", 87.6, descriptor); // 63.1 - 8999990
-            floatRange.set__from_value(87.6).set__to_value(10000000.0).set__step(0.1);
+            floatRange.set__from_value(87.6).set__to_value(10000000.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_auto_exposure_time_range_max", 8999990.0, descriptor); // 87.6 - 10000000
-            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(48.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_gain", 0.0, descriptor); // 0 - 48
             this->declare_parameter("allied_narrow_camera_auto_gain", false);
-            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(48.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_auto_gain_range_min", 0.0, descriptor); // 0 - 48
-            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(48.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_auto_gain_range_max", 48.0, descriptor); // 0 - 48
-            floatRange.set__from_value(0.4).set__to_value(2.4).set__step(0.1);
+            floatRange.set__from_value(0.4).set__to_value(2.4);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_gamma", 1.0, descriptor); // 0.4 - 2.4
-            floatRange.set__from_value(0.0).set__to_value(2.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(2.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_saturation", 1.0, descriptor); // 0 - 2
             // this->declare_parameter("allied_narrow_camera_sharpness", 0.0); // -12 - 12
-            floatRange.set__from_value(-40).set__to_value(40.0).set__step(0.1);
+            floatRange.set__from_value(-40).set__to_value(40.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_hue", 0.0, descriptor); // -40 - 40
-            intRange.set__from_value(0).set__to_value(1).set__step(1);            // TODO: dropdown menu
+            intRange.set__from_value(0).set__to_value(1); // TODO: dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -151,7 +151,7 @@ namespace l3cam_ros2
             this->declare_parameter("allied_narrow_camera_intensity_auto_precedence", 0, descriptor); // 0(MinimizeNoise) or 1(MinimizeBlur)
             descriptor.description = "";
             this->declare_parameter("allied_narrow_camera_auto_white_balance", false);
-            intRange.set__from_value(0).set__to_value(1).set__step(1); // TODO: dropdown menu
+            intRange.set__from_value(0).set__to_value(1); // TODO: dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -159,18 +159,18 @@ namespace l3cam_ros2
                 "\tBlue = 1";
             this->declare_parameter("allied_narrow_camera_balance_ratio_selector", 0, descriptor); // 0(Red), 1(Blue)
             descriptor.description = "";
-            floatRange.set__from_value(0.0).set__to_value(8.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(8.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_balance_ratio", 2.4, descriptor); // 0 - 8
-            floatRange.set__from_value(0.0).set__to_value(100.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(100.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_balance_white_auto_rate", 100.0, descriptor); // 0 - 100
-            floatRange.set__from_value(0.0).set__to_value(50.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(50.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_balance_white_auto_tolerance", 5.0, descriptor); // 0 - 50
             // this->declare_parameter("allied_narrow_camera_auto_mode_region_height", 2056); // 0 - 2056
             // this->declare_parameter("allied_narrow_camera_auto_mode_region_width", 2464); // 0 - 2464
-            intRange.set__from_value(0).set__to_value(4).set__step(1); // TODO: dropdown menu
+            intRange.set__from_value(0).set__to_value(4); // TODO: dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -178,7 +178,7 @@ namespace l3cam_ros2
                 "\tFullImage = 4";
             this->declare_parameter("allied_narrow_camera_intensity_controller_region", 0, descriptor); // 0(AutoMode), 4(FullImage)
             descriptor.description = "";
-            floatRange.set__from_value(10).set__to_value(90).set__step(0.1);
+            floatRange.set__from_value(10).set__to_value(90);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_intensity_controller_target", 50.0, descriptor); // 10 - 90
             // this->declare_parameter("allied_narrow_camera_max_driver_buffers_count", 64); // 1 - 4096

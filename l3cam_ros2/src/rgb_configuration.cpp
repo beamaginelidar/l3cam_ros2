@@ -92,37 +92,37 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            range.set__from_value(-15).set__to_value(15).set__step(1);
+            range.set__from_value(-15).set__to_value(15);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_brightness", 0, descriptor); // -15 - 15
             this->declare_parameter("rgb_camera_contrast", 10, descriptor);  // 0 - 30
-            range.set__from_value(0).set__to_value(60).set__step(1);
+            range.set__from_value(0).set__to_value(60);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_saturation", 16, descriptor); // 0 - 60
-            range.set__from_value(0).set__to_value(127).set__step(1);
+            range.set__from_value(0).set__to_value(127);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_sharpness", 16, descriptor); // 0 - 127
-            range.set__from_value(40).set__to_value(500).set__step(1);
+            range.set__from_value(40).set__to_value(500);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_gamma", 220, descriptor); // 40 - 500
-            range.set__from_value(0).set__to_value(63).set__step(1);
+            range.set__from_value(0).set__to_value(63);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_gain", 0, descriptor); // 0 - 63
             this->declare_parameter("rgb_camera_auto_white_balance", true);
-            range.set__from_value(1000).set__to_value(10000).set__step(1);
+            range.set__from_value(1000).set__to_value(10000);
             descriptor.integer_range = {range};
             // descriptor.read_only = this->get_parameter("rgb_camera_auto_white_balance").as_bool();
             this->declare_parameter("rgb_camera_white_balance", 5000, descriptor); // 1000 - 10000
             this->declare_parameter("rgb_camera_auto_exposure_time", true);
-            range.set__from_value(1).set__to_value(10000).set__step(1);
+            range.set__from_value(1).set__to_value(10000);
             descriptor.integer_range = {range};
             // descriptor.read_only = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
             this->declare_parameter("rgb_camera_exposure_time", 156, descriptor); // 1 - 10000
 
-            /*range.set__from_value(1).set__to_value(3).set__step(1);
+            /*range.set__from_value(1).set__to_value(3);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_resolution", 3, descriptor); // see econResolutions
-            range.set__from_value(1).set__to_value(16).set__step(1);
+            range.set__from_value(1).set__to_value(16);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_framerate", 10, descriptor); // 1 - 16*/
 

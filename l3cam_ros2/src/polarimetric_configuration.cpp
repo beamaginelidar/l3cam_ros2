@@ -90,30 +90,30 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor floatDescriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
-            intRange.set__from_value(0).set__to_value(255).set__step(1);
+            intRange.set__from_value(0).set__to_value(255);
             intDescriptor.integer_range = {intRange};
             this->declare_parameter("polarimetric_camera_brightness", 127, intDescriptor); // 0 - 255
-            floatRange.set__from_value(0.0).set__to_value(12.5).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(12.5);
             floatDescriptor.floating_point_range = {floatRange};
             this->declare_parameter("polarimetric_camera_black_level", 6.0, floatDescriptor); // 0 - 12.5
             this->declare_parameter("polarimetric_camera_auto_gain", true);
-            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(48.0);
             floatDescriptor.floating_point_range = {floatRange};
             this->declare_parameter("polarimetric_camera_auto_gain_range_minimum", 0.0, floatDescriptor); // 0 - 48
-            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(48.0);
             floatDescriptor.floating_point_range = {floatRange};
             this->declare_parameter("polarimetric_camera_auto_gain_range_maximum", 48.0, floatDescriptor); // 0 - 48
-            floatRange.set__from_value(0.0).set__to_value(48.0).set__step(0.1);
+            floatRange.set__from_value(0.0).set__to_value(48.0);
             floatDescriptor.floating_point_range = {floatRange};
             this->declare_parameter("polarimetric_camera_gain", 24.0, floatDescriptor); // 0 - 48
             this->declare_parameter("polarimetric_camera_auto_exposure_time", true);
-            floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.1);
+            floatRange.set__from_value(33.5).set__to_value(66470.6);
             floatDescriptor.floating_point_range = {floatRange};
             this->declare_parameter("polarimetric_camera_auto_exposure_time_range_minimum", 33.5, floatDescriptor); // 33.5 - 66470.6
-            floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.1);
+            floatRange.set__from_value(33.5).set__to_value(66470.6);
             floatDescriptor.floating_point_range = {floatRange};
             this->declare_parameter("polarimetric_camera_auto_exposure_time_range_maximum", 66470.6, floatDescriptor); // 33.5 - 66470.6
-            floatRange.set__from_value(33.5).set__to_value(66470.6).set__step(0.001);
+            floatRange.set__from_value(33.5).set__to_value(66470.6);
             floatDescriptor.floating_point_range = {floatRange};
             this->declare_parameter("polarimetric_camera_exposure_time", 33.5, floatDescriptor); // 33.5 - 66470.6
 

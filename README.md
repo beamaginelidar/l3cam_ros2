@@ -120,13 +120,13 @@ The l3cam_ros2_node is the main node that connects to the L3Cam and configures i
 
 The pointcloud_stream is the node that publishes pointcloud frames if the LiDAR sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
 
-### polarimetric_stream
+### polarimetric_wide_stream
 
-The polarimetric_stream is the node that publishes polarimetric or Allied Wide image frames if the polarimetric or the Allied Wide sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
+The polarimetric_wide_stream is the node that publishes polarimetric or Allied Wide image frames if the polarimetric or the Allied Wide sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
 
-### rgb_stream
+### rgb_narrow_stream
 
-The rgb_stream is the node that publishes RGB or Allied Narrow image frames if the RGB or the Allied Narrow sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
+The rgb_narrow_stream is the node that publishes RGB or Allied Narrow image frames if the RGB or the Allied Narrow sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
 
 ### thermal_stream
 

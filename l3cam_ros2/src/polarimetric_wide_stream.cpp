@@ -67,7 +67,7 @@ pthread_t stream_thread;
 
 bool g_listening = false;
 
-bool m_rgb; // true if rgb sensor available, false if narrow available
+bool m_pol = false; // true if polarimetric available, false if wide available
 
 struct threadData
 {
@@ -81,7 +81,7 @@ void *ImageThread(void *functionData)
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
     std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
-    int m_udp_port = 6020;             // For RGB and Allied Narrow it's 6020
+    int m_udp_port = 6060;             // For Polarimetric and Allied Wide it's 6060
 
     socklen_t socket_len = sizeof(m_socket);
     char *buffer;
@@ -101,7 +101,7 @@ void *ImageThread(void *functionData)
         perror("Opening socket");
         return 0;
     }
-    // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket RGB created");
+    // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket Polarimetric created");
 
     memset((char *)&m_socket, 0, sizeof(struct sockaddr_in));
     m_socket.sin_addr.s_addr = inet_addr((char *)m_address.c_str());
@@ -129,10 +129,10 @@ void *ImageThread(void *functionData)
     }
 
     g_listening = true;
-    if (m_rgb)
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "RGB streaming.");
+    if (m_pol)
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Polarimetric streaming.");
     else
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Allied Narrow streaming.");
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Allied Wide streaming.");
 
     uint8_t *image_pointer = NULL;
 
@@ -170,13 +170,22 @@ void *ImageThread(void *functionData)
             bytes_count = 0;
             memcpy(image_pointer, m_image_buffer, m_image_data_size);
 
-            cv::Mat img_data(m_image_height, m_image_width, CV_8UC3, image_pointer);
+            cv::Mat img_data;
+            if (m_image_channels == 1)
+            {
+                img_data = cv::Mat(m_image_height, m_image_width, CV_8UC1, image_pointer);
+                cv::cvtColor(img_data, img_data, cv::COLOR_GRAY2BGR);
+            }
+            else if (m_image_channels == 3)
+            {
+                img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);
+            }
 
             cv_bridge::CvImage img_bridge;
             sensor_msgs::msg::Image img_msg; // message to be sent
 
             std_msgs::msg::Header header;
-            header.frame_id = m_rgb ? "rgb" : "allied_narrow";
+            header.frame_id = m_pol ? "polarimetric" : "allied_wide";
             // m_timestamp format: hhmmsszzz
             header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
@@ -213,19 +222,19 @@ void *ImageThread(void *functionData)
 
 namespace l3cam_ros2
 {
-    class RgbStream : public rclcpp::Node
+    class PolarimetricWideStream : public rclcpp::Node
     {
     public:
-        RgbStream() : Node("rgb_stream")
+        PolarimetricWideStream() : Node("polarimetric_wide_stream")
         {
             clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
         }
 
         void declareServiceServers()
         {
-            std::string sensor = m_rgb ? "rgb" : "narrow";
+            std::string sensor = m_pol ? "polarimetric" : "wide";
             srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
-                sensor + "_stream_disconnected", std::bind(&RgbStream::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
+                sensor + "_stream_disconnected", std::bind(&PolarimetricWideStream::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
         }
 
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
@@ -253,7 +262,7 @@ namespace l3cam_ros2
 
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
 
-    }; // class RgbStream
+    }; // class PolarimetricWideStream
 
 } // namespace l3cam_ros2
 
@@ -261,9 +270,9 @@ int main(int argc, char const *argv[])
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<l3cam_ros2::RgbStream> node = std::make_shared<l3cam_ros2::RgbStream>();
+    std::shared_ptr<l3cam_ros2::PolarimetricWideStream> node = std::make_shared<l3cam_ros2::PolarimetricWideStream>();
 
-    // Check if RGB or Allied Narrow is available
+    // Check if Polarimetric or Allied Wide is available
     while (!node->clientGetSensors->wait_for_service(1s))
     {
         if (!rclcpp::ok())
@@ -288,15 +297,15 @@ int main(int argc, char const *argv[])
         {
             for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_econ_rgb && resultGetSensors.get()->sensors[i].sensor_available)
+                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_pol && resultGetSensors.get()->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
-                    m_rgb = true;
+                    m_pol = true;
                 }
-                else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_narrow && resultGetSensors.get()->sensors[i].sensor_available)
+                else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_wide && resultGetSensors.get()->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
-                    m_rgb = false;
+                    m_pol = false;
                 }
             }
         }
@@ -314,7 +323,7 @@ int main(int argc, char const *argv[])
 
     if (sensor_is_available)
     {
-        std::string sensor = (m_rgb ? "RGB" : "Allied Narrow");
+        std::string sensor = (m_pol ? "Polarimetric" : "Allied Wide");
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), sensor << " camera available for streaming");
         node->declareServiceServers();
     }
@@ -323,7 +332,7 @@ int main(int argc, char const *argv[])
         return 0;
     }
 
-    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(m_rgb ? "img_rgb" : "img_narrow", 10);
+    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(m_pol ? "img_pol" : "img_wide", 10);
 
     threadData *data = (struct threadData *)malloc(sizeof(struct threadData));
     data->publisher = node->publisher_;

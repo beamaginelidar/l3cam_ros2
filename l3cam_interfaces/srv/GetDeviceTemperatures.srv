@@ -1,0 +1,13 @@
+---
+int32 error
+int32 bcpu_temp
+int32 mcpu_temp
+int32 gpu_temp
+int32 pll_temp
+int32 board_temp
+int32 diode_temp
+int32 pmic_temp
+int32 fan_temp
+int32 inter_temp
+int32 allied_wide_temp
+int32 allied_narrow_temp

@@ -1,0 +1,4 @@
+int32 sensor_type
+int32 protocol
+---
+int32 error

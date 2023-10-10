@@ -1,0 +1,4 @@
+int32 sensor_type
+---
+string pipeline
+int32 error

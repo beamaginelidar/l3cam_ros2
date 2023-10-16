@@ -116,6 +116,10 @@ If using `rqt_reconfiugre`, the window might show up before the driver is connec
 
 The l3cam_ros2_node is the main node that connects to the L3Cam and configures it according to ROS parameters/services. See the [parameters](#parameters) and [services](#services) sections for documentation regarding the various parameters that can be used to configure the L3Cam.
 
+**Note:**
+
+- If in any case this node dies without printing `Terminating...` and `Terminated.` you might have problems with the sensors as the library might have terminated wrongly. If this happens, reboot the device.
+
 ### pointcloud_stream
 
 The pointcloud_stream is the node that publishes pointcloud frames if the LiDAR sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
@@ -193,57 +197,65 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 
 ### Pointcloud parameters
 
-| Parameter                        | Type | Default | Range                 |
-| -------------------------------- | ---- | ------- | --------------------- |
-| `pointcloud_color`               | enum | 0       | see `pointCloudColor` |
-| `pointcloud_color_range_minimum` | int  | 0       | [0, 400000]           |
-| `pointcloud_color_range_maximum` | int  | 400000  | [0, 400000]           |
-| `distance_range_minimum`         | int  | 0       | [0, 400000]           |
-| `distance_range_maximum`         | int  | 400000  | [0, 400000]           |
-| `auto_bias`                      | bool | true    |                       |
-| `bias_value_right`               | int  | 1580    | [700, 3500]           |
-| `bias_value_left`                | int  | 1380    | [700, 3500]           |
+| Parameter                        | Type   | Default | Range                    |
+| -------------------------------- | ------ | ------- | ------------------------ |
+| `pointcloud_color`               | enum   | 0       | see `pointCloudColor`    |
+| `pointcloud_color_range_minimum` | int    | 0       | [0, 400000]              |
+| `pointcloud_color_range_maximum` | int    | 400000  | [0, 400000]              |
+| `distance_range_minimum`         | int    | 0       | [0, 400000]              |
+| `distance_range_maximum`         | int    | 400000  | [0, 400000]              |
+| `auto_bias`                      | bool   | true    |                          |
+| `bias_value_right`               | int    | 1580    | [700, 3500]              |
+| `bias_value_left`                | int    | 1380    | [700, 3500]              |
+| `lidar_streaming_protocol`       | int    | 0       | see `streamingProtocols` |
+| `lidar_rtsp_pipeline`            | string |         |                          |
 
 ### Polarimetric parameters
 
-| Parameter                                              | Type   | Default   | Range             |
-| ------------------------------------------------------ | ------ | --------- | ----------------- |
-| `polarimetric_camera_brightness`                       | int    | 127       | [0, 255]          |
-| `polarimetric_camera_black_level`                      | double | 6.0       | [0, 12.5]         |
-| `polarimetric_camera_auto_gain`                        | bool   | true      |                   |
-| `polarimetric_camera_auto_gain_range_minimum`          | double | 0.0       | [0, 48]           |
-| `polarimetric_camera_auto_gain_range_maximum`          | double | 48.0      | [0, 48]           |
-| `polarimetric_camera_gain`                             | double | 24.0      | [0, 48]           |
-| `polarimetric_camera_auto_exposure_time`               | bool   | true      |                   |
-| `polarimetric_camera_auto_exposure_time_range_minimum` | double | 33.456    | [33.456, 1000000] |
-| `polarimetric_camera_auto_exposure_time_range_maximum` | double | 1000000.0 | [33.456, 1000000] |
-| `polarimetric_camera_exposure_time`                    | double | 500000.0  | [33.456, 1000000] |
+| Parameter                                              | Type   | Default   | Range                    |
+| ------------------------------------------------------ | ------ | --------- | ------------------------ |
+| `polarimetric_camera_brightness`                       | int    | 127       | [0, 255]                 |
+| `polarimetric_camera_black_level`                      | double | 6.0       | [0, 12.5]                |
+| `polarimetric_camera_auto_gain`                        | bool   | true      |                          |
+| `polarimetric_camera_auto_gain_range_minimum`          | double | 0.0       | [0, 48]                  |
+| `polarimetric_camera_auto_gain_range_maximum`          | double | 48.0      | [0, 48]                  |
+| `polarimetric_camera_gain`                             | double | 24.0      | [0, 48]                  |
+| `polarimetric_camera_auto_exposure_time`               | bool   | true      |                          |
+| `polarimetric_camera_auto_exposure_time_range_minimum` | double | 33.456    | [33.456, 1000000]        |
+| `polarimetric_camera_auto_exposure_time_range_maximum` | double | 1000000.0 | [33.456, 1000000]        |
+| `polarimetric_camera_exposure_time`                    | double | 500000.0  | [33.456, 1000000]        |
+| `polarimetric_streaming_protocol`                      | int    | 0         | see `streamingProtocols` |
+| `polarimetric_rtsp_pipeline`                           | string |           |                          |
 
 ### RGB parameters
 
-| Parameter                       | Type | Default | Range                 |
-| ------------------------------- | ---- | ------- | --------------------- |
-| `rgb_camera_brightness`         | int  | 0       | [-15, 15]             |
-| `rgb_camera_contrast`           | int  | 10      | [0, 30]               |
-| `rgb_camera_saturation`         | int  | 16      | [0, 60]               |
-| `rgb_camera_sharpness`          | int  | 16      | [0, 127]              |
-| `rgb_camera_gamma`              | int  | 220     | [40, 500]             |
-| `rgb_camera_gain`               | int  | 0       | [0, 63]               |
-| `rgb_camera_auto_white_balance` | bool | true    |                       |
-| `rgb_camera_white_balance`      | int  | 5000    | [1000, 10000]         |
-| `rgb_camera_auto_exposure_time` | bool | true    |                       |
-| `rgb_camera_exposure_time`      | int  | 156     | [1, 10000]            |
-| `rgb_camera_resolution`         | enum | 3       | see `econResolutions` |
-| `rgb_camera_framerate`          | int  | 10      | [1, 16]               |
+| Parameter                       | Type   | Default | Range                    |
+| ------------------------------- | ------ | ------- | ------------------------ |
+| `rgb_camera_brightness`         | int    | 0       | [-15, 15]                |
+| `rgb_camera_contrast`           | int    | 10      | [0, 30]                  |
+| `rgb_camera_saturation`         | int    | 16      | [0, 60]                  |
+| `rgb_camera_sharpness`          | int    | 16      | [0, 127]                 |
+| `rgb_camera_gamma`              | int    | 220     | [40, 500]                |
+| `rgb_camera_gain`               | int    | 0       | [0, 63]                  |
+| `rgb_camera_auto_white_balance` | bool   | true    |                          |
+| `rgb_camera_white_balance`      | int    | 5000    | [1000, 10000]            |
+| `rgb_camera_auto_exposure_time` | bool   | true    |                          |
+| `rgb_camera_exposure_time`      | int    | 156     | [1, 10000]               |
+| `rgb_camera_resolution`         | enum   | 3       | see `econResolutions`    |
+| `rgb_camera_framerate`          | int    | 10      | [1, 16]                  |
+| `rgb_streaming_protocol`        | int    | 0       | see `streamingProtocols` |
+| `rgb_rtsp_pipeline`             | string |         |                          |
 
 ### Thermal parameters
 
-| Parameter                               | Type | Default | Range              |
-| --------------------------------------- | ---- | ------- | ------------------ |
-| `thermal_camera_colormap`               | enum | 1       | see `thermalTypes` |
-| `thermal_camera_temperature_filter`     | bool | false   |                    |
-| `thermal_camera_temperature_filter_min` | int  | 0       | [-40, 200]         |
-| `thermal_camera_temperature_filter_max` | int  | 50      | [-40, 200]         |
+| Parameter                               | Type   | Default | Range                    |
+| --------------------------------------- | ------ | ------- | ------------------------ |
+| `thermal_camera_colormap`               | enum   | 1       | see `thermalTypes`       |
+| `thermal_camera_temperature_filter`     | bool   | false   |                          |
+| `thermal_camera_temperature_filter_min` | int    | 0       | [-40, 200]               |
+| `thermal_camera_temperature_filter_max` | int    | 50      | [-40, 200]               |
+| `thermal_streaming_protocol`            | int    | 0       | see `streamingProtocols` |
+| `thermal_rtsp_pipeline`                 | string |         |                          |
 
 ### Allied Wide parameters
 
@@ -273,6 +285,8 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `allied_wide_camera_intensity_controller_region`  | enum   | 0       | 0(AutoMode) or 4(FullImage)         |
 | `allied_wide_camera_intensity_controller_target`  | double | 50      | [10, 90]                            |
 | `allied_wide_camera_max_driver_buffers_count`     | int    | 64      | [1, 4096]                           |
+| `allied_wide_streaming_protocol`                  | int    | 0       | see `streamingProtocols`            |
+| `allied_wide_rtsp_pipeline`                       | string |         |                                     |
 
 ### Allied Narrow parameters
 
@@ -297,15 +311,18 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `allied_narrow_camera_balance_ratio`                | double | 2.35498 | [0, 8]                              |
 | `allied_narrow_camera_balance_white_auto_rate`      | double | 100     | [0, 100]                            |
 | `allied_narrow_camera_balance_white_auto_tolerance` | double | 5       | [0, 50]                             |
-| `allied_narrow_camera_auto_mode_region_height`      | int    | 2056    | [0, 2056]                           |
-| `allied_narrow_camera_auto_mode_region_width`       | int    | 2464    | [0, 2464]                           |
+| `allied_narrow_camera_auto_mode_region_height`      | int    | 1544    | [0, 1544]                           |
+| `allied_narrow_camera_auto_mode_region_width`       | int    | 2064    | [0, 2064]                           |
 | `allied_narrow_camera_intensity_controller_region`  | enum   | 0       | 0(AutoMode) or 4(FullImage)         |
 | `allied_narrow_camera_intensity_controller_target`  | double | 50      | [10, 90]                            |
 | `allied_narrow_camera_max_driver_buffers_count`     | int    | 64      | [1, 4096]                           |
+| `allied_narrow_streaming_protocol`                  | int    | 0       | see `streamingProtocols`            |
+| `allied_narrow_rtsp_pipeline`                       | string |         |                                     |
 
 **Note:**
 
 - The following parameters might not match the real value as they depend on another parameter to be able to be set, and getters for sensors parameters, except allied cameras, are not supported yet.
+
   - `bias_value_right` depends on `auto_bias`.
   - `bias_value_left` depends on `auto_bias`.
   - `polarimetric_camera_auto_gain_range_minimum` depends on `polarimetric_camera_auto_gain`.
@@ -318,6 +335,7 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
   - `rgb_camera_exposure_time` depends on `rgb_camera_auto_exposure_time`.
 
 - The following parameters will change when the parameter they depend on changes. These changes will not be shown directly in `rqt_reconfigure`, so you might have to hide and show the parameter's node.
+
   - `allied_wide_camera_exposure_time` changes when `allied_wide_camera_auto_exposure_time` is set to false.
   - `allied_wide_camera_gain` changes when `allied_wide_camera_auto_gain` is set to false.
   - `allied_narrow_camera_exposure_time` changes when `allied_narrow_camera_auto_exposure_time` is set to false.
@@ -331,88 +349,91 @@ Only the changeable parameters while streaming will appear on the dynamic reconf
 
 The ranges shown in the [parameters](#parameters) section also apply to the services as the same parameters are being changed.
 
-| Service                                                | Args                                                                                    | Return                                                       |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `/get_version`                                         | -                                                                                       | string version                                               |
-| `/initialize`                                          | string local_address, string device_address                                             | int error                                                    |
-| `/terminate`                                           | -                                                                                       | int error                                                    |
-| `/find_devices`                                        | -                                                                                       | int error, int num_devices                                   |
-| `/get_local_server_address`                            | -                                                                                       | string local_ip_address                                      |
-| `/get_device_status`                                   | -                                                                                       | int error, int system_status                                 |
-| `/get_sensors_available`                               | -                                                                                       | int error, Sensor[] sensors, int num_sensors                 |
-| `/get_network_configuration`                           | -                                                                                       | int error, string ip_address, string netmask, string gateway |
-| `/change_network_configuration`                        | string ip_address, string netmask, string gateway, bool enable_dhcp                     | int error                                                    |
-| `/power_off_device`                                    | -                                                                                       | int error                                                    |
-| `/start_device`                                        | -                                                                                       | int error                                                    |
-| `/stop_device`                                         | -                                                                                       | int error                                                    |
-| `/start_stream`                                        | -                                                                                       | int error                                                    |
-| `/stop_stream`                                         | -                                                                                       | int error                                                    |
-| `/change_pointcloud_color`                             | int visualization_color                                                                 | int error                                                    |
-| `/change_pointcloud_color_range`                       | int max_value, int min_value                                                            | int error                                                    |
-| `/change_distance_range`                               | int max_value, int min_value                                                            | int error                                                    |
-| `/enable_auto_bias`                                    | bool enabled                                                                            | -                                                            |
-| `/change_bias_value`                                   | int index, int bias                                                                     | -                                                            |
-| `/set_polarimetric_camera_default_settings`            | -                                                                                       | int error                                                    |
-| `/change_polarimetric_camera_brightness`               | int brightness                                                                          | int error                                                    |
-| `/change_polarimetric_camera_black_level`              | float black_level                                                                       | int error                                                    |
-| `/enable_polarimetric_camera_auto_gain`                | bool enabled                                                                            | int error                                                    |
-| `/change_polarimetric_camera_auto_gain_range`          | float min_gain, float max_gain                                                          | int error                                                    |
-| `/change_polarimetric_camera_gain`                     | float gain                                                                              | int error                                                    |
-| `/enable_polarimetric_camera_auto_exposure_time`       | bool enabled                                                                            | int error                                                    |
-| `/change_polarimetric_camera_exposure_time`            | float exposure_time                                                                     | int error                                                    |
-| `/change_polarimetric_camera_auto_exposure_time_range` | float min_exposure, float max_exposure                                                  | int error                                                    |
-| `/set_rgb_camera_default_settings`                     | -                                                                                       | int error                                                    |
-| `/change_rgb_camera_brightness`                        | int brightness                                                                          | int error                                                    |
-| `/change_rgb_camera_contrast`                          | int contrast                                                                            | int error                                                    |
-| `/change_rgb_camera_saturation`                        | int saturation                                                                          | int error                                                    |
-| `/change_rgb_camera_sharpness`                         | int sharpness                                                                           | int error                                                    |
-| `/change_rgb_camera_gamma`                             | int gamma                                                                               | int error                                                    |
-| `/change_rgb_camera_gain`                              | int gain                                                                                | int error                                                    |
-| `/change_rgb_camera_white_balance`                     | int white_balance                                                                       | int error                                                    |
-| `/enable_rgb_camera_auto_exposure_time`                | bool enabled                                                                            | int error                                                    |
-| `/change_rgb_camera_exposure_time`                     | int exposure_time                                                                       | int error                                                    |
-| `/enable_rgb_camera_auto_white_balance`                | bool enabled                                                                            | int error                                                    |
-| `/change_thermal_camera_colormap`                      | int colormap                                                                            | int error                                                    |
-| `/change_thermal_camera_temperature_filter`            | float min_temperature, float max_temperature                                            | int error                                                    |
-| `/enable_thermal_camera_temperature_filter`            | bool enabled                                                                            | int error                                                    |
-| `/change_allied_camera_exposure_time`                  | int allied_type, float exposure_time                                                    | int error                                                    |
-| `/enable_allied_camera_auto_exposure_time`             | int allied_type, bool enabled                                                           | int error                                                    |
-| `/change_allied_camera_auto_exposure_time_range`       | int allied_type, float auto_exposure_time_range_min, float auto_exposure_time_range_max | int error                                                    |
-| `/change_allied_camera_gain`                           | int allied_type, float gain                                                             | int error                                                    |
-| `/enable_allied_camera_auto_gain`                      | int allied_type, bool enabled                                                           | int error                                                    |
-| `/change_allied_camera_auto_gain_range`                | int allied_type, float auto_gain_range_min, float auto_gain_range_max                   | int error                                                    |
-| `/change_allied_camera_gamma`                          | int allied_type, float gamma                                                            | int error                                                    |
-| `/change_allied_camera_saturation`                     | int allied_type, float saturation                                                       | int error                                                    |
-| `/change_allied_camera_hue`                            | int allied_type, float hue                                                              | int error                                                    |
-| `/change_allied_camera_intensity_auto_precedence`      | int allied_type, int intensity_auto_precedence                                          | int error                                                    |
-| `/enable_allied_camera_auto_white_balance`             | int allied_type, bool enabled                                                           | int error                                                    |
-| `/change_allied_camera_balance_ratio_selector`         | int allied_type, int white_balance_ratio_selector                                       | int error                                                    |
-| `/change_allied_camera_balance_ratio`                  | int allied_type, float balance_ratio                                                    | int error                                                    |
-| `/change_allied_camera_balance_white_auto_rate`        | int allied_type, float white_balance_auto_rate                                          | int error                                                    |
-| `/change_allied_camera_balance_white_auto_tolerance`   | int allied_type, float white_balance_auto_tolerance                                     | int error                                                    |
-| `/change_allied_camera_intensity_controller_region`    | int allied_type, int intensity_controller_region                                        | int error                                                    |
-| `/change_allied_camera_intensity_controller_target`    | int allied_type, float intensity_controller_target                                      | int error                                                    |
-| `get_allied_camera_black_level`                        | int allied_type                                                                         | int error, float black_level                                 |
-| `get_allied_camera_exposure_time`                      | int allied_type                                                                         | int error, float exposure_time                               |
-| `get_allied_camera_auto_exposure_time`                 | int allied_type                                                                         | int error, bool enabled                                      |
-| `get_allied_camera_auto_exposure_time_range`           | int allied_type                                                                         | int error, float auto_exposure_time_range                    |
-| `get_allied_camera_gain`                               | int allied_type                                                                         | int error, float gain                                        |
-| `get_allied_camera_auto_gain`                          | int allied_type                                                                         | int error, bool enabled                                      |
-| `get_allied_camera_auto_gain_range`                    | int allied_type                                                                         | int error, float min, float max                              |
-| `get_allied_camera_gamma`                              | int allied_type                                                                         | int error, float gamma                                       |
-| `get_allied_camera_saturation`                         | int allied_type                                                                         | int error, float saturation                                  |
-| `get_allied_camera_sharpness`                          | int allied_type                                                                         | int error, int sharpness                                     |
-| `get_allied_camera_hue`                                | int allied_type                                                                         | int error, float hue                                         |
-| `get_allied_camera_intensity_auto_precedence`          | int allied_type                                                                         | int error, int mode                                          |
-| `get_allied_camera_auto_white_balance`                 | int allied_type                                                                         | int error, bool enabled                                      |
-| `get_allied_camera_balance_ratio_selector`             | int allied_type                                                                         | int error, int ratio_selector                                |
-| `get_allied_camera_balance_ratio`                      | int allied_type                                                                         | int error, float balance_ratio                               |
-| `get_allied_camera_balance_white_auto_rate`            | int allied_type                                                                         | int error, float balance_white_auto_rate                     |
-| `get_allied_camera_balance_white_auto_tolerance`       | int allied_type                                                                         | int error, float balance_white_auto_tolerance                |
-| `get_allied_camera_auto_mode_region`                   | int allied_type                                                                         | int error, int height, int width                             |
-| `get_allied_camera_intensity_controller_region`        | int allied_type                                                                         | int error, int mode                                          |
-| `get_allied_camera_intensity_controller_target`        | int allied_type                                                                         | int error, float intensity_controller_target                 |
-| `get_allied_camera_max_driver_buffers_count`           | int allied_type                                                                         | int error, int max_driver_buffers_count                      |
+| Service                                                | Args                                                                                    | Return                                                                                                                                                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/get_version`                                         | -                                                                                       | string version                                                                                                                                                                                 |
+| `/initialize`                                          | string local_address, string device_address                                             | int error                                                                                                                                                                                      |
+| `/terminate`                                           | -                                                                                       | int error                                                                                                                                                                                      |
+| `/find_devices`                                        | -                                                                                       | int error, int num_devices                                                                                                                                                                     |
+| `/get_local_server_address`                            | -                                                                                       | string local_ip_address                                                                                                                                                                        |
+| `/get_device_status`                                   | -                                                                                       | int error, int system_status                                                                                                                                                                   |
+| `/get_sensors_available`                               | -                                                                                       | int error, Sensor[] sensors, int num_sensors                                                                                                                                                   |
+| `/change_streaming_protocol`                           | int sensor_type, int protocol                                                           | int error                                                                                                                                                                                      |
+| `/get_rtsp_pipeline`                                   | int sensor_type                                                                         | int pipeline, int error                                                                                                                                                                        |
+| `/get_network_configuration`                           | -                                                                                       | int error, string ip_address, string netmask, string gateway                                                                                                                                   |
+| `/change_network_configuration`                        | string ip_address, string netmask, string gateway, bool enable_dhcp                     | int error                                                                                                                                                                                      |
+| `/power_off_device`                                    | -                                                                                       | int error                                                                                                                                                                                      |
+| `/start_device`                                        | -                                                                                       | int error                                                                                                                                                                                      |
+| `/stop_device`                                         | -                                                                                       | int error                                                                                                                                                                                      |
+| `/start_stream`                                        | -                                                                                       | int error                                                                                                                                                                                      |
+| `/stop_stream`                                         | -                                                                                       | int error                                                                                                                                                                                      |
+| `/get_device_temperatures`                             | -                                                                                       | int error, int bcpu_temp, int mcpu_temp, int gpu_temp, int pll_temp, int board_temp, int diode_temp, int pmic_temp, int fan_temp, int inter_temp, int allied_wide_temp, int allied_narrow_temp |
+| `/change_pointcloud_color`                             | int visualization_color                                                                 | int error                                                                                                                                                                                      |
+| `/change_pointcloud_color_range`                       | int max_value, int min_value                                                            | int error                                                                                                                                                                                      |
+| `/change_distance_range`                               | int max_value, int min_value                                                            | int error                                                                                                                                                                                      |
+| `/enable_auto_bias`                                    | bool enabled                                                                            | -                                                                                                                                                                                              |
+| `/change_bias_value`                                   | int index, int bias                                                                     | -                                                                                                                                                                                              |
+| `/set_polarimetric_camera_default_settings`            | -                                                                                       | int error                                                                                                                                                                                      |
+| `/change_polarimetric_camera_brightness`               | int brightness                                                                          | int error                                                                                                                                                                                      |
+| `/change_polarimetric_camera_black_level`              | float black_level                                                                       | int error                                                                                                                                                                                      |
+| `/enable_polarimetric_camera_auto_gain`                | bool enabled                                                                            | int error                                                                                                                                                                                      |
+| `/change_polarimetric_camera_auto_gain_range`          | float min_gain, float max_gain                                                          | int error                                                                                                                                                                                      |
+| `/change_polarimetric_camera_gain`                     | float gain                                                                              | int error                                                                                                                                                                                      |
+| `/enable_polarimetric_camera_auto_exposure_time`       | bool enabled                                                                            | int error                                                                                                                                                                                      |
+| `/change_polarimetric_camera_exposure_time`            | float exposure_time                                                                     | int error                                                                                                                                                                                      |
+| `/change_polarimetric_camera_auto_exposure_time_range` | float min_exposure, float max_exposure                                                  | int error                                                                                                                                                                                      |
+| `/set_rgb_camera_default_settings`                     | -                                                                                       | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_brightness`                        | int brightness                                                                          | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_contrast`                          | int contrast                                                                            | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_saturation`                        | int saturation                                                                          | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_sharpness`                         | int sharpness                                                                           | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_gamma`                             | int gamma                                                                               | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_gain`                              | int gain                                                                                | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_white_balance`                     | int white_balance                                                                       | int error                                                                                                                                                                                      |
+| `/enable_rgb_camera_auto_exposure_time`                | bool enabled                                                                            | int error                                                                                                                                                                                      |
+| `/change_rgb_camera_exposure_time`                     | int exposure_time                                                                       | int error                                                                                                                                                                                      |
+| `/enable_rgb_camera_auto_white_balance`                | bool enabled                                                                            | int error                                                                                                                                                                                      |
+| `/change_thermal_camera_colormap`                      | int colormap                                                                            | int error                                                                                                                                                                                      |
+| `/change_thermal_camera_temperature_filter`            | float min_temperature, float max_temperature                                            | int error                                                                                                                                                                                      |
+| `/enable_thermal_camera_temperature_filter`            | bool enabled                                                                            | int error                                                                                                                                                                                      |
+| `/change_allied_camera_exposure_time`                  | int allied_type, float exposure_time                                                    | int error                                                                                                                                                                                      |
+| `/enable_allied_camera_auto_exposure_time`             | int allied_type, bool enabled                                                           | int error                                                                                                                                                                                      |
+| `/change_allied_camera_auto_exposure_time_range`       | int allied_type, float auto_exposure_time_range_min, float auto_exposure_time_range_max | int error                                                                                                                                                                                      |
+| `/change_allied_camera_gain`                           | int allied_type, float gain                                                             | int error                                                                                                                                                                                      |
+| `/enable_allied_camera_auto_gain`                      | int allied_type, bool enabled                                                           | int error                                                                                                                                                                                      |
+| `/change_allied_camera_auto_gain_range`                | int allied_type, float auto_gain_range_min, float auto_gain_range_max                   | int error                                                                                                                                                                                      |
+| `/change_allied_camera_gamma`                          | int allied_type, float gamma                                                            | int error                                                                                                                                                                                      |
+| `/change_allied_camera_saturation`                     | int allied_type, float saturation                                                       | int error                                                                                                                                                                                      |
+| `/change_allied_camera_hue`                            | int allied_type, float hue                                                              | int error                                                                                                                                                                                      |
+| `/change_allied_camera_intensity_auto_precedence`      | int allied_type, int intensity_auto_precedence                                          | int error                                                                                                                                                                                      |
+| `/enable_allied_camera_auto_white_balance`             | int allied_type, bool enabled                                                           | int error                                                                                                                                                                                      |
+| `/change_allied_camera_balance_ratio_selector`         | int allied_type, int white_balance_ratio_selector                                       | int error                                                                                                                                                                                      |
+| `/change_allied_camera_balance_ratio`                  | int allied_type, float balance_ratio                                                    | int error                                                                                                                                                                                      |
+| `/change_allied_camera_balance_white_auto_rate`        | int allied_type, float white_balance_auto_rate                                          | int error                                                                                                                                                                                      |
+| `/change_allied_camera_balance_white_auto_tolerance`   | int allied_type, float white_balance_auto_tolerance                                     | int error                                                                                                                                                                                      |
+| `/change_allied_camera_intensity_controller_region`    | int allied_type, int intensity_controller_region                                        | int error                                                                                                                                                                                      |
+| `/change_allied_camera_intensity_controller_target`    | int allied_type, float intensity_controller_target                                      | int error                                                                                                                                                                                      |
+| `get_allied_camera_black_level`                        | int allied_type                                                                         | int error, float black_level                                                                                                                                                                   |
+| `get_allied_camera_exposure_time`                      | int allied_type                                                                         | int error, float exposure_time                                                                                                                                                                 |
+| `get_allied_camera_auto_exposure_time`                 | int allied_type                                                                         | int error, bool enabled                                                                                                                                                                        |
+| `get_allied_camera_auto_exposure_time_range`           | int allied_type                                                                         | int error, float auto_exposure_time_range                                                                                                                                                      |
+| `get_allied_camera_gain`                               | int allied_type                                                                         | int error, float gain                                                                                                                                                                          |
+| `get_allied_camera_auto_gain`                          | int allied_type                                                                         | int error, bool enabled                                                                                                                                                                        |
+| `get_allied_camera_auto_gain_range`                    | int allied_type                                                                         | int error, float min, float max                                                                                                                                                                |
+| `get_allied_camera_gamma`                              | int allied_type                                                                         | int error, float gamma                                                                                                                                                                         |
+| `get_allied_camera_saturation`                         | int allied_type                                                                         | int error, float saturation                                                                                                                                                                    |
+| `get_allied_camera_sharpness`                          | int allied_type                                                                         | int error, int sharpness                                                                                                                                                                       |
+| `get_allied_camera_hue`                                | int allied_type                                                                         | int error, float hue                                                                                                                                                                           |
+| `get_allied_camera_intensity_auto_precedence`          | int allied_type                                                                         | int error, int mode                                                                                                                                                                            |
+| `get_allied_camera_auto_white_balance`                 | int allied_type                                                                         | int error, bool enabled                                                                                                                                                                        |
+| `get_allied_camera_balance_ratio_selector`             | int allied_type                                                                         | int error, int ratio_selector                                                                                                                                                                  |
+| `get_allied_camera_balance_ratio`                      | int allied_type                                                                         | int error, float balance_ratio                                                                                                                                                                 |
+| `get_allied_camera_balance_white_auto_rate`            | int allied_type                                                                         | int error, float balance_white_auto_rate                                                                                                                                                       |
+| `get_allied_camera_balance_white_auto_tolerance`       | int allied_type                                                                         | int error, float balance_white_auto_tolerance                                                                                                                                                  |
+| `get_allied_camera_auto_mode_region`                   | int allied_type                                                                         | int error, int height, int width                                                                                                                                                               |
+| `get_allied_camera_intensity_controller_region`        | int allied_type                                                                         | int error, int mode                                                                                                                                                                            |
+| `get_allied_camera_intensity_controller_target`        | int allied_type                                                                         | int error, float intensity_controller_target                                                                                                                                                   |
+| `get_allied_camera_max_driver_buffers_count`           | int allied_type                                                                         | int error, int max_driver_buffers_count                                                                                                                                                        |
 
 **Note:**
 

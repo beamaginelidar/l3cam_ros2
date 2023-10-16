@@ -243,7 +243,6 @@ namespace l3cam_ros2
         {
             ROS2_BMG_UNUSED(res);
             g_listening = false;
-            usleep(500000);
 
             if (req->code == 0)
             {
@@ -328,6 +327,10 @@ int main(int argc, char const *argv[])
     pthread_create(&stream_thread, NULL, &ImageThread, (void *)data);
 
     rclcpp::spin(node);
+
+    g_listening = false;
+    usleep(500000);
+
     rclcpp::shutdown();
     return 0;
 }

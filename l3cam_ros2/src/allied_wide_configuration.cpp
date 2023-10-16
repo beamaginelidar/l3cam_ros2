@@ -52,7 +52,8 @@
 #include "l3cam_interfaces/srv/change_allied_camera_balance_white_auto_tolerance.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_intensity_controller_region.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_intensity_controller_target.hpp"
-
+#include "l3cam_interfaces/srv/change_streaming_protocol.hpp"
+#include "l3cam_interfaces/srv/get_rtsp_pipeline.hpp"
 #include "l3cam_interfaces/srv/get_allied_camera_exposure_time.hpp"
 #include "l3cam_interfaces/srv/get_allied_camera_gain.hpp"
 
@@ -69,8 +70,7 @@ namespace l3cam_ros2
     public:
         AlliedWideConfiguration() : Node("allied_wide_configuration")
         {
-            declareGetParameters();
-
+            // Create service clients
             clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
             clientExposureTime = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>("change_allied_camera_exposure_time");
             clientAutoExposureTime = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>("enable_allied_camera_auto_exposure_time");
@@ -88,9 +88,12 @@ namespace l3cam_ros2
             clientBalanceWhiteAutoTolerance = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>("change_allied_camera_balance_white_auto_tolerance");
             clientIntensityControllerRegion = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>("change_allied_camera_intensity_controller_region");
             clientIntensityControllerTarget = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>("change_allied_camera_intensity_controller_target");
-
+            clientStreamingProtocol = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
+            clientGetRtspPipeline = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
             clientGetExposureTime = this->create_client<l3cam_interfaces::srv::GetAlliedCameraExposureTime>("get_allied_camera_exposure_time");
             clientGetGain = this->create_client<l3cam_interfaces::srv::GetAlliedCameraGain>("get_allied_camera_gain");
+
+            declareGetParameters();
 
             // Create service server
             srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
@@ -102,6 +105,7 @@ namespace l3cam_ros2
         }
 
         rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
+        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr clientGetRtspPipeline;
 
     private:
         void declareGetParameters()
@@ -176,6 +180,9 @@ namespace l3cam_ros2
             floatRange.set__from_value(10).set__to_value(90);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_intensity_controller_target", 50.0, descriptor); // 10 - 90
+            intRange.set__from_value(0).set__to_value(1);
+            descriptor.integer_range = {intRange};
+            this->declare_parameter("allied_wide_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
 
             // Get and save parameters
             allied_wide_camera_exposure_time = this->get_parameter("allied_wide_camera_exposure_time").as_double();
@@ -197,6 +204,7 @@ namespace l3cam_ros2
             allied_wide_camera_balance_white_auto_tolerance = this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double();
             allied_wide_camera_intensity_controller_region = this->get_parameter("allied_wide_camera_intensity_controller_region").as_int();
             allied_wide_camera_intensity_controller_target = this->get_parameter("allied_wide_camera_intensity_controller_target").as_double();
+            streaming_protocol = this->get_parameter("allied_wide_streaming_protocol").as_int();
         }
 
         rcl_interfaces::msg::SetParametersResult parametersCallback(
@@ -558,6 +566,25 @@ namespace l3cam_ros2
                     auto resultIntensityControllerTarget = clientIntensityControllerTarget->async_send_request(
                         requestIntensityControllerTarget, std::bind(&AlliedWideConfiguration::intensityControllerTargetResponseCallback, this, std::placeholders::_1));
                 }
+                if (param_name == "allied_wide_streaming_protocol" && param.as_int() != streaming_protocol)
+                {
+                    while (!clientStreamingProtocol->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
+                    requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_allied_wide;
+                    requestStreamingProtocol->protocol = param.as_int();
+
+                    auto resultStreamingProtocol = clientStreamingProtocol->async_send_request(
+                        requestStreamingProtocol, std::bind(&AlliedWideConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
+                }
             }
 
             return result;
@@ -709,7 +736,6 @@ namespace l3cam_ros2
                     // If auto gain deactivated we have to get the actual gain to know its value
                     if (!allied_wide_camera_auto_gain)
                     {
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Getting gain value");
                         while (!clientGetGain->wait_for_service(1s))
                         {
                             if (!rclcpp::ok())
@@ -751,14 +777,14 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameters changed successfully
+                    // Parameters changed successfully, save values
                     allied_wide_camera_auto_gain_range_min = this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double();
                     allied_wide_camera_auto_gain_range_max = this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double();
                 }
                 else
                 {
-                    // Parameters could not be changed, reset parameters to value before change
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    // Parameters could not be changed, reset parameters to value before change
                     this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_min", allied_wide_camera_auto_gain_range_min));
                     this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_max", allied_wide_camera_auto_gain_range_max));
                 }
@@ -781,7 +807,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_gamma = this->get_parameter("allied_wide_camera_gamma").as_double();
                 }
                 else
@@ -808,7 +834,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_hue = this->get_parameter("allied_wide_camera_hue").as_double();
                 }
                 else
@@ -835,7 +861,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_intensity_auto_precedence = this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int();
                 }
                 else
@@ -862,7 +888,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_auto_white_balance = this->get_parameter("allied_wide_camera_auto_white_balance").as_bool();
                 }
                 else
@@ -889,7 +915,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_balance_ratio_selector = this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int();
                 }
                 else
@@ -916,7 +942,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_balance_ratio = this->get_parameter("allied_wide_camera_balance_ratio").as_double();
                 }
                 else
@@ -943,7 +969,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_balance_white_auto_rate = this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double();
                 }
                 else
@@ -970,7 +996,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_balance_white_auto_tolerance = this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double();
                 }
                 else
@@ -997,7 +1023,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_intensity_controller_region = this->get_parameter("allied_wide_camera_intensity_controller_region").as_int();
                 }
                 else
@@ -1024,7 +1050,7 @@ namespace l3cam_ros2
                 int error = future.get()->error;
                 if (!error)
                 {
-                    // Parameter changed successfully
+                    // Parameter changed successfully, save value
                     allied_wide_camera_intensity_controller_target = this->get_parameter("allied_wide_camera_intensity_controller_target").as_double();
                 }
                 else
@@ -1090,6 +1116,33 @@ namespace l3cam_ros2
             }
         }
 
+        void streamingProtocolResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    streaming_protocol = this->get_parameter("allied_wide_streaming_protocol").as_int();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("allied_wide_streaming_protocol", streaming_protocol));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_streaming_protocol");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("allied_wide_streaming_protocol", streaming_protocol));
+            }
+        }
+
         void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
                                         std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
         {
@@ -1125,6 +1178,7 @@ namespace l3cam_ros2
         double allied_wide_camera_balance_white_auto_tolerance;
         int allied_wide_camera_intensity_controller_region;
         double allied_wide_camera_intensity_controller_target;
+        int streaming_protocol;
 
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedPtr clientExposureTime;
         rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>::SharedPtr clientAutoExposureTime;
@@ -1142,7 +1196,7 @@ namespace l3cam_ros2
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr clientBalanceWhiteAutoTolerance;
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>::SharedPtr clientIntensityControllerRegion;
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>::SharedPtr clientIntensityControllerTarget;
-
+        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr clientStreamingProtocol;
         rclcpp::Client<l3cam_interfaces::srv::GetAlliedCameraExposureTime>::SharedPtr clientGetExposureTime;
         rclcpp::Client<l3cam_interfaces::srv::GetAlliedCameraGain>::SharedPtr clientGetGain;
 
@@ -1176,16 +1230,19 @@ int main(int argc, char **argv)
 
     int error = L3CAM_OK;
     bool sensor_is_available = false;
+    // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
         error = resultGetSensors.get()->error;
 
         if (!error)
+        {
             for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
             {
                 if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_wide && resultGetSensors.get()->sensors[i].sensor_available)
                     sensor_is_available = true;
             }
+        }
         else
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
@@ -1205,6 +1262,43 @@ int main(int argc, char **argv)
     else
     {
         return 0;
+    }
+
+    // Get pipeline
+    while (!node->clientGetRtspPipeline->wait_for_service(1s))
+    {
+        if (!rclcpp::ok())
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+            return 0;
+        }
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+    }
+
+    auto requestGetRtspPipeline = std::make_shared<l3cam_interfaces::srv::GetRtspPipeline::Request>();
+    requestGetRtspPipeline.get()->sensor_type = (int)sensorTypes::sensor_allied_wide;
+    auto resultGetRtspPipeline = node->clientGetRtspPipeline->async_send_request(requestGetRtspPipeline);
+
+    if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+        error = resultGetRtspPipeline.get()->error;
+
+        if (!error)
+        {
+            rcl_interfaces::msg::ParameterDescriptor descriptor;
+            descriptor.read_only = true;
+            node->declare_parameter("allied_wide_rtsp_pipeline", resultGetRtspPipeline.get()->pipeline, descriptor);
+        }
+        else
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting pipeline in " << __func__ << ": " << getBeamErrorDescription(error));
+            return 1;
+        }
+    }
+    else
+    {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_rtsp_pipeline");
+        return 1;
     }
 
     rclcpp::spin(node);

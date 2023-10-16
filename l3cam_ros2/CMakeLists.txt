@@ -17,12 +17,13 @@ find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 
 include_directories(
+  include/l3cam_ros2
   /usr/local/lib/libl3cam
   /usr/local/include/libl3cam
 )
 FIND_LIBRARY(l3cam_LIBRARIES libL3Cam.a /usr/local/lib/libl3cam/)
 
-add_executable(l3cam_ros2_node src/l3cam_ros2_node.hpp src/l3cam_ros2_node.cpp)
+add_executable(l3cam_ros2_node src/l3cam_ros2_node.cpp)
 ament_target_dependencies(l3cam_ros2_node rclcpp l3cam_interfaces)
 target_link_libraries(l3cam_ros2_node ${l3cam_LIBRARIES})
 

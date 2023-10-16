@@ -8,6 +8,10 @@
     <arg name="pointcloud_color_range_maximum" default="400000" />
     <arg name="distance_range_minimum" default="0" />
     <arg name="distance_range_maximum" default="400000" />
+    <arg name="auto_bias" default="true" />
+    <arg name="bias_value_right" default="1580" />
+    <arg name="bias_value_left" default="1380" />
+    <arg name="lidar_streaming_protocol" default="0" />
 
     <!-- Polarimetric configuration -->
     <arg name="polarimetric_camera_brightness" default="127" />
@@ -20,6 +24,7 @@
     <arg name="polarimetric_camera_auto_exposure_time_range_minimum" default="33.5" />
     <arg name="polarimetric_camera_auto_exposure_time_range_maximum" default="66470.6" />
     <arg name="polarimetric_camera_exposure_time" default="33.5" /> 
+    <arg name="polarimetric_streaming_protocol" default="0" />
 
     <!-- RGB configuration -->
     <arg name="rgb_camera_brightness" default="0" />
@@ -32,12 +37,14 @@
     <arg name="rgb_camera_white_balance" default="5000" />
     <arg name="rgb_camera_auto_exposure_time" default="false" />
     <arg name="rgb_camera_exposure_time" default="156" />
+    <arg name="rgb_streaming_protocol" default="0" />
 
     <!-- Thermal configuration -->
     <arg name="thermal_camera_colormap" default="1" />
     <arg name="thermal_camera_temperature_filter" default="false" />
     <arg name="thermal_camera_temperature_filter_min" default="0" />
     <arg name="thermal_camera_temperature_filter_max" default="50" />
+    <arg name="thermal_streaming_protocol" default="0" />
 
     <!-- Allied Wide configuration -->
     <arg name="allied_wide_camera_exposure_time" default="4992.4" />
@@ -59,6 +66,7 @@
     <arg name="allied_wide_camera_balance_white_auto_tolerance" default="5" />
     <arg name="allied_wide_camera_intensity_controller_region" default="0" />
     <arg name="allied_wide_camera_intensity_controller_target" default="50" />
+    <arg name="allied_wide_streaming_protocol" default="0" />
 
     <!-- Allied Narrow configuration -->
     <arg name="allied_narrow_camera_exposure_time" default="4992.4" />
@@ -80,6 +88,7 @@
     <arg name="allied_narrow_camera_balance_white_auto_tolerance" default="5" />
     <arg name="allied_narrow_camera_intensity_controller_region" default="0" />
     <arg name="allied_narrow_camera_intensity_controller_target" default="50" />
+    <arg name="allied_narrow_streaming_protocol" default="0" />
 
     <!-- Dynamic reconfigure -->
     <node pkg="l3cam_ros2" exec="network_configuration" name="network_configuration" if="$(var network_conf)" />
@@ -90,6 +99,10 @@
         <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />
         <param name="distance_range_minimum" value="$(var distance_range_minimum)" type="int" />
         <param name="distance_range_maximum" value="$(var distance_range_maximum)" type="int" />
+        <param name="auto_bias" value="$(var auto_bias)" type="bool" />
+        <param name="bias_value_right" value="$(var bias_value_right)" type="int" />
+        <param name="bias_value_left" value="$(var bias_value_left)" type="int" />
+        <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" type="int" />
     </node>
 
     <node pkg="l3cam_ros2" exec="polarimetric_configuration" name="polarimetric_configuration">
@@ -103,6 +116,7 @@
         <param name="polarimetric_camera_auto_exposure_time_range_minimum" value="$(var polarimetric_camera_auto_exposure_time_range_minimum)" type="float" />
         <param name="polarimetric_camera_auto_exposure_time_range_maximum" value="$(var polarimetric_camera_auto_exposure_time_range_maximum)" type="float" />
         <param name="polarimetric_camera_exposure_time" value="$(var polarimetric_camera_exposure_time)" type="float" />
+        <param name="polarimetric_streaming_protocol" value="$(var polarimetric_streaming_protocol)" type="int" />
     </node>
 
     <node pkg="l3cam_ros2" exec="rgb_configuration" name="rgb_configuration">
@@ -116,6 +130,7 @@
         <param name="rgb_camera_white_balance" value="$(var rgb_camera_white_balance)" type="int" />
         <param name="rgb_camera_auto_exposure_time" value="$(var rgb_camera_auto_exposure_time)" type="bool" />
         <param name="rgb_camera_exposure_time" value="$(var rgb_camera_exposure_time)" type="int" />
+        <param name="rgb_streaming_protocol" value="$(var rgb_streaming_protocol)" type="int" />
     </node>
 
     <node pkg="l3cam_ros2" exec="thermal_configuration" name="thermal_configuration">
@@ -123,6 +138,7 @@
         <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" type="bool" />
         <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" type="int" />
         <param name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" type="int" />
+        <param name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" type="int" />
     </node>
 
     <node pkg="l3cam_ros2" exec="allied_wide_configuration" name="allied_wide_configuration">
@@ -145,6 +161,7 @@
         <param name="allied_wide_camera_balance_white_auto_tolerance" value="$(var allied_wide_camera_balance_white_auto_tolerance)" type="float" />
         <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" type="int" />
         <param name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" type="float" />
+        <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" type="int" />
     </node>
     
     <node pkg="l3cam_ros2" exec="allied_narrow_configuration" name="allied_narrow_configuration">
@@ -167,6 +184,7 @@
         <param name="allied_narrow_camera_balance_white_auto_tolerance" value="$(var allied_narrow_camera_balance_white_auto_tolerance)" type="float" />
         <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" type="int" />
         <param name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" type="float" />
+        <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" type="int" />
     </node>
     
     <node pkg="rqt_reconfigure" exec="rqt_reconfigure" name="rqt_reconfigure" if="$(var rqt_reconfigure)" />

@@ -44,6 +44,8 @@
 #include "l3cam_interfaces/srv/enable_polarimetric_camera_auto_exposure_time.hpp"
 #include "l3cam_interfaces/srv/change_polarimetric_camera_auto_exposure_time_range.hpp"
 #include "l3cam_interfaces/srv/change_polarimetric_camera_exposure_time.hpp"
+#include "l3cam_interfaces/srv/change_streaming_protocol.hpp"
+#include "l3cam_interfaces/srv/get_rtsp_pipeline.hpp"
 
 #include "l3cam_interfaces/srv/sensor_disconnected.hpp"
 
@@ -58,8 +60,6 @@ namespace l3cam_ros2
     public:
         PolarimetricConfiguration() : Node("polarimetric_configuration")
         {
-            declareGetParameters();
-
             // Create service clients
             clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
             clientBrightness = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>("change_polarimetric_camera_brightness");
@@ -70,6 +70,10 @@ namespace l3cam_ros2
             clientAutoExposureTime = this->create_client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>("enable_polarimetric_camera_auto_exposure_time");
             clientAutoExposureTimeRange = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>("change_polarimetric_camera_auto_exposure_time_range");
             clientExposureTime = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>("change_polarimetric_camera_exposure_time");
+            clientStreamingProtocol = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
+            clientGetRtspPipeline = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
+
+            declareGetParameters();
 
             // Create service server
             srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
@@ -81,41 +85,44 @@ namespace l3cam_ros2
         }
 
         rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
+        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr clientGetRtspPipeline;
 
     private:
         void declareGetParameters()
         {
             // Declare parameters with range
-            rcl_interfaces::msg::ParameterDescriptor intDescriptor;
-            rcl_interfaces::msg::ParameterDescriptor floatDescriptor;
+            rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
             intRange.set__from_value(0).set__to_value(255);
-            intDescriptor.integer_range = {intRange};
-            this->declare_parameter("polarimetric_camera_brightness", 127, intDescriptor); // 0 - 255
+            descriptor.integer_range = {intRange};
+            this->declare_parameter("polarimetric_camera_brightness", 127, descriptor); // 0 - 255
             floatRange.set__from_value(0.0).set__to_value(12.5);
-            floatDescriptor.floating_point_range = {floatRange};
-            this->declare_parameter("polarimetric_camera_black_level", 6.0, floatDescriptor); // 0 - 12.5
+            descriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_black_level", 6.0, descriptor); // 0 - 12.5
             this->declare_parameter("polarimetric_camera_auto_gain", true);
             floatRange.set__from_value(0.0).set__to_value(48.0);
-            floatDescriptor.floating_point_range = {floatRange};
-            this->declare_parameter("polarimetric_camera_auto_gain_range_minimum", 0.0, floatDescriptor); // 0 - 48
+            descriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_gain_range_minimum", 0.0, descriptor); // 0 - 48
             floatRange.set__from_value(0.0).set__to_value(48.0);
-            floatDescriptor.floating_point_range = {floatRange};
-            this->declare_parameter("polarimetric_camera_auto_gain_range_maximum", 48.0, floatDescriptor); // 0 - 48
+            descriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_gain_range_maximum", 48.0, descriptor); // 0 - 48
             floatRange.set__from_value(0.0).set__to_value(48.0);
-            floatDescriptor.floating_point_range = {floatRange};
-            this->declare_parameter("polarimetric_camera_gain", 24.0, floatDescriptor); // 0 - 48
+            descriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_gain", 24.0, descriptor); // 0 - 48
             this->declare_parameter("polarimetric_camera_auto_exposure_time", true);
             floatRange.set__from_value(33.5).set__to_value(66470.6);
-            floatDescriptor.floating_point_range = {floatRange};
-            this->declare_parameter("polarimetric_camera_auto_exposure_time_range_minimum", 33.5, floatDescriptor); // 33.5 - 66470.6
+            descriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_exposure_time_range_minimum", 33.5, descriptor); // 33.5 - 66470.6
             floatRange.set__from_value(33.5).set__to_value(66470.6);
-            floatDescriptor.floating_point_range = {floatRange};
-            this->declare_parameter("polarimetric_camera_auto_exposure_time_range_maximum", 66470.6, floatDescriptor); // 33.5 - 66470.6
+            descriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_auto_exposure_time_range_maximum", 66470.6, descriptor); // 33.5 - 66470.6
             floatRange.set__from_value(33.5).set__to_value(66470.6);
-            floatDescriptor.floating_point_range = {floatRange};
-            this->declare_parameter("polarimetric_camera_exposure_time", 33.5, floatDescriptor); // 33.5 - 66470.6
+            descriptor.floating_point_range = {floatRange};
+            this->declare_parameter("polarimetric_camera_exposure_time", 33.5, descriptor); // 33.5 - 66470.6
+            intRange.set__from_value(0).set__to_value(1);
+            descriptor.integer_range = {intRange};
+            this->declare_parameter("polarimetric_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
 
             // Get and save parameters
             polarimetric_camera_brightness = this->get_parameter("polarimetric_camera_brightness").as_int();
@@ -128,6 +135,7 @@ namespace l3cam_ros2
             polarimetric_camera_auto_exposure_time_range_minimum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_minimum").as_double();
             polarimetric_camera_auto_exposure_time_range_maximum = this->get_parameter("polarimetric_camera_auto_exposure_time_range_maximum").as_double();
             polarimetric_camera_exposure_time = this->get_parameter("polarimetric_camera_exposure_time").as_double();
+            streaming_protocol = this->get_parameter("polarimetric_streaming_protocol").as_int();
         }
 
         rcl_interfaces::msg::SetParametersResult parametersCallback(
@@ -325,6 +333,25 @@ namespace l3cam_ros2
 
                     auto resultExposureTime = clientExposureTime->async_send_request(
                         requestExposureTime, std::bind(&PolarimetricConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "polarimetric_streaming_protocol" && param.as_int() != streaming_protocol)
+                {
+                    while (!clientStreamingProtocol->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
+                    requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_pol;
+                    requestStreamingProtocol->protocol = param.as_int();
+
+                    auto resultStreamingProtocol = clientStreamingProtocol->async_send_request(
+                        requestStreamingProtocol, std::bind(&PolarimetricConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
                 }
             }
 
@@ -553,6 +580,33 @@ namespace l3cam_ros2
             }
         }
 
+        void streamingProtocolResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    streaming_protocol = this->get_parameter("polarimetric_streaming_protocol").as_int();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("polarimetric_streaming_protocol", streaming_protocol));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_streaming_protocol");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("polarimetric_streaming_protocol", streaming_protocol));
+            }
+        }
+
         void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
                                         std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
         {
@@ -579,6 +633,7 @@ namespace l3cam_ros2
         double polarimetric_camera_auto_exposure_time_range_minimum;
         double polarimetric_camera_auto_exposure_time_range_maximum;
         double polarimetric_camera_exposure_time;
+        int streaming_protocol;
 
         rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedPtr clientBrightness;
         rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedPtr clientBlackLevel;
@@ -588,6 +643,7 @@ namespace l3cam_ros2
         rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>::SharedPtr clientAutoExposureTime;
         rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>::SharedPtr clientAutoExposureTimeRange;
         rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>::SharedPtr clientExposureTime;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr clientStreamingProtocol;
 
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
 
@@ -649,6 +705,43 @@ int main(int argc, char **argv)
     else
     {
         return 0;
+    }
+
+    // Get pipeline
+    while (!node->clientGetRtspPipeline->wait_for_service(1s))
+    {
+        if (!rclcpp::ok())
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+            return 0;
+        }
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+    }
+
+    auto requestGetRtspPipeline = std::make_shared<l3cam_interfaces::srv::GetRtspPipeline::Request>();
+    requestGetRtspPipeline.get()->sensor_type = (int)sensorTypes::sensor_pol;
+    auto resultGetRtspPipeline = node->clientGetRtspPipeline->async_send_request(requestGetRtspPipeline);
+
+    if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+        error = resultGetRtspPipeline.get()->error;
+
+        if (!error)
+        {
+            rcl_interfaces::msg::ParameterDescriptor descriptor;
+            descriptor.read_only = true;
+            node->declare_parameter("polarimetric_rtsp_pipeline", resultGetRtspPipeline.get()->pipeline, descriptor);
+        }
+        else
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting pipeline in " << __func__ << ": " << getBeamErrorDescription(error));
+            return 1;
+        }
+    }
+    else
+    {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_rtsp_pipeline");
+        return 1;
     }
 
     rclcpp::spin(node);

@@ -39,6 +39,8 @@
 #include "l3cam_interfaces/srv/change_thermal_camera_colormap.hpp"
 #include "l3cam_interfaces/srv/enable_thermal_camera_temperature_filter.hpp"
 #include "l3cam_interfaces/srv/change_thermal_camera_temperature_filter.hpp"
+#include "l3cam_interfaces/srv/change_streaming_protocol.hpp"
+#include "l3cam_interfaces/srv/get_rtsp_pipeline.hpp"
 
 #include "l3cam_interfaces/srv/sensor_disconnected.hpp"
 
@@ -53,13 +55,15 @@ namespace l3cam_ros2
     public:
         ThermalConfiguration() : Node("thermal_configuration")
         {
-            declarGetParameters();
-
             // Create service clients
             clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
             clientColormap = this->create_client<l3cam_interfaces::srv::ChangeThermalCameraColormap>("change_thermal_camera_colormap");
             clientTemperatureFilter = this->create_client<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>("enable_thermal_camera_temperature_filter");
             clientTemperatureFilterRange = this->create_client<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>("change_thermal_camera_temperature_filter");
+            clientStreamingProtocol = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
+            clientGetRtspPipeline = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
+
+            declarGetParameters();
 
             // Create service server
             srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
@@ -71,6 +75,7 @@ namespace l3cam_ros2
         }
 
         rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
+        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr clientGetRtspPipeline;
 
     private:
         void declarGetParameters()
@@ -109,12 +114,16 @@ namespace l3cam_ros2
             range.set__from_value(-40).set__to_value(200);
             descriptor.integer_range = {range};
             this->declare_parameter("thermal_camera_temperature_filter_max", 50, descriptor); // -40 - 200
+            range.set__from_value(0).set__to_value(1);
+            descriptor.integer_range = {range};
+            this->declare_parameter("thermal_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
 
             // Get and save parameters
             thermal_camera_colormap = this->get_parameter("thermal_camera_colormap").as_int();
             thermal_camera_temperature_filter = this->get_parameter("thermal_camera_temperature_filter").as_bool();
             thermal_camera_temperature_filter_min = this->get_parameter("thermal_camera_temperature_filter_min").as_int();
             thermal_camera_temperature_filter_max = this->get_parameter("thermal_camera_temperature_filter_max").as_int();
+            streaming_protocol = this->get_parameter("thermal_streaming_protocol").as_int();
         }
 
         rcl_interfaces::msg::SetParametersResult parametersCallback(
@@ -202,6 +211,25 @@ namespace l3cam_ros2
 
                     auto resultTemperatureFilterRange = clientTemperatureFilterRange->async_send_request(
                         requestTemperatureFilterRange, std::bind(&ThermalConfiguration::temperatureFilterRangeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "thermal_streaming_protocol" && param.as_int() != streaming_protocol)
+                {
+                    while (!clientStreamingProtocol->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
+                    requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_thermal;
+                    requestStreamingProtocol->protocol = param.as_int();
+
+                    auto resultStreamingProtocol = clientStreamingProtocol->async_send_request(
+                        requestStreamingProtocol, std::bind(&ThermalConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
                 }
             }
 
@@ -292,6 +320,33 @@ namespace l3cam_ros2
             }
         }
 
+        void streamingProtocolResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    streaming_protocol = this->get_parameter("thermal_streaming_protocol").as_int();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("thermal_streaming_protocol", streaming_protocol));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_streaming_protocol");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("thermal_streaming_protocol", streaming_protocol));
+            }
+        }
+
         void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
                                         std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
         {
@@ -312,10 +367,12 @@ namespace l3cam_ros2
         bool thermal_camera_temperature_filter;
         int thermal_camera_temperature_filter_min;
         int thermal_camera_temperature_filter_max;
+        int streaming_protocol;
 
         rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraColormap>::SharedPtr clientColormap;
         rclcpp::Client<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>::SharedPtr clientTemperatureFilter;
         rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>::SharedPtr clientTemperatureFilterRange;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr clientStreamingProtocol;
 
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
 
@@ -379,6 +436,43 @@ int main(int argc, char **argv)
     else
     {
         return 0;
+    }
+
+    // Get pipeline
+    while (!node->clientGetRtspPipeline->wait_for_service(1s))
+    {
+        if (!rclcpp::ok())
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+            return 0;
+        }
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+    }
+
+    auto requestGetRtspPipeline = std::make_shared<l3cam_interfaces::srv::GetRtspPipeline::Request>();
+    requestGetRtspPipeline.get()->sensor_type = (int)sensorTypes::sensor_thermal;
+    auto resultGetRtspPipeline = node->clientGetRtspPipeline->async_send_request(requestGetRtspPipeline);
+
+    if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+        error = resultGetRtspPipeline.get()->error;
+
+        if (!error)
+        {
+            rcl_interfaces::msg::ParameterDescriptor descriptor;
+            descriptor.read_only = true;
+            node->declare_parameter("thermal_rtsp_pipeline", resultGetRtspPipeline.get()->pipeline, descriptor);
+        }
+        else
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting pipeline in " << __func__ << ": " << getBeamErrorDescription(error));
+            return 1;
+        }
+    }
+    else
+    {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_rtsp_pipeline");
+        return 1;
     }
 
     rclcpp::spin(node);

@@ -46,6 +46,8 @@
 #include "l3cam_interfaces/srv/change_rgb_camera_white_balance.hpp"
 #include "l3cam_interfaces/srv/enable_rgb_camera_auto_exposure_time.hpp"
 #include "l3cam_interfaces/srv/change_rgb_camera_exposure_time.hpp"
+#include "l3cam_interfaces/srv/change_streaming_protocol.hpp"
+#include "l3cam_interfaces/srv/get_rtsp_pipeline.hpp"
 
 #include "l3cam_interfaces/srv/sensor_disconnected.hpp"
 
@@ -60,8 +62,6 @@ namespace l3cam_ros2
     public:
         RgbConfiguration() : Node("rgb_configuration")
         {
-            declareGetParameters();
-
             // Create service clients
             clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
             clientBrightness = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>("change_rgb_camera_brightness");
@@ -74,6 +74,10 @@ namespace l3cam_ros2
             clientWhiteBalance = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>("change_rgb_camera_white_balance");
             clientAutoExposureTime = this->create_client<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>("enable_rgb_camera_auto_exposure_time");
             clientExposureTime = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>("change_rgb_camera_exposure_time");
+            clientStreamingProtocol = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
+            clientGetRtspPipeline = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
+
+            declareGetParameters();
 
             // Create service server
             srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
@@ -85,6 +89,7 @@ namespace l3cam_ros2
         }
 
         rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
+        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr clientGetRtspPipeline;
 
     private:
         void declareGetParameters()
@@ -116,6 +121,9 @@ namespace l3cam_ros2
             range.set__from_value(1).set__to_value(10000);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_exposure_time", 156, descriptor); // 1 - 10000
+            range.set__from_value(0).set__to_value(1);
+            descriptor.integer_range = {range};
+            this->declare_parameter("rgb_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
 
             // Get and save parameters
             rgb_camera_brightness = this->get_parameter("rgb_camera_brightness").as_int();
@@ -128,6 +136,7 @@ namespace l3cam_ros2
             rgb_camera_white_balance = this->get_parameter("rgb_camera_white_balance").as_int();
             rgb_camera_auto_exposure_time = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
             rgb_camera_exposure_time = this->get_parameter("rgb_camera_exposure_time").as_int();
+            streaming_protocol = this->get_parameter("rgb_streaming_protocol").as_int();
         }
 
         rcl_interfaces::msg::SetParametersResult parametersCallback(
@@ -321,6 +330,25 @@ namespace l3cam_ros2
 
                     auto resultExposureTime = clientExposureTime->async_send_request(
                         requestExposureTime, std::bind(&RgbConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
+                }
+                if (param_name == "rgb_streaming_protocol" && param.as_int() != streaming_protocol)
+                {
+                    while (!clientStreamingProtocol->wait_for_service(1s))
+                    {
+                        if (!rclcpp::ok())
+                        {
+                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                            break;
+                        }
+                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                    }
+
+                    auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
+                    requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_econ_rgb;
+                    requestStreamingProtocol->protocol = param.as_int();
+
+                    auto resultStreamingProtocol = clientStreamingProtocol->async_send_request(
+                        requestStreamingProtocol, std::bind(&RgbConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
                 }
             }
 
@@ -615,6 +643,33 @@ namespace l3cam_ros2
             }
         }
 
+        void streamingProtocolResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    streaming_protocol = this->get_parameter("rgb_streaming_protocol").as_int();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("rgb_streaming_protocol", streaming_protocol));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_streaming_protocol");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("rgb_streaming_protocol", streaming_protocol));
+            }
+        }
+
         void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
                                         std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
         {
@@ -641,6 +696,7 @@ namespace l3cam_ros2
         int rgb_camera_white_balance;
         bool rgb_camera_auto_exposure_time;
         int rgb_camera_exposure_time;
+        int streaming_protocol;
 
         rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>::SharedPtr clientBrightness;
         rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraContrast>::SharedPtr clientContrast;
@@ -652,6 +708,7 @@ namespace l3cam_ros2
         rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>::SharedPtr clientWhiteBalance;
         rclcpp::Client<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>::SharedPtr clientAutoExposureTime;
         rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>::SharedPtr clientExposureTime;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr clientStreamingProtocol;
 
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
 
@@ -715,6 +772,43 @@ int main(int argc, char **argv)
     else
     {
         return 0;
+    }
+
+    // Get pipeline
+    while (!node->clientGetRtspPipeline->wait_for_service(1s))
+    {
+        if (!rclcpp::ok())
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+            return 0;
+        }
+        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+    }
+
+    auto requestGetRtspPipeline = std::make_shared<l3cam_interfaces::srv::GetRtspPipeline::Request>();
+    requestGetRtspPipeline.get()->sensor_type = (int)sensorTypes::sensor_econ_rgb;
+    auto resultGetRtspPipeline = node->clientGetRtspPipeline->async_send_request(requestGetRtspPipeline);
+
+    if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
+    {
+        error = resultGetRtspPipeline.get()->error;
+
+        if (!error)
+        {
+            rcl_interfaces::msg::ParameterDescriptor descriptor;
+            descriptor.read_only = true;
+            node->declare_parameter("rgb_rtsp_pipeline", resultGetRtspPipeline.get()->pipeline, descriptor);
+        }
+        else
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting pipeline in " << __func__ << ": " << getBeamErrorDescription(error));
+            return 1;
+        }
+    }
+    else
+    {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_rtsp_pipeline");
+        return 1;
     }
 
     rclcpp::spin(node);

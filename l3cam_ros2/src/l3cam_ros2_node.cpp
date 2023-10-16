@@ -50,8 +50,6 @@ namespace l3cam_ros2
         registerErrorCallback(errorNotification);
 
         declareParameters();
-
-        timer_ = this->create_wall_timer(500ms, std::bind(&L3Cam::timer_callback, this));
     }
 
     int L3Cam::initializeDevice()
@@ -137,6 +135,7 @@ namespace l3cam_ros2
         error = START_DEVICE(devices[0]);
         if (error)
             return error;
+
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Device started");
 
         loadDefaultParams();
@@ -197,6 +196,12 @@ namespace l3cam_ros2
         descriptor.integer_range = {intRange};
         this->declare_parameter("bias_value_right", 1580, descriptor); // 700 - 3500
         this->declare_parameter("bias_value_left", 1380, descriptor);  // 700 - 3500
+        intRange.set__from_value(0).set__to_value(1);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("lidar_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.read_only = true;
+        this->declare_parameter("lidar_rtsp_pipeline", "", descriptor);
+        descriptor.read_only = false;
         // Polarimetric
         intRange.set__from_value(0).set__to_value(255);
         descriptor.integer_range = {intRange};
@@ -224,6 +229,12 @@ namespace l3cam_ros2
         floatRange.set__from_value(33.5).set__to_value(66470.6);
         descriptor.floating_point_range = {floatRange};
         this->declare_parameter("polarimetric_camera_exposure_time", 33.5, descriptor); // 33.5 - 66470.6
+        intRange.set__from_value(0).set__to_value(1);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("polarimetric_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.read_only = true;
+        this->declare_parameter("polarimetric_rtsp_pipeline", "", descriptor);
+        descriptor.read_only = false;
         // RGB
         intRange.set__from_value(-15).set__to_value(15);
         descriptor.integer_range = {intRange};
@@ -261,6 +272,12 @@ namespace l3cam_ros2
         intRange.set__from_value(1).set__to_value(16);
         descriptor.integer_range = {intRange};
         this->declare_parameter("rgb_camera_framerate", 10, descriptor); // 1 - 16
+        intRange.set__from_value(0).set__to_value(1);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("rgb_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.read_only = true;
+        this->declare_parameter("rgb_rtsp_pipeline", "", descriptor);
+        descriptor.read_only = false;
         // Thermal
         intRange.set__from_value(1).set__to_value(108); // TODO: dynamic reconfigure enumerate thermalTypes
         descriptor.integer_range = {intRange};
@@ -293,6 +310,12 @@ namespace l3cam_ros2
         intRange.set__from_value(-40).set__to_value(200);
         descriptor.integer_range = {intRange};
         this->declare_parameter("thermal_camera_temperature_filter_max", 50, descriptor); // -40 - 200
+        intRange.set__from_value(0).set__to_value(1);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("thermal_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.read_only = true;
+        this->declare_parameter("thermal_rtsp_pipeline", "", descriptor);
+        descriptor.read_only = false;
         // Allied Wide
         this->declare_parameter("allied_wide_camera_black_level", 0.0); // 0 - 4095
         floatRange.set__from_value(63.0).set__to_value(10000000.0);
@@ -354,17 +377,17 @@ namespace l3cam_ros2
         this->declare_parameter("allied_wide_camera_balance_white_auto_tolerance", 5.0, descriptor); // 0 - 50
         intRange.set__from_value(00).set__to_value(1028);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("allied_wide_camera_auto_mode_region_height", 1028, descriptor); // 0 - 1028
+        this->declare_parameter("allied_wide_camera_auto_mode_region_height", 0, descriptor); // 0 - 1028
         intRange.set__from_value(0).set__to_value(1232);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("allied_wide_camera_auto_mode_region_width", 1232, descriptor); // 0 - 1232
-        intRange.set__from_value(0).set__to_value(4);                                           // TODO: dynamic reconfigure enumerate
+        this->declare_parameter("allied_wide_camera_auto_mode_region_width", 0, descriptor); // 0 - 1232
+        intRange.set__from_value(0).set__to_value(4);                                        // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"
             "\tAutoMode = 0\n"
             "\tFullImage = 4";
-        this->declare_parameter("allied_wide_camera_intensity_controller_region", 0, descriptor); // 0(AutoMode), 4(FullImage)
+        this->declare_parameter("allied_wide_camera_intensity_controller_region", 4, descriptor); // 0(AutoMode), 4(FullImage)
         descriptor.description = "";
         floatRange.set__from_value(10).set__to_value(90);
         descriptor.floating_point_range = {floatRange};
@@ -372,6 +395,12 @@ namespace l3cam_ros2
         intRange.set__from_value(1).set__to_value(4096);
         descriptor.integer_range = {intRange};
         this->declare_parameter("allied_wide_camera_max_driver_buffers_count", 64, descriptor); // 1 - 4096
+        intRange.set__from_value(0).set__to_value(1);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("allied_wide_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.read_only = true;
+        this->declare_parameter("allied_wide_rtsp_pipeline", "", descriptor);
+        descriptor.read_only = false;
         // Allied Narrow
         this->declare_parameter("allied_narrow_camera_black_level", 0.0); // 0 - 4095
         floatRange.set__from_value(63.0).set__to_value(10000000.0);
@@ -432,19 +461,19 @@ namespace l3cam_ros2
         floatRange.set__from_value(0.0).set__to_value(50.0);
         descriptor.floating_point_range = {floatRange};
         this->declare_parameter("allied_narrow_camera_balance_white_auto_tolerance", 5.0, descriptor); // 0 - 50
-        intRange.set__from_value(0).set__to_value(2056);
+        intRange.set__from_value(0).set__to_value(1544);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("allied_narrow_camera_auto_mode_region_height", 2056, descriptor); // 0 - 2056
-        intRange.set__from_value(0).set__to_value(2464);
+        this->declare_parameter("allied_narrow_camera_auto_mode_region_height", 0, descriptor); // 0 - 1544
+        intRange.set__from_value(0).set__to_value(2064);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("allied_narrow_camera_auto_mode_region_width", 2464, descriptor); // 0 - 2464
-        intRange.set__from_value(0).set__to_value(4);                                             // TODO: dynamic reconfigure enumerate
+        this->declare_parameter("allied_narrow_camera_auto_mode_region_width", 0, descriptor); // 0 - 2064
+        intRange.set__from_value(0).set__to_value(4).set__step(4);                             // TODO: dynamic reconfigure enumerate
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be:\n"
             "\tAutoMode = 0\n"
             "\tFullImage = 4";
-        this->declare_parameter("allied_narrow_camera_intensity_controller_region", 0, descriptor); // 0(AutoMode), 4(FullImage)
+        this->declare_parameter("allied_narrow_camera_intensity_controller_region", 4, descriptor); // 0(AutoMode), 4(FullImage)
         descriptor.description = "";
         floatRange.set__from_value(10).set__to_value(90);
         descriptor.floating_point_range = {floatRange};
@@ -452,6 +481,12 @@ namespace l3cam_ros2
         intRange.set__from_value(0).set__to_value(4096);
         descriptor.integer_range = {intRange};
         this->declare_parameter("allied_narrow_camera_max_driver_buffers_count", 64, descriptor); // 1 - 4096
+        intRange.set__from_value(0).set__to_value(1);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("allied_narrow_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.read_only = true;
+        this->declare_parameter("allied_narrow_rtsp_pipeline", "", descriptor);
+        descriptor.read_only = false;
     }
 
     void L3Cam::initializeServices()
@@ -478,6 +513,12 @@ namespace l3cam_ros2
         srvGetSensorsAvailable = this->create_service<l3cam_interfaces::srv::GetSensorsAvailable>(
             "get_sensors_available",
             std::bind(&L3Cam::getSensorsAvailable, this, std::placeholders::_1, std::placeholders::_2));
+        srvChangeStreamingProtocol = this->create_service<l3cam_interfaces::srv::ChangeStreamingProtocol>(
+            "change_streaming_protocol",
+            std::bind(&L3Cam::changeStreamingProtocol, this, std::placeholders::_1, std::placeholders::_2));
+        srvGetRtspPipeline = this->create_service<l3cam_interfaces::srv::GetRtspPipeline>(
+            "get_rtsp_pipeline",
+            std::bind(&L3Cam::getRtspPipeline, this, std::placeholders::_1, std::placeholders::_2));
         srvGetNetworkConfiguration = this->create_service<l3cam_interfaces::srv::GetNetworkConfiguration>(
             "get_network_configuration",
             std::bind(&L3Cam::getNetworkConfiguration, this, std::placeholders::_1, std::placeholders::_2));
@@ -499,245 +540,266 @@ namespace l3cam_ros2
         srvStopStream = this->create_service<l3cam_interfaces::srv::StopStream>(
             "stop_stream",
             std::bind(&L3Cam::stopStream, this, std::placeholders::_1, std::placeholders::_2));
+        srvGetDeviceTemperatures = this->create_service<l3cam_interfaces::srv::GetDeviceTemperatures>(
+            "get_device_temperatures",
+            std::bind(&L3Cam::getDeviceTemperatures, this, std::placeholders::_1, std::placeholders::_2));
 
         if (m_lidar_sensor != NULL)
         {
-            srvChangePointcloudColor = this->create_service<l3cam_interfaces::srv::ChangePointcloudColor>(
-                "change_pointcloud_color",
-                std::bind(&L3Cam::changePointcloudColor, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangePointcloudColorRange = this->create_service<l3cam_interfaces::srv::ChangePointcloudColorRange>(
-                "change_pointcloud_color_range",
-                std::bind(&L3Cam::changePointcloudColorRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeDistanceRange = this->create_service<l3cam_interfaces::srv::ChangeDistanceRange>(
-                "change_distance_range",
-                std::bind(&L3Cam::changeDistanceRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnableAutoBias = this->create_service<l3cam_interfaces::srv::EnableAutoBias>(
-                "enable_auto_bias",
-                std::bind(&L3Cam::enableAutoBias, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeBiasValue = this->create_service<l3cam_interfaces::srv::ChangeBiasValue>(
-                "change_bias_value",
-                std::bind(&L3Cam::changeBiasValue, this, std::placeholders::_1, std::placeholders::_2));
+            if (m_lidar_sensor->sensor_available) // if lidar is available
+            {
+                srvChangePointcloudColor = this->create_service<l3cam_interfaces::srv::ChangePointcloudColor>(
+                    "change_pointcloud_color",
+                    std::bind(&L3Cam::changePointcloudColor, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangePointcloudColorRange = this->create_service<l3cam_interfaces::srv::ChangePointcloudColorRange>(
+                    "change_pointcloud_color_range",
+                    std::bind(&L3Cam::changePointcloudColorRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeDistanceRange = this->create_service<l3cam_interfaces::srv::ChangeDistanceRange>(
+                    "change_distance_range",
+                    std::bind(&L3Cam::changeDistanceRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnableAutoBias = this->create_service<l3cam_interfaces::srv::EnableAutoBias>(
+                    "enable_auto_bias",
+                    std::bind(&L3Cam::enableAutoBias, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeBiasValue = this->create_service<l3cam_interfaces::srv::ChangeBiasValue>(
+                    "change_bias_value",
+                    std::bind(&L3Cam::changeBiasValue, this, std::placeholders::_1, std::placeholders::_2));
 
-            clientPointCloudStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_stream_disconnected");
-            clientPointCloudConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_configuration_disconnected");
+                clientPointCloudStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_stream_disconnected");
+                clientPointCloudConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_configuration_disconnected");
+            }
         }
 
         if (m_polarimetric_sensor != NULL)
         {
-            srvSetPolarimetricCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>(
-                "set_polarimetric_camera_default_settings",
-                std::bind(&L3Cam::setPolarimetricCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangePolarimetricCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>(
-                "change_polarimetric_camera_brightness",
-                std::bind(&L3Cam::changePolarimetricCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangePolarimetricCameraBlackLevel = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>(
-                "change_polarimetric_camera_black_level",
-                std::bind(&L3Cam::changePolarimetricCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnablePolarimetricCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>(
-                "enable_polarimetric_camera_auto_gain",
-                std::bind(&L3Cam::enablePolarimetricCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangePolarimetricCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>(
-                "change_polarimetric_camera_auto_gain_range",
-                std::bind(&L3Cam::changePolarimetricCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangePolarimetricCameraGain = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraGain>(
-                "change_polarimetric_camera_gain",
-                std::bind(&L3Cam::changePolarimetricCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnablePolarimetricCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>(
-                "enable_polarimetric_camera_auto_exposure_time",
-                std::bind(&L3Cam::enablePolarimetricCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangePolarimetricCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>(
-                "change_polarimetric_camera_auto_exposure_time_range",
-                std::bind(&L3Cam::changePolarimetricCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangePolarimetricCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>(
-                "change_polarimetric_camera_exposure_time",
-                std::bind(&L3Cam::changePolarimetricCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            if (m_polarimetric_sensor->sensor_available) // if polarimetric is available
+            {
+                srvSetPolarimetricCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>(
+                    "set_polarimetric_camera_default_settings",
+                    std::bind(&L3Cam::setPolarimetricCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangePolarimetricCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>(
+                    "change_polarimetric_camera_brightness",
+                    std::bind(&L3Cam::changePolarimetricCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangePolarimetricCameraBlackLevel = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>(
+                    "change_polarimetric_camera_black_level",
+                    std::bind(&L3Cam::changePolarimetricCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnablePolarimetricCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>(
+                    "enable_polarimetric_camera_auto_gain",
+                    std::bind(&L3Cam::enablePolarimetricCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangePolarimetricCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>(
+                    "change_polarimetric_camera_auto_gain_range",
+                    std::bind(&L3Cam::changePolarimetricCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangePolarimetricCameraGain = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraGain>(
+                    "change_polarimetric_camera_gain",
+                    std::bind(&L3Cam::changePolarimetricCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnablePolarimetricCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>(
+                    "enable_polarimetric_camera_auto_exposure_time",
+                    std::bind(&L3Cam::enablePolarimetricCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangePolarimetricCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>(
+                    "change_polarimetric_camera_auto_exposure_time_range",
+                    std::bind(&L3Cam::changePolarimetricCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangePolarimetricCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>(
+                    "change_polarimetric_camera_exposure_time",
+                    std::bind(&L3Cam::changePolarimetricCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
 
-            clientPolWideStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_wide_stream_disconnected");
-            clientPolConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_configuration_disconnected");
+                clientPolWideStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_wide_stream_disconnected");
+                clientPolConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_configuration_disconnected");
+            }
         }
 
         if (m_rgb_sensor != NULL)
         {
-            srvSetRgbCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetRgbCameraDefaultSettings>(
-                "set_rgb_camera_default_settings",
-                std::bind(&L3Cam::setRgbCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraBrightness>(
-                "change_rgb_camera_brightness",
-                std::bind(&L3Cam::changeRgbCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraContrast = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraContrast>(
-                "change_rgb_camera_contrast",
-                std::bind(&L3Cam::changeRgbCameraContrast, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSaturation>(
-                "change_rgb_camera_saturation",
-                std::bind(&L3Cam::changeRgbCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraSharpness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSharpness>(
-                "change_rgb_camera_sharpness",
-                std::bind(&L3Cam::changeRgbCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGamma>(
-                "change_rgb_camera_gamma",
-                std::bind(&L3Cam::changeRgbCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraGain = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGain>(
-                "change_rgb_camera_gain",
-                std::bind(&L3Cam::changeRgbCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnableRgbCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>(
-                "enable_rgb_camera_auto_white_balance",
-                std::bind(&L3Cam::enableRgbCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraWhiteBalance = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>(
-                "change_rgb_camera_white_balance",
-                std::bind(&L3Cam::changeRgbCameraWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnableRgbCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>(
-                "enable_rgb_camera_auto_exposure_time",
-                std::bind(&L3Cam::enableRgbCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeRgbCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>(
-                "change_rgb_camera_exposure_time",
-                std::bind(&L3Cam::changeRgbCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+            if (m_rgb_sensor->sensor_available) // if rgb is available
+            {
+                srvSetRgbCameraDefaultSettings = this->create_service<l3cam_interfaces::srv::SetRgbCameraDefaultSettings>(
+                    "set_rgb_camera_default_settings",
+                    std::bind(&L3Cam::setRgbCameraDefaultSettings, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraBrightness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraBrightness>(
+                    "change_rgb_camera_brightness",
+                    std::bind(&L3Cam::changeRgbCameraBrightness, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraContrast = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraContrast>(
+                    "change_rgb_camera_contrast",
+                    std::bind(&L3Cam::changeRgbCameraContrast, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSaturation>(
+                    "change_rgb_camera_saturation",
+                    std::bind(&L3Cam::changeRgbCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraSharpness = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraSharpness>(
+                    "change_rgb_camera_sharpness",
+                    std::bind(&L3Cam::changeRgbCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGamma>(
+                    "change_rgb_camera_gamma",
+                    std::bind(&L3Cam::changeRgbCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraGain = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraGain>(
+                    "change_rgb_camera_gain",
+                    std::bind(&L3Cam::changeRgbCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnableRgbCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>(
+                    "enable_rgb_camera_auto_white_balance",
+                    std::bind(&L3Cam::enableRgbCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraWhiteBalance = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>(
+                    "change_rgb_camera_white_balance",
+                    std::bind(&L3Cam::changeRgbCameraWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnableRgbCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>(
+                    "enable_rgb_camera_auto_exposure_time",
+                    std::bind(&L3Cam::enableRgbCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeRgbCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>(
+                    "change_rgb_camera_exposure_time",
+                    std::bind(&L3Cam::changeRgbCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
 
-            clientRgbNarrowStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_narrow_stream_disconnected");
-            clientRgbConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_configuration_disconnected");
+                clientRgbNarrowStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_narrow_stream_disconnected");
+                clientRgbConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_configuration_disconnected");
+            }
         }
 
         if (m_thermal_sensor != NULL)
         {
-            srvChangeThermalCameraColormap = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraColormap>(
-                "change_thermal_camera_colormap",
-                std::bind(&L3Cam::changeThermalCameraColormap, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>(
-                "change_thermal_camera_temperature_filter",
-                std::bind(&L3Cam::changeThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnableThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>(
-                "enable_thermal_camera_temperature_filter",
-                std::bind(&L3Cam::enableThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
+            if (m_thermal_sensor->sensor_available) // if thermal is available
+            {
+                srvChangeThermalCameraColormap = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraColormap>(
+                    "change_thermal_camera_colormap",
+                    std::bind(&L3Cam::changeThermalCameraColormap, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>(
+                    "change_thermal_camera_temperature_filter",
+                    std::bind(&L3Cam::changeThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnableThermalCameraTemperatureFilter = this->create_service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>(
+                    "enable_thermal_camera_temperature_filter",
+                    std::bind(&L3Cam::enableThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
 
-            clientThermalStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_stream_disconnected");
-            clientThermalConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_configuration_disconnected");
+                clientThermalStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_stream_disconnected");
+                clientThermalConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_configuration_disconnected");
+            }
         }
 
         if (m_allied_wide_sensor != NULL)
         {
-            srvChangeAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>(
-                "change_allied_camera_exposure_time",
-                std::bind(&L3Cam::changeAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnableAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>(
-                "enable_allied_camera_auto_exposure_time",
-                std::bind(&L3Cam::enableAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>(
-                "change_allied_camera_auto_exposure_time_range",
-                std::bind(&L3Cam::changeAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraGain = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGain>(
-                "change_allied_camera_gain",
-                std::bind(&L3Cam::changeAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnableAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>(
-                "enable_allied_camera_auto_gain",
-                std::bind(&L3Cam::enableAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>(
-                "change_allied_camera_auto_gain_range",
-                std::bind(&L3Cam::changeAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGamma>(
-                "change_allied_camera_gamma",
-                std::bind(&L3Cam::changeAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>(
-                "change_allied_camera_saturation",
-                std::bind(&L3Cam::changeAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraHue = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraHue>(
-                "change_allied_camera_hue",
-                std::bind(&L3Cam::changeAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>(
-                "change_allied_camera_intensity_auto_precedence",
-                std::bind(&L3Cam::changeAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
-            srvEnableAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>(
-                "enable_allied_camera_auto_white_balance",
-                std::bind(&L3Cam::enableAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>(
-                "change_allied_camera_balance_ratio_selector",
-                std::bind(&L3Cam::changeAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>(
-                "change_allied_camera_balance_ratio",
-                std::bind(&L3Cam::changeAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>(
-                "change_allied_camera_balance_white_auto_rate",
-                std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>(
-                "change_allied_camera_balance_white_auto_tolerance",
-                std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>(
-                "change_allied_camera_intensity_controller_region",
-                std::bind(&L3Cam::changeAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
-            srvChangeAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>(
-                "change_allied_camera_intensity_controller_target",
-                std::bind(&L3Cam::changeAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
+            if (m_allied_wide_sensor->sensor_available) // if allied wide is available
+            {
+                srvChangeAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>(
+                    "change_allied_camera_exposure_time",
+                    std::bind(&L3Cam::changeAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnableAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>(
+                    "enable_allied_camera_auto_exposure_time",
+                    std::bind(&L3Cam::enableAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>(
+                    "change_allied_camera_auto_exposure_time_range",
+                    std::bind(&L3Cam::changeAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraGain = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGain>(
+                    "change_allied_camera_gain",
+                    std::bind(&L3Cam::changeAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnableAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>(
+                    "enable_allied_camera_auto_gain",
+                    std::bind(&L3Cam::enableAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>(
+                    "change_allied_camera_auto_gain_range",
+                    std::bind(&L3Cam::changeAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraGamma>(
+                    "change_allied_camera_gamma",
+                    std::bind(&L3Cam::changeAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>(
+                    "change_allied_camera_saturation",
+                    std::bind(&L3Cam::changeAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraHue = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraHue>(
+                    "change_allied_camera_hue",
+                    std::bind(&L3Cam::changeAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>(
+                    "change_allied_camera_intensity_auto_precedence",
+                    std::bind(&L3Cam::changeAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
+                srvEnableAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>(
+                    "enable_allied_camera_auto_white_balance",
+                    std::bind(&L3Cam::enableAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>(
+                    "change_allied_camera_balance_ratio_selector",
+                    std::bind(&L3Cam::changeAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>(
+                    "change_allied_camera_balance_ratio",
+                    std::bind(&L3Cam::changeAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>(
+                    "change_allied_camera_balance_white_auto_rate",
+                    std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>(
+                    "change_allied_camera_balance_white_auto_tolerance",
+                    std::bind(&L3Cam::changeAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>(
+                    "change_allied_camera_intensity_controller_region",
+                    std::bind(&L3Cam::changeAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
+                srvChangeAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>(
+                    "change_allied_camera_intensity_controller_target",
+                    std::bind(&L3Cam::changeAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
 
-            clientPolWideStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_wide_stream_disconnected");
-            clientWideConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_wide_configuration_disconnected");
+                clientPolWideStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("polarimetric_wide_stream_disconnected");
+                clientWideConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_wide_configuration_disconnected");
+            }
         }
 
         if (m_allied_narrow_sensor != NULL)
         {
-            srvGetAlliedCameraBlackLevel = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>(
-                "get_allied_camera_black_level",
-                std::bind(&L3Cam::getAlliedCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>(
-                "get_allied_camera_exposure_time",
-                std::bind(&L3Cam::getAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>(
-                "get_allied_camera_auto_exposure_time",
-                std::bind(&L3Cam::getAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>(
-                "get_allied_camera_auto_exposure_time_range",
-                std::bind(&L3Cam::getAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGain>(
-                "get_allied_camera_gain",
-                std::bind(&L3Cam::getAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>(
-                "get_allied_camera_auto_gain",
-                std::bind(&L3Cam::getAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>(
-                "get_allied_camera_auto_gain_range",
-                std::bind(&L3Cam::getAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGamma>(
-                "get_allied_camera_gamma",
-                std::bind(&L3Cam::getAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSaturation>(
-                "get_allied_camera_saturation",
-                std::bind(&L3Cam::getAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraSharpness = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSharpness>(
-                "get_allied_camera_sharpness",
-                std::bind(&L3Cam::getAlliedCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraHue = this->create_service<l3cam_interfaces::srv::GetAlliedCameraHue>(
-                "get_allied_camera_hue",
-                std::bind(&L3Cam::getAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>(
-                "get_allied_camera_intensity_auto_precedence",
-                std::bind(&L3Cam::getAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>(
-                "get_allied_camera_auto_white_balance",
-                std::bind(&L3Cam::getAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>(
-                "get_allied_camera_balance_ratio_selector",
-                std::bind(&L3Cam::getAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>(
-                "get_allied_camera_balance_ratio",
-                std::bind(&L3Cam::getAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>(
-                "get_allied_camera_balance_white_auto_rate",
-                std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>(
-                "get_allied_camera_balance_white_auto_tolerance",
-                std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraAutoModeRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>(
-                "get_allied_camera_auto_mode_region",
-                std::bind(&L3Cam::getAlliedCameraAutoModeRegion, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>(
-                "get_allied_camera_intensity_controller_region",
-                std::bind(&L3Cam::getAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>(
-                "get_allied_camera_intensity_controller_target",
-                std::bind(&L3Cam::getAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
-            srvGetAlliedCameraMaxDriverBuffersCount = this->create_service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>(
-                "get_allied_camera_max_driver_buffers_count",
-                std::bind(&L3Cam::getAlliedCameraMaxDriverBuffersCount, this, std::placeholders::_1, std::placeholders::_2));
+            if (m_allied_narrow_sensor->sensor_available) // if allied narrow is available
+            {
+                srvGetAlliedCameraBlackLevel = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>(
+                    "get_allied_camera_black_level",
+                    std::bind(&L3Cam::getAlliedCameraBlackLevel, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>(
+                    "get_allied_camera_exposure_time",
+                    std::bind(&L3Cam::getAlliedCameraExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraAutoExposureTime = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>(
+                    "get_allied_camera_auto_exposure_time",
+                    std::bind(&L3Cam::getAlliedCameraAutoExposureTime, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraAutoExposureTimeRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>(
+                    "get_allied_camera_auto_exposure_time_range",
+                    std::bind(&L3Cam::getAlliedCameraAutoExposureTimeRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGain>(
+                    "get_allied_camera_gain",
+                    std::bind(&L3Cam::getAlliedCameraGain, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraAutoGain = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>(
+                    "get_allied_camera_auto_gain",
+                    std::bind(&L3Cam::getAlliedCameraAutoGain, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraAutoGainRange = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>(
+                    "get_allied_camera_auto_gain_range",
+                    std::bind(&L3Cam::getAlliedCameraAutoGainRange, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraGamma = this->create_service<l3cam_interfaces::srv::GetAlliedCameraGamma>(
+                    "get_allied_camera_gamma",
+                    std::bind(&L3Cam::getAlliedCameraGamma, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraSaturation = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSaturation>(
+                    "get_allied_camera_saturation",
+                    std::bind(&L3Cam::getAlliedCameraSaturation, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraSharpness = this->create_service<l3cam_interfaces::srv::GetAlliedCameraSharpness>(
+                    "get_allied_camera_sharpness",
+                    std::bind(&L3Cam::getAlliedCameraSharpness, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraHue = this->create_service<l3cam_interfaces::srv::GetAlliedCameraHue>(
+                    "get_allied_camera_hue",
+                    std::bind(&L3Cam::getAlliedCameraHue, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraIntensityAutoPrecedence = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>(
+                    "get_allied_camera_intensity_auto_precedence",
+                    std::bind(&L3Cam::getAlliedCameraIntensityAutoPrecedence, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraAutoWhiteBalance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>(
+                    "get_allied_camera_auto_white_balance",
+                    std::bind(&L3Cam::getAlliedCameraAutoWhiteBalance, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraBalanceRatioSelector = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>(
+                    "get_allied_camera_balance_ratio_selector",
+                    std::bind(&L3Cam::getAlliedCameraBalanceRatioSelector, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraBalanceRatio = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>(
+                    "get_allied_camera_balance_ratio",
+                    std::bind(&L3Cam::getAlliedCameraBalanceRatio, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraBalanceWhiteAutoRate = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>(
+                    "get_allied_camera_balance_white_auto_rate",
+                    std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoRate, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraBalanceWhiteAutoTolerance = this->create_service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>(
+                    "get_allied_camera_balance_white_auto_tolerance",
+                    std::bind(&L3Cam::getAlliedCameraBalanceWhiteAutoTolerance, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraAutoModeRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>(
+                    "get_allied_camera_auto_mode_region",
+                    std::bind(&L3Cam::getAlliedCameraAutoModeRegion, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraIntensityControllerRegion = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>(
+                    "get_allied_camera_intensity_controller_region",
+                    std::bind(&L3Cam::getAlliedCameraIntensityControllerRegion, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraIntensityControllerTarget = this->create_service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>(
+                    "get_allied_camera_intensity_controller_target",
+                    std::bind(&L3Cam::getAlliedCameraIntensityControllerTarget, this, std::placeholders::_1, std::placeholders::_2));
+                srvGetAlliedCameraMaxDriverBuffersCount = this->create_service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>(
+                    "get_allied_camera_max_driver_buffers_count",
+                    std::bind(&L3Cam::getAlliedCameraMaxDriverBuffersCount, this, std::placeholders::_1, std::placeholders::_2));
 
-            clientRgbNarrowStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_narrow_stream_disconnected");
-            clientNarrowConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_narrow_configuration_disconnected");
+                clientRgbNarrowStreamDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("rgb_narrow_stream_disconnected");
+                clientNarrowConfigurationDisconnected = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("allied_narrow_configuration_disconnected");
+            }
         }
 
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Services ready");
@@ -786,6 +848,16 @@ namespace l3cam_ros2
                     CHANGE_BIAS_VALUE(devices[0], 1, this->get_parameter("bias_value_right").as_int());
                     CHANGE_BIAS_VALUE(devices[0], 2, this->get_parameter("bias_value_left").as_int());
                 }
+                if (this->get_parameter("lidar_streaming_protocol").as_int() == 1)
+                {
+                    m_lidar_sensor->protocol = protocol_gstreamer;
+                    printDefaultError(CHANGE_STREAMING_PROTOCOL(devices[0], m_lidar_sensor), "lidar_streaming_protocol");
+                }
+                if (this->get_parameter("lidar_rtsp_pipeline").as_string() != "")
+                {
+                    char *pipeline = &std::string(this->get_parameter("lidar_rtsp_pipeline").as_string())[0];
+                    printDefaultError(CHANGE_RTSP_PIPELINE(devices[0], *m_lidar_sensor, pipeline), "lidar_rtsp_pipeline");
+                }
             }
             else
             {
@@ -833,6 +905,16 @@ namespace l3cam_ros2
                     printDefaultError(CHANGE_POLARIMETRIC_CAMERA_EXPOSURE_TIME(devices[0],
                                                                                this->get_parameter("polarimetric_camera_exposure_time").as_double()),
                                       "polarimetric_camera_exposure_time");
+                }
+                if (this->get_parameter("polarimetric_streaming_protocol").as_int() == 1)
+                {
+                    m_polarimetric_sensor->protocol = protocol_gstreamer;
+                    printDefaultError(CHANGE_STREAMING_PROTOCOL(devices[0], m_polarimetric_sensor), "polarimetric_streaming_protocol");
+                }
+                if (this->get_parameter("polarimetric_rtsp_pipeline").as_string() != "")
+                {
+                    char *pipeline = &std::string(this->get_parameter("polarimetric_rtsp_pipeline").as_string())[0];
+                    printDefaultError(CHANGE_RTSP_PIPELINE(devices[0], *m_polarimetric_sensor, pipeline), "polarimetric_rtsp_pipeline");
                 }
             }
             else
@@ -886,6 +968,16 @@ namespace l3cam_ros2
                 printDefaultError(CHANGE_RGB_CAMERA_FRAMERATE(devices[0],
                                                               this->get_parameter("rgb_camera_framerate").as_int()),
                                   "rgb_camera_framerate");
+                if (this->get_parameter("rgb_streaming_protocol").as_int() == 1)
+                {
+                    m_rgb_sensor->protocol = protocol_gstreamer;
+                    printDefaultError(CHANGE_STREAMING_PROTOCOL(devices[0], m_rgb_sensor), "rgb_streaming_protocol");
+                }
+                if (this->get_parameter("rgb_rtsp_pipeline").as_string() != "")
+                {
+                    char *pipeline = &std::string(this->get_parameter("rgb_rtsp_pipeline").as_string())[0];
+                    printDefaultError(CHANGE_RTSP_PIPELINE(devices[0], *m_rgb_sensor, pipeline), "rgb_rtsp_pipeline");
+                }
             }
             else
             {
@@ -905,7 +997,17 @@ namespace l3cam_ros2
                 printDefaultError(CHANGE_THERMAL_CAMERA_TEMPERATURE_FILTER(devices[0],
                                                                            this->get_parameter("thermal_camera_temperature_filter_min").as_int(),
                                                                            this->get_parameter("thermal_camera_temperature_filter_max").as_int()),
-                                  "thermal_camera_temperature_filter");
+                                  "thermal_camera_temperature_filter_range");
+                if (this->get_parameter("thermal_streaming_protocol").as_int() == 1)
+                {
+                    m_thermal_sensor->protocol = protocol_gstreamer;
+                    printDefaultError(CHANGE_STREAMING_PROTOCOL(devices[0], m_thermal_sensor), "thermal_streaming_protocol");
+                }
+                if (this->get_parameter("thermal_rtsp_pipeline").as_string() != "")
+                {
+                    char *pipeline = &std::string(this->get_parameter("thermal_rtsp_pipeline").as_string())[0];
+                    printDefaultError(CHANGE_RTSP_PIPELINE(devices[0], *m_thermal_sensor, pipeline), "thermal_rtsp_pipeline");
+                }
             }
             else
             {
@@ -988,6 +1090,16 @@ namespace l3cam_ros2
                 printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_wide_sensor,
                                                                                 this->get_parameter("allied_wide_camera_max_driver_buffers_count").as_int()),
                                   "allied_wide_camera_max_driver_buffers_count");
+                if (this->get_parameter("allied_wide_streaming_protocol").as_int() == 1)
+                {
+                    m_allied_wide_sensor->protocol = protocol_gstreamer;
+                    printDefaultError(CHANGE_STREAMING_PROTOCOL(devices[0], m_allied_wide_sensor), "allied_wide_streaming_protocol");
+                }
+                if (this->get_parameter("allied_wide_rtsp_pipeline").as_string() != "")
+                {
+                    char *pipeline = &std::string(this->get_parameter("allied_wide_rtsp_pipeline").as_string())[0];
+                    printDefaultError(CHANGE_RTSP_PIPELINE(devices[0], *m_allied_wide_sensor, pipeline), "allied_wide_rtsp_pipeline");
+                }
             }
             else
             {
@@ -1070,6 +1182,16 @@ namespace l3cam_ros2
                 printDefaultError(CHANGE_ALLIED_CAMERA_MAX_DRIVER_BUFFERS_COUNT(devices[0], *m_allied_narrow_sensor,
                                                                                 this->get_parameter("allied_narrow_camera_max_driver_buffers_count").as_int()),
                                   "allied_narrow_camera_max_driver_buffers_count");
+                if (this->get_parameter("allied_narrow_streaming_protocol").as_int() == 1)
+                {
+                    m_allied_narrow_sensor->protocol = protocol_gstreamer;
+                    printDefaultError(CHANGE_STREAMING_PROTOCOL(devices[0], m_allied_narrow_sensor), "allied_narrow_streaming_protocol");
+                }
+                if (this->get_parameter("allied_narrow_rtsp_pipeline").as_string() != "")
+                {
+                    char *pipeline = &std::string(this->get_parameter("allied_narrow_rtsp_pipeline").as_string())[0];
+                    printDefaultError(CHANGE_RTSP_PIPELINE(devices[0], *m_allied_narrow_sensor, pipeline), "allied_narrow_rtsp_pipeline");
+                }
             }
             else
             {
@@ -1078,27 +1200,6 @@ namespace l3cam_ros2
         }
 
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Default parameters loaded");
-    }
-
-    void L3Cam::timer_callback()
-    {
-        int error = FIND_DEVICES(devices, &num_devices);
-        if (error)
-        {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while finding devices: " << getBeamErrorDescription(error));
-            STOP_STREAM(devices[0]);
-            STOP_DEVICE(devices[0]);
-            TERMINATE(devices[0]);
-            rclcpp::shutdown();
-        }
-        else if (num_devices == 0)
-        {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Device disconnected");
-            STOP_STREAM(devices[0]);
-            STOP_DEVICE(devices[0]);
-            TERMINATE(devices[0]);
-            rclcpp::shutdown();
-        }
     }
 
     // Service callbacks
@@ -1158,6 +1259,89 @@ namespace l3cam_ros2
             res->sensors[i].image_type = av_sensors[i].image_type;
             res->sensors[i].perception_enabled = av_sensors[i].perception_enabled;
             res->sensors[i].sensor_available = av_sensors[i].sensor_available;
+        }
+    }
+
+    void L3Cam::changeStreamingProtocol(const std::shared_ptr<l3cam_interfaces::srv::ChangeStreamingProtocol::Request> req,
+                                        std::shared_ptr<l3cam_interfaces::srv::ChangeStreamingProtocol::Response> res)
+    {
+        STOP_STREAM(devices[0]);
+
+        streamingProtocols protocol;
+        switch (req->protocol)
+        {
+        case 0:
+            protocol = protocol_raw_udp;
+            break;
+        case 1:
+            protocol = protocol_gstreamer;
+            break;
+        default:
+            protocol = protocol_raw_udp;
+            break;
+        }
+
+        switch (req->sensor_type)
+        {
+        case ((int)sensorTypes::sensor_lidar):
+            m_lidar_sensor->protocol = protocol;
+            res->error = CHANGE_STREAMING_PROTOCOL(devices[0], m_lidar_sensor);
+            break;
+        case ((int)sensorTypes::sensor_pol):
+            m_polarimetric_sensor->protocol = protocol;
+            res->error = CHANGE_STREAMING_PROTOCOL(devices[0], m_polarimetric_sensor);
+            break;
+        case ((int)sensorTypes::sensor_econ_rgb):
+            m_rgb_sensor->protocol = protocol;
+            res->error = CHANGE_STREAMING_PROTOCOL(devices[0], m_rgb_sensor);
+            break;
+        case ((int)sensorTypes::sensor_thermal):
+            m_thermal_sensor->protocol = protocol;
+            res->error = CHANGE_STREAMING_PROTOCOL(devices[0], m_thermal_sensor);
+            break;
+        case ((int)sensorTypes::sensor_allied_wide):
+            m_allied_wide_sensor->protocol = protocol;
+            res->error = CHANGE_STREAMING_PROTOCOL(devices[0], m_allied_wide_sensor);
+            break;
+        case ((int)sensorTypes::sensor_allied_narrow):
+            m_allied_narrow_sensor->protocol = protocol;
+            res->error = CHANGE_STREAMING_PROTOCOL(devices[0], m_allied_narrow_sensor);
+            break;
+        }
+
+        START_STREAM(devices[0]);
+    }
+
+    void L3Cam::getRtspPipeline(const std::shared_ptr<l3cam_interfaces::srv::GetRtspPipeline::Request> req,
+                                std::shared_ptr<l3cam_interfaces::srv::GetRtspPipeline::Response> res)
+    {
+        char *pipeline = NULL;
+        switch (req->sensor_type)
+        {
+        case (int)sensorTypes::sensor_lidar:
+            res->error = GET_RTSP_PIPELINE(devices[0], *m_lidar_sensor, &pipeline);
+            res->pipeline = std::string(pipeline);
+            break;
+        case (int)sensorTypes::sensor_pol:
+            res->error = GET_RTSP_PIPELINE(devices[0], *m_polarimetric_sensor, &pipeline);
+            res->pipeline = std::string(pipeline);
+            break;
+        case (int)sensorTypes::sensor_econ_rgb:
+            res->error = GET_RTSP_PIPELINE(devices[0], *m_rgb_sensor, &pipeline);
+            res->pipeline = std::string(pipeline);
+            break;
+        case (int)sensorTypes::sensor_thermal:
+            res->error = GET_RTSP_PIPELINE(devices[0], *m_thermal_sensor, &pipeline);
+            res->pipeline = std::string(pipeline);
+            break;
+        case (int)sensorTypes::sensor_allied_wide:
+            res->error = GET_RTSP_PIPELINE(devices[0], *m_allied_wide_sensor, &pipeline);
+            res->pipeline = std::string(pipeline);
+            break;
+        case (int)sensorTypes::sensor_allied_narrow:
+            res->error = GET_RTSP_PIPELINE(devices[0], *m_allied_narrow_sensor, &pipeline);
+            res->pipeline = std::string(pipeline);
+            break;
         }
     }
 
@@ -1222,6 +1406,45 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(req);
         res->error = STOP_STREAM(devices[0]);
+    }
+
+    void L3Cam::getDeviceTemperatures(const std::shared_ptr<l3cam_interfaces::srv::GetDeviceTemperatures::Request> req,
+                                      std::shared_ptr<l3cam_interfaces::srv::GetDeviceTemperatures::Response> res)
+    {
+        ROS2_BMG_UNUSED(req);
+        int32_t *temperatures = (int32_t *)malloc(sizeof(int32_t) * 11);
+        int error = GET_DEVICE_TEMPERATURES(devices[0], temperatures);
+        res->error = error;
+        if (error != L3CAM_OK)
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " in temperatures error: " << getBeamErrorDescription(error));
+            res->bcpu_temp = 0;
+            res->mcpu_temp = 0;
+            res->gpu_temp = 0;
+            res->pll_temp = 0;
+            res->board_temp = 0;
+            res->diode_temp = 0;
+            res->pmic_temp = 0;
+            res->fan_temp = 0;
+            res->inter_temp = 0;
+            res->allied_wide_temp = 0;
+            res->allied_narrow_temp = 0;
+        }
+        else
+        {
+            res->bcpu_temp = temperatures[0] / 1000.0;
+            res->mcpu_temp = temperatures[1] / 1000.0;
+            res->gpu_temp = temperatures[2] / 1000.0;
+            res->pll_temp = temperatures[3] / 1000.0;
+            res->board_temp = temperatures[4] / 1000.0;
+            res->diode_temp = temperatures[5] / 1000.0;
+            res->pmic_temp = temperatures[6] / 1000.0;
+            res->fan_temp = temperatures[7] / 1000.0;
+            res->inter_temp = temperatures[8] / 1000.0;
+            res->allied_wide_temp = temperatures[9] / 1000.0;
+            res->allied_narrow_temp = temperatures[10] / 1000.0;
+        }
+        free(temperatures);
     }
 
     // Point Cloud
@@ -2010,6 +2233,7 @@ namespace l3cam_ros2
         }
     }
 
+    // Sensors Disconnection
     void L3Cam::lidarDisconnected(int code)
     {
         // Stream
@@ -2257,7 +2481,7 @@ int main(int argc, char **argv)
     error = l3cam_ros2::node->startDeviceStream();
     if (error)
     {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while starting device stream: " << getBeamErrorDescription(error));
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while starting device and stream: " << getBeamErrorDescription(error));
         STOP_DEVICE(l3cam_ros2::node->devices[0]);
         TERMINATE(l3cam_ros2::node->devices[0]);
         return 1;
@@ -2270,6 +2494,7 @@ int main(int argc, char **argv)
     STOP_STREAM(l3cam_ros2::node->devices[0]);
     STOP_DEVICE(l3cam_ros2::node->devices[0]);
     TERMINATE(l3cam_ros2::node->devices[0]);
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
 
     rclcpp::shutdown();
     return 0;

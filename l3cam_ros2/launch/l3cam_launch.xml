@@ -18,6 +18,8 @@
     <arg name="auto_bias" default="true" />
     <arg name="bias_value_right" default="1580" /> <!-- 700 - 3500 -->
     <arg name="bias_value_left" default="1380" /> <!-- 700 - 3500 -->
+    <arg name="lidar_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
+    <arg name="lidar_rtsp_pipeline" default="" />
 
     <!-- Polarimetric configuration -->
     <arg name="polarimetric_camera_brightness" default="127" /> <!-- 0 - 255 -->
@@ -30,6 +32,8 @@
     <arg name="polarimetric_camera_auto_exposure_time_range_minimum" default="33.5" /> <!-- 33.5 - 66470.6 -->
     <arg name="polarimetric_camera_auto_exposure_time_range_maximum" default="66470.6" /> <!-- 33.5 - 66470.6 -->
     <arg name="polarimetric_camera_exposure_time" default="33.5" /> <!-- 33.5 - 66470.6 -->
+    <arg name="polarimetric_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
+    <arg name="polarimetric_rtsp_pipeline" default="" />
 
     <!-- RGB configuration -->
     <arg name="rgb_camera_brightness" default="0" /> <!-- -15 - 15 -->
@@ -44,12 +48,16 @@
     <arg name="rgb_camera_exposure_time" default="156" /> <!-- 1 - 10000 -->
     <arg name="rgb_camera_resolution" default="3" /> <!-- see econResolutions -->
     <arg name="rgb_camera_framerate" default="10" /> <!-- 1 - 16 -->
+    <arg name="rgb_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
+    <arg name="rgb_rtsp_pipeline" default="" />
 
     <!-- Thermal configuration -->
     <arg name="thermal_camera_colormap" default="1" /> <!-- see thermalTypes -->
     <arg name="thermal_camera_temperature_filter" default="false" />
     <arg name="thermal_camera_temperature_filter_min" default="0" /> <!-- -40 - 200 -->
     <arg name="thermal_camera_temperature_filter_max" default="50" /> <!-- -40 - 200 -->
+    <arg name="thermal_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
+    <arg name="thermal_rtsp_pipeline" default="" />
 
     <!-- Allied Wide configuration -->
     <arg name="allied_wide_camera_black_level" default="0" /> <!-- 0 - 4095 -->
@@ -76,6 +84,8 @@
     <arg name="allied_wide_camera_intensity_controller_region" default="0" /> <!-- 0(AutoMode), 4(FullImage) -->
     <arg name="allied_wide_camera_intensity_controller_target" default="50" /> <!-- 10 - 90 -->
     <arg name="allied_wide_camera_max_driver_buffers_count" default="64" /> <!-- 1 - 4096 -->
+    <arg name="allied_wide_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
+    <arg name="allied_wide_rtsp_pipeline" default="" />
 
     <!-- Allied Narrow configuration -->
     <arg name="allied_narrow_camera_black_level" default="0" /> <!-- 0 - 4095 -->
@@ -97,11 +107,13 @@
     <arg name="allied_narrow_camera_balance_ratio" default="2.4" /> <!-- 0 - 8 -->
     <arg name="allied_narrow_camera_balance_white_auto_rate" default="100" /> <!-- 0 - 100 -->
     <arg name="allied_narrow_camera_balance_white_auto_tolerance" default="5" /> <!-- 0 - 50 -->
-    <arg name="allied_narrow_camera_auto_mode_region_height" default="2056" /> <!-- 0 - 2056 -->
-    <arg name="allied_narrow_camera_auto_mode_region_width" default="2464" /> <!-- 0 - 2464 -->
+    <arg name="allied_narrow_camera_auto_mode_region_height" default="1544" /> <!-- 0 - 1544 -->
+    <arg name="allied_narrow_camera_auto_mode_region_width" default="2064" /> <!-- 0 - 2064 -->
     <arg name="allied_narrow_camera_intensity_controller_region" default="0" /> <!-- 0(AutoMode), 4(FullImage) -->
     <arg name="allied_narrow_camera_intensity_controller_target" default="50" /> <!-- 10 - 90 -->
     <arg name="allied_narrow_camera_max_driver_buffers_count" default="64" /> <!-- 1 - 4096 -->
+    <arg name="allied_narrow_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
+    <arg name="allied_narrow_rtsp_pipeline" default="" />
 
     <!-- Start the driver -->
     <node pkg="l3cam_ros2" exec="l3cam_ros2_node" name="l3cam_ros2_node" output="screen">
@@ -116,6 +128,8 @@
         <param name="auto_bias" value="$(var auto_bias)" type="bool" />
         <param name="bias_value_right" value="$(var bias_value_right)" type="int" />
         <param name="bias_value_left" value="$(var bias_value_left)" type="int" />
+        <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" type="int" />
+        <param name="lidar_rtsp_pipeline" value="$(var lidar_rtsp_pipeline)" type="str" />
 
         <param name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" type="int" />
         <param name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" type="float" />
@@ -127,6 +141,8 @@
         <param name="polarimetric_camera_auto_exposure_time_range_minimum" value="$(var polarimetric_camera_auto_exposure_time_range_minimum)" type="float" />
         <param name="polarimetric_camera_auto_exposure_time_range_maximum" value="$(var polarimetric_camera_auto_exposure_time_range_maximum)" type="float" />
         <param name="polarimetric_camera_exposure_time" value="$(var polarimetric_camera_exposure_time)" type="float" />
+        <param name="polarimetric_streaming_protocol" value="$(var polarimetric_streaming_protocol)" type="int" />
+        <param name="polarimetric_rtsp_pipeline" value="$(var polarimetric_rtsp_pipeline)" type="str" />
 
         <param name="rgb_camera_brightness" value="$(var rgb_camera_brightness)" type="int" />
         <param name="rgb_camera_contrast" value="$(var rgb_camera_contrast)" type="int" />
@@ -140,11 +156,15 @@
         <param name="rgb_camera_exposure_time" value="$(var rgb_camera_exposure_time)" type="int" />
         <param name="rgb_camera_resolution" value="$(var rgb_camera_resolution)" type="int" />
         <param name="rgb_camera_framerate" value="$(var rgb_camera_framerate)" type="int" />
+        <param name="rgb_streaming_protocol" value="$(var rgb_streaming_protocol)" type="int" />
+        <param name="rgb_rtsp_pipeline" value="$(var rgb_rtsp_pipeline)" type="str" />
 
         <param name="thermal_camera_colormap" value="$(var thermal_camera_colormap)" type="int" />
         <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" type="bool" />
         <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" type="int" />
         <param name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" type="int" />
+        <param name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" type="int" />
+        <param name="thermal_rtsp_pipeline" value="$(var thermal_rtsp_pipeline)" type="str" />
         
         <param name="allied_wide_camera_black_level" value="$(var allied_wide_camera_black_level)" type="float" />
         <param name="allied_wide_camera_exposure_time" value="$(var allied_wide_camera_exposure_time)" type="float" />
@@ -170,6 +190,8 @@
         <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" type="int" />
         <param name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" type="float" />
         <param name="allied_wide_camera_max_driver_buffers_count" value="$(var allied_wide_camera_max_driver_buffers_count)" type="int" />
+        <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" type="int" />
+        <param name="allied_wide_rtsp_pipeline" value="$(var allied_wide_rtsp_pipeline)" type="str" />
 
         <param name="allied_narrow_camera_black_level" value="$(var allied_narrow_camera_black_level)" type="float" />
         <param name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" type="float" />
@@ -195,6 +217,8 @@
         <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" type="int" />
         <param name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" type="float" />
         <param name="allied_narrow_camera_max_driver_buffers_count" value="$(var allied_narrow_camera_max_driver_buffers_count)" type="int" />
+        <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" type="int" />
+        <param name="allied_narrow_rtsp_pipeline" value="$(var allied_narrow_rtsp_pipeline)" type="str" />
     </node>
 
     <!-- Start dyanmic reconfigure -->
@@ -206,6 +230,7 @@
         <arg name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" />
         <arg name="distance_range_minimum" value="$(var distance_range_minimum)" />
         <arg name="distance_range_maximum" value="$(var distance_range_maximum)" />
+        <arg name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" />
 
         <arg name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" />
         <arg name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" />
@@ -217,6 +242,7 @@
         <arg name="polarimetric_camera_auto_exposure_time_range_minimum" value="$(var polarimetric_camera_auto_exposure_time_range_minimum)" />
         <arg name="polarimetric_camera_auto_exposure_time_range_maximum" value="$(var polarimetric_camera_auto_exposure_time_range_maximum)" />
         <arg name="polarimetric_camera_exposure_time" value="$(var polarimetric_camera_exposure_time)" />
+        <arg name="polarimetric_streaming_protocol" value="$(var polarimetric_streaming_protocol)" />
 
         <arg name="rgb_camera_brightness" value="$(var rgb_camera_brightness)" />
         <arg name="rgb_camera_contrast" value="$(var rgb_camera_contrast)" />
@@ -228,11 +254,13 @@
         <arg name="rgb_camera_white_balance" value="$(var rgb_camera_white_balance)" />
         <arg name="rgb_camera_auto_exposure_time" value="$(var rgb_camera_auto_exposure_time)" />
         <arg name="rgb_camera_exposure_time" value="$(var rgb_camera_exposure_time)" />
+        <arg name="rgb_streaming_protocol" value="$(var rgb_streaming_protocol)" />
 
         <arg name="thermal_camera_colormap" value="$(var thermal_camera_colormap)" />
         <arg name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" />
         <arg name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" />
         <arg name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" />
+        <arg name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" />
 
         <arg name="allied_wide_camera_exposure_time" value="$(var allied_wide_camera_exposure_time)" />
         <arg name="allied_wide_camera_auto_exposure_time" value="$(var allied_wide_camera_auto_exposure_time)" />
@@ -253,6 +281,7 @@
         <arg name="allied_wide_camera_balance_white_auto_tolerance" value="$(var allied_wide_camera_balance_white_auto_tolerance)" />
         <arg name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" />
         <arg name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" />
+        <arg name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" />
 
         <arg name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" />
         <arg name="allied_narrow_camera_auto_exposure_time" value="$(var allied_narrow_camera_auto_exposure_time)" />
@@ -273,6 +302,8 @@
         <arg name="allied_narrow_camera_balance_white_auto_tolerance" value="$(var allied_narrow_camera_balance_white_auto_tolerance)" />
         <arg name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" />
         <arg name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" />
+        <arg name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" />
+
     </include>
 
     <!-- Start streaming the available sensors. -->

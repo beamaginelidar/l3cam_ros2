@@ -37,6 +37,8 @@
 #include "l3cam_interfaces/srv/get_local_server_address.hpp"
 #include "l3cam_interfaces/srv/get_device_status.hpp"
 #include "l3cam_interfaces/srv/get_sensors_available.hpp"
+#include "l3cam_interfaces/srv/change_streaming_protocol.hpp"
+#include "l3cam_interfaces/srv/get_rtsp_pipeline.hpp"
 #include "l3cam_interfaces/srv/get_network_configuration.hpp"
 #include "l3cam_interfaces/srv/change_network_configuration.hpp"
 #include "l3cam_interfaces/srv/power_off_device.hpp"
@@ -44,6 +46,7 @@
 #include "l3cam_interfaces/srv/stop_device.hpp"
 #include "l3cam_interfaces/srv/start_stream.hpp"
 #include "l3cam_interfaces/srv/stop_stream.hpp"
+#include "l3cam_interfaces/srv/get_device_temperatures.hpp"
 
 #include "l3cam_interfaces/srv/change_pointcloud_color.hpp"
 #include "l3cam_interfaces/srv/change_pointcloud_color_range.hpp"
@@ -138,6 +141,7 @@ namespace l3cam_ros2
         void initializeServices();
 
         inline void printDefaultError(int error, std::string param);
+        void loadBeforeStartParams();
         void loadDefaultParams();
 
         void timer_callback();
@@ -149,6 +153,8 @@ namespace l3cam_ros2
         void getLocalServerAddress(const std::shared_ptr<l3cam_interfaces::srv::GetLocalServerAddress::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetLocalServerAddress::Response> res);
         void getDeviceStatus(const std::shared_ptr<l3cam_interfaces::srv::GetDeviceStatus::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetDeviceStatus::Response> res);
         void getSensorsAvailable(const std::shared_ptr<l3cam_interfaces::srv::GetSensorsAvailable::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetSensorsAvailable::Response> res);
+        void changeStreamingProtocol(const std::shared_ptr<l3cam_interfaces::srv::ChangeStreamingProtocol::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeStreamingProtocol::Response> res);
+        void getRtspPipeline(const std::shared_ptr<l3cam_interfaces::srv::GetRtspPipeline::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetRtspPipeline::Response> res);
         void getNetworkConfiguration(const std::shared_ptr<l3cam_interfaces::srv::GetNetworkConfiguration::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetNetworkConfiguration::Response> res);
         void changeNetworkConfiguration(const std::shared_ptr<l3cam_interfaces::srv::ChangeNetworkConfiguration::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeNetworkConfiguration::Response> res);
         void powerOffDevice(const std::shared_ptr<l3cam_interfaces::srv::PowerOffDevice::Request> req, std::shared_ptr<l3cam_interfaces::srv::PowerOffDevice::Response> res);
@@ -156,6 +162,7 @@ namespace l3cam_ros2
         void stopDevice(const std::shared_ptr<l3cam_interfaces::srv::StopDevice::Request> req, std::shared_ptr<l3cam_interfaces::srv::StopDevice::Response> res);
         void startStream(const std::shared_ptr<l3cam_interfaces::srv::StartStream::Request> req, std::shared_ptr<l3cam_interfaces::srv::StartStream::Response> res);
         void stopStream(const std::shared_ptr<l3cam_interfaces::srv::StopStream::Request> req, std::shared_ptr<l3cam_interfaces::srv::StopStream::Response> res);
+        void getDeviceTemperatures(const std::shared_ptr<l3cam_interfaces::srv::GetDeviceTemperatures::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetDeviceTemperatures::Response> res);
         void changePointcloudColor(const std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColor::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColor::Response> res);
         void changePointcloudColorRange(const std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColorRange::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColorRange::Response> res);
         void changeDistanceRange(const std::shared_ptr<l3cam_interfaces::srv::ChangeDistanceRange::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeDistanceRange::Response> res);
@@ -239,6 +246,8 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::GetLocalServerAddress>::SharedPtr srvGetLocalServerAddress;
         rclcpp::Service<l3cam_interfaces::srv::GetDeviceStatus>::SharedPtr srvGetDeviceStatus;
         rclcpp::Service<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr srvGetSensorsAvailable;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr srvChangeStreamingProtocol;
+        rclcpp::Service<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr srvGetRtspPipeline;
         rclcpp::Service<l3cam_interfaces::srv::GetNetworkConfiguration>::SharedPtr srvGetNetworkConfiguration;
         rclcpp::Service<l3cam_interfaces::srv::ChangeNetworkConfiguration>::SharedPtr srvChangeNetworkConfiguration;
         rclcpp::Service<l3cam_interfaces::srv::PowerOffDevice>::SharedPtr srvPowerOffDevice;
@@ -246,6 +255,7 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::StopDevice>::SharedPtr srvStopDevice;
         rclcpp::Service<l3cam_interfaces::srv::StartStream>::SharedPtr srvStartStream;
         rclcpp::Service<l3cam_interfaces::srv::StopStream>::SharedPtr srvStopStream;
+        rclcpp::Service<l3cam_interfaces::srv::GetDeviceTemperatures>::SharedPtr srvGetDeviceTemperatures;
 
         rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColor>::SharedPtr srvChangePointcloudColor;
         rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedPtr srvChangePointcloudColorRange;

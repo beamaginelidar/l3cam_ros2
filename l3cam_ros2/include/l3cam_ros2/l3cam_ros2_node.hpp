@@ -133,6 +133,7 @@ namespace l3cam_ros2
 
         int initializeDevice();
         int startDeviceStream();
+        void disconnectAll(int code);
 
         l3cam devices[1];
         LibL3CamState m_state;
@@ -234,7 +235,7 @@ namespace l3cam_ros2
         void lidarDisconnected(int code);
         void polDisconnected(int code);
         void rgbDisconnected(int code);
-        void wideDisconnected(int code);
+        void alliedwideDisconnected(int code);
         void alliedNarrowDisconnect(int code);
         void thermalDisconnected(int code);
 

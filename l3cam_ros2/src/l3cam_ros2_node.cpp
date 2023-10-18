@@ -159,6 +159,35 @@ namespace l3cam_ros2
         return L3CAM_OK;
     }
 
+    void L3Cam::disconnectAll(int code)
+    {
+        networkDisconnected(L3CAM_OK);
+        if (m_lidar_sensor != NULL && m_lidar_sensor->sensor_available)
+        {
+            lidarDisconnected(L3CAM_OK);
+        }
+        if (m_polarimetric_sensor != NULL && m_polarimetric_sensor->sensor_available)
+        {
+            polDisconnected(L3CAM_OK);
+        }
+        if (m_rgb_sensor != NULL && m_rgb_sensor->sensor_available)
+        {
+            rgbDisconnected(L3CAM_OK);
+        }
+        if (m_allied_wide_sensor != NULL && m_allied_wide_sensor->sensor_available)
+        {
+            alliedwideDisconnected(L3CAM_OK);
+        }
+        if (m_allied_narrow_sensor != NULL && m_allied_narrow_sensor->sensor_available)
+        {
+            alliedNarrowDisconnect(L3CAM_OK);
+        }
+        if (m_thermal_sensor != NULL && m_thermal_sensor->sensor_available)
+        {
+            thermalDisconnected(L3CAM_OK);
+        }
+    }
+
     void L3Cam::declareParameters()
     {
         rcl_interfaces::msg::ParameterDescriptor descriptor;
@@ -1216,12 +1245,12 @@ namespace l3cam_ros2
 
     // Service callbacks
     void L3Cam::libL3camState(const std::shared_ptr<l3cam_interfaces::srv::LibL3camState::Request> req,
-                           std::shared_ptr<l3cam_interfaces::srv::LibL3camState::Response> res)
+                              std::shared_ptr<l3cam_interfaces::srv::LibL3camState::Response> res)
     {
         ROS2_BMG_UNUSED(req);
         res->state = m_state;
     }
-    
+
     void L3Cam::getVersion(const std::shared_ptr<l3cam_interfaces::srv::GetVersion::Request> req,
                            std::shared_ptr<l3cam_interfaces::srv::GetVersion::Response> res)
     {
@@ -1241,26 +1270,19 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(req);
         res->error = STOP_STREAM(devices[0]);
-        if(!res->error)
+        if (!res->error)
         {
             m_state = LibL3CamState::started;
             res->error = STOP_DEVICE(devices[0]);
         }
-        if(!res->error)
+        if (!res->error)
         {
             m_state = LibL3CamState::initialized;
             res->error = TERMINATE(devices[0]);
-            if(!res->error)
+            if (!res->error)
             {
                 m_state = LibL3CamState::terminated;
-                // disconnect all sensors
-                networkDisconnected(L3CAM_OK);
-                lidarDisconnected(L3CAM_OK);
-                polDisconnected(L3CAM_OK);
-                rgbDisconnected(L3CAM_OK);
-                wideDisconnected(L3CAM_OK);
-                alliedNarrowDisconnect(L3CAM_OK);
-                thermalDisconnected(L3CAM_OK);
+                disconnectAll(0);
                 rclcpp::shutdown();
             }
         }
@@ -1429,7 +1451,7 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(req);
         res->error = START_DEVICE(devices[0]);
-        if(!res->error)
+        if (!res->error)
             m_state = LibL3CamState::started;
     }
 
@@ -1438,14 +1460,13 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(req);
         res->error = STOP_STREAM(devices[0]);
-        if(!res->error)
+        if (!res->error)
         {
             m_state = LibL3CamState::started;
             res->error = STOP_DEVICE(devices[0]);
-            if(!res->error)
+            if (!res->error)
                 m_state = LibL3CamState::initialized;
         }
-        
     }
 
     void L3Cam::startStream(const std::shared_ptr<l3cam_interfaces::srv::StartStream::Request> req,
@@ -1453,7 +1474,7 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(req);
         res->error = START_STREAM(devices[0]);
-        if(!res->error)
+        if (!res->error)
             m_state = LibL3CamState::streaming;
     }
 
@@ -1462,7 +1483,7 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(req);
         res->error = STOP_STREAM(devices[0]);
-        if(!res->error)
+        if (!res->error)
             m_state = LibL3CamState::started;
     }
 
@@ -2415,7 +2436,7 @@ namespace l3cam_ros2
         auto resultRgbConfigurationDisconnected = clientRgbConfigurationDisconnected->async_send_request(requestRgbConfigurationDisconnected);
     }
 
-    void L3Cam::wideDisconnected(int code)
+    void L3Cam::alliedwideDisconnected(int code)
     {
         // Stream
         while (!clientPolWideStreamDisconnected->wait_for_service(1s))
@@ -2550,6 +2571,7 @@ int main(int argc, char **argv)
     if (error)
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while initializing device: " << getBeamErrorDescription(error));
+        l3cam_ros2::node->disconnectAll(error);
         TERMINATE(l3cam_ros2::node->devices[0]);
         l3cam_ros2::node->m_state = LibL3CamState::terminated;
         return 1;
@@ -2559,10 +2581,9 @@ int main(int argc, char **argv)
     if (error)
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while starting device and stream: " << getBeamErrorDescription(error));
+        l3cam_ros2::node->disconnectAll(error);
         STOP_STREAM(l3cam_ros2::node->devices[0]);
-        l3cam_ros2::node->m_state = LibL3CamState::started;
         STOP_DEVICE(l3cam_ros2::node->devices[0]);
-        l3cam_ros2::node->m_state = LibL3CamState::initialized;
         TERMINATE(l3cam_ros2::node->devices[0]);
         l3cam_ros2::node->m_state = LibL3CamState::terminated;
         return 1;
@@ -2573,9 +2594,7 @@ int main(int argc, char **argv)
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminating...");
     // Before exiting stop stream, device and terminate
     STOP_STREAM(l3cam_ros2::node->devices[0]);
-    l3cam_ros2::node->m_state = LibL3CamState::started;
     STOP_DEVICE(l3cam_ros2::node->devices[0]);
-    l3cam_ros2::node->m_state = LibL3CamState::initialized;
     TERMINATE(l3cam_ros2::node->devices[0]);
     l3cam_ros2::node->m_state = LibL3CamState::terminated;
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");

@@ -213,7 +213,7 @@ namespace l3cam_ros2
         }
 
         void networkDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
-                                        std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
+                                         std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
         {
             ROS2_BMG_UNUSED(res);
 

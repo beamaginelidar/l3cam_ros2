@@ -58,7 +58,7 @@
 
 #include "l3cam_interfaces/srv/sensor_disconnected.hpp"
 
-#include "l3cam_ros2_node.hpp" // for ROS2_BMG_UNUSED
+#include "l3cam_ros2_utils.hpp"
 
 using namespace std::chrono_literals;
 
@@ -226,7 +226,7 @@ namespace l3cam_ros2
     class PointCloudStream : public rclcpp::Node
     {
     public:
-        PointCloudStream() : Node("pointcloud_stream")
+        explicit PointCloudStream() : Node("pointcloud_stream")
         {
             clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
 

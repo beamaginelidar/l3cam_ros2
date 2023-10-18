@@ -29,7 +29,9 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <beamagine.h>
+#include <l3cam_ros2_utils.hpp>
 
+#include "l3cam_interfaces/srv/lib_l3cam_state.hpp"
 #include "l3cam_interfaces/srv/get_version.hpp"
 #include "l3cam_interfaces/srv/initialize.hpp"
 #include "l3cam_interfaces/srv/terminate.hpp"
@@ -122,8 +124,6 @@
 
 #include "l3cam_interfaces/srv/sensor_disconnected.hpp"
 
-#define ROS2_BMG_UNUSED(x) (void)x;
-
 namespace l3cam_ros2
 {
     class L3Cam : public rclcpp::Node
@@ -135,6 +135,7 @@ namespace l3cam_ros2
         int startDeviceStream();
 
         l3cam devices[1];
+        LibL3CamState m_state;
 
     private:
         void declareParameters();
@@ -144,8 +145,7 @@ namespace l3cam_ros2
         void loadBeforeStartParams();
         void loadDefaultParams();
 
-        void timer_callback();
-
+        void libL3camState(const std::shared_ptr<l3cam_interfaces::srv::LibL3camState::Request> req, std::shared_ptr<l3cam_interfaces::srv::LibL3camState::Response> res);
         void getVersion(const std::shared_ptr<l3cam_interfaces::srv::GetVersion::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetVersion::Response> res);
         void initialize(const std::shared_ptr<l3cam_interfaces::srv::Initialize::Request> req, std::shared_ptr<l3cam_interfaces::srv::Initialize::Response> res);
         void terminate(const std::shared_ptr<l3cam_interfaces::srv::Terminate::Request> req, std::shared_ptr<l3cam_interfaces::srv::Terminate::Response> res);
@@ -230,6 +230,7 @@ namespace l3cam_ros2
         void getAlliedCameraIntensityControllerTarget(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget::Response> res);
         void getAlliedCameraMaxDriverBuffersCount(const std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount::Response> res);
 
+        void networkDisconnected(int code);
         void lidarDisconnected(int code);
         void polDisconnected(int code);
         void rgbDisconnected(int code);
@@ -239,6 +240,7 @@ namespace l3cam_ros2
 
         static void errorNotification(const int32_t *error);
 
+        rclcpp::Service<l3cam_interfaces::srv::LibL3camState>::SharedPtr srvLibL3camState;
         rclcpp::Service<l3cam_interfaces::srv::GetVersion>::SharedPtr srvGetVersion;
         rclcpp::Service<l3cam_interfaces::srv::Initialize>::SharedPtr srvInitialize;
         rclcpp::Service<l3cam_interfaces::srv::Terminate>::SharedPtr srvTerminate;
@@ -328,6 +330,7 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>::SharedPtr srvGetAlliedCameraIntensityControllerTarget;
         rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>::SharedPtr srvGetAlliedCameraMaxDriverBuffersCount;
 
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientNetworkDisconnected;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientPointCloudStreamDisconnected;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientPointCloudConfigurationDisconnected;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientPolWideStreamDisconnected;
@@ -338,8 +341,6 @@ namespace l3cam_ros2
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientThermalConfigurationDisconnected;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientWideConfigurationDisconnected;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientNarrowConfigurationDisconnected;
-
-        rclcpp::TimerBase::SharedPtr timer_;
 
         sensor av_sensors[6];
 

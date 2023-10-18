@@ -46,7 +46,7 @@
 
 #include "l3cam_interfaces/srv/sensor_disconnected.hpp"
 
-#include "l3cam_ros2_node.hpp" // for ROS2_BMG_UNUSED
+#include "l3cam_ros2_utils.hpp"
 
 using namespace std::chrono_literals;
 
@@ -55,7 +55,7 @@ namespace l3cam_ros2
     class PointCloudConfiguration : public rclcpp::Node
     {
     public:
-        PointCloudConfiguration() : Node("pointcloud_configuration")
+        explicit PointCloudConfiguration() : Node("pointcloud_configuration")
         {
             // Create service clients
             clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");

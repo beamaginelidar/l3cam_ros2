@@ -36,6 +36,10 @@
 #include "l3cam_interfaces/srv/get_network_configuration.hpp"
 #include "l3cam_interfaces/srv/change_network_configuration.hpp"
 
+#include "l3cam_interfaces/srv/sensor_disconnected.hpp"
+
+#include "l3cam_ros2_utils.hpp"
+
 using namespace std::chrono_literals;
 
 namespace l3cam_ros2
@@ -43,7 +47,7 @@ namespace l3cam_ros2
     class NetworkConfiguration : public rclcpp::Node
     {
     public:
-        NetworkConfiguration() : Node("network_configuration")
+        explicit NetworkConfiguration() : Node("network_configuration")
         {
             // Declare parameters
             this->declare_parameter("ip_address", "192.168.1.250");
@@ -54,6 +58,9 @@ namespace l3cam_ros2
             // Create service clients
             clientGetNetwork = this->create_client<l3cam_interfaces::srv::GetNetworkConfiguration>("get_network_configuration");
             clientNetwork = this->create_client<l3cam_interfaces::srv::ChangeNetworkConfiguration>("change_network_configuration");
+
+            srvNetworkDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
+                "network_disconnected", std::bind(&NetworkConfiguration::networkDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
         }
 
         void handleParamsCallback()
@@ -205,12 +212,30 @@ namespace l3cam_ros2
             }
         }
 
+        void networkDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
+                                        std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
+        {
+            ROS2_BMG_UNUSED(res);
+
+            if (req->code == 0)
+            {
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting cleanly.");
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
+            }
+
+            rclcpp::shutdown();
+        }
+
         std::string ip_address;
         std::string netmask;
         std::string gateway;
         bool dhcp;
 
         rclcpp::Client<l3cam_interfaces::srv::ChangeNetworkConfiguration>::SharedPtr clientNetwork;
+        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvNetworkDisconnected;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 

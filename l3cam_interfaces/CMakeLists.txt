@@ -14,7 +14,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 set(srv_files
-  "srv/LibL3camState.srv"
+  "srv/LibL3camStatus.srv"
   "srv/GetVersion.srv"
   "srv/Initialize.srv"
   "srv/Terminate.srv"

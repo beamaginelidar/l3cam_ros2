@@ -63,24 +63,25 @@ namespace l3cam_ros2
         explicit RgbConfiguration() : Node("rgb_configuration")
         {
             // Create service clients
-            clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
-            clientBrightness = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>("change_rgb_camera_brightness");
-            clientContrast = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraContrast>("change_rgb_camera_contrast");
-            clientSaturation = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraSaturation>("change_rgb_camera_saturation");
-            clientSharpness = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraSharpness>("change_rgb_camera_sharpness");
-            clientGamma = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraGamma>("change_rgb_camera_gamma");
-            clientGain = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraGain>("change_rgb_camera_gain");
-            clientAutoWhiteBalance = this->create_client<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>("enable_rgb_camera_auto_white_balance");
-            clientWhiteBalance = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>("change_rgb_camera_white_balance");
-            clientAutoExposureTime = this->create_client<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>("enable_rgb_camera_auto_exposure_time");
-            clientExposureTime = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>("change_rgb_camera_exposure_time");
-            clientStreamingProtocol = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
-            clientGetRtspPipeline = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
+            client_get_sensors_ = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
+            client_brightness_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>("change_rgb_camera_brightness");
+            client_contrast_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraContrast>("change_rgb_camera_contrast");
+            client_saturation_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraSaturation>("change_rgb_camera_saturation");
+            client_sharpness_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraSharpness>("change_rgb_camera_sharpness");
+            client_gamma_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraGamma>("change_rgb_camera_gamma");
+            client_gain_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraGain>("change_rgb_camera_gain");
+            client_auto_white_balance_ = this->create_client<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>("enable_rgb_camera_auto_white_balance");
+            client_white_balance_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>("change_rgb_camera_white_balance");
+            client_auto_exposure_time_ = this->create_client<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>("enable_rgb_camera_auto_exposure_time");
+            client_exposure_time_ = this->create_client<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>("change_rgb_camera_exposure_time");
+            client_streaming_protocol_ = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
+            client_get_rtsp_pipeline_ = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
 
-            declareGetParameters();
+            declareParams();
+            loadDefaultParams();
 
             // Create service server
-            srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
+            srv_sensor_disconnected_ = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
                 "rgb_configuration_disconnected", std::bind(&RgbConfiguration::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
 
             // Callback on parameters changed
@@ -88,15 +89,16 @@ namespace l3cam_ros2
                 std::bind(&RgbConfiguration::parametersCallback, this, std::placeholders::_1));
         }
 
-        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
-        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr clientGetRtspPipeline;
+        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr client_get_sensors_;
+        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr client_get_rtsp_pipeline_;
 
     private:
-        void declareGetParameters()
+        void declareParams()
         {
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
+            this->declare_parameter("timeout_secs", 60);
             range.set__from_value(-15).set__to_value(15);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_brightness", 0, descriptor); // -15 - 15
@@ -124,19 +126,22 @@ namespace l3cam_ros2
             range.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        }
 
+        void loadDefaultParams()
+        {
             // Get and save parameters
-            rgb_camera_brightness = this->get_parameter("rgb_camera_brightness").as_int();
-            rgb_camera_contrast = this->get_parameter("rgb_camera_contrast").as_int();
-            rgb_camera_saturation = this->get_parameter("rgb_camera_saturation").as_int();
-            rgb_camera_sharpness = this->get_parameter("rgb_camera_sharpness").as_int();
-            rgb_camera_gamma = this->get_parameter("rgb_camera_gamma").as_int();
-            rgb_camera_gain = this->get_parameter("rgb_camera_gain").as_int();
-            rgb_camera_auto_white_balance = this->get_parameter("rgb_camera_auto_white_balance").as_bool();
-            rgb_camera_white_balance = this->get_parameter("rgb_camera_white_balance").as_int();
-            rgb_camera_auto_exposure_time = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
-            rgb_camera_exposure_time = this->get_parameter("rgb_camera_exposure_time").as_int();
-            streaming_protocol = this->get_parameter("rgb_streaming_protocol").as_int();
+            rgb_camera_brightness_ = this->get_parameter("rgb_camera_brightness").as_int();
+            rgb_camera_contrast_ = this->get_parameter("rgb_camera_contrast").as_int();
+            rgb_camera_saturation_ = this->get_parameter("rgb_camera_saturation").as_int();
+            rgb_camera_sharpness_ = this->get_parameter("rgb_camera_sharpness").as_int();
+            rgb_camera_gamma_ = this->get_parameter("rgb_camera_gamma").as_int();
+            rgb_camera_gain_ = this->get_parameter("rgb_camera_gain").as_int();
+            rgb_camera_auto_white_balance_ = this->get_parameter("rgb_camera_auto_white_balance").as_bool();
+            rgb_camera_white_balance_ = this->get_parameter("rgb_camera_white_balance").as_int();
+            rgb_camera_auto_exposure_time_ = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
+            rgb_camera_exposure_time_ = this->get_parameter("rgb_camera_exposure_time").as_int();
+            streaming_protocol_ = this->get_parameter("rgb_streaming_protocol").as_int();
         }
 
         rcl_interfaces::msg::SetParametersResult parametersCallback(
@@ -151,210 +156,267 @@ namespace l3cam_ros2
             for (const auto &param : parameters)
             {
                 std::string param_name = param.get_name();
-                if (param_name == "rgb_camera_brightness" && param.as_int() != rgb_camera_brightness)
+                if (param_name == "rgb_camera_brightness" && param.as_int() != rgb_camera_brightness_)
                 {
-                    while (!clientBrightness->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestBrightness = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraBrightness::Request>();
-                    requestBrightness->brightness = param.as_int();
-
-                    auto resultBrightness = clientBrightness->async_send_request(
-                        requestBrightness, std::bind(&RgbConfiguration::brightnessResponseCallback, this, std::placeholders::_1));
+                    callBrightness(param.as_int());
                 }
-                if (param_name == "rgb_camera_contrast" && param.as_int() != rgb_camera_contrast)
+                if (param_name == "rgb_camera_contrast" && param.as_int() != rgb_camera_contrast_)
                 {
-                    while (!clientContrast->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestContrast = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraContrast::Request>();
-                    requestContrast->contrast = param.as_int();
-
-                    auto resultContrast = clientContrast->async_send_request(
-                        requestContrast, std::bind(&RgbConfiguration::contrastResponseCallback, this, std::placeholders::_1));
+                    callContrast(param.as_int());
                 }
-                if (param_name == "rgb_camera_saturation" && param.as_int() != rgb_camera_saturation)
+                if (param_name == "rgb_camera_saturation" && param.as_int() != rgb_camera_saturation_)
                 {
-                    while (!clientSaturation->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestSaturation = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraSaturation::Request>();
-                    requestSaturation->saturation = param.as_int();
-
-                    auto resultSaturation = clientSaturation->async_send_request(
-                        requestSaturation, std::bind(&RgbConfiguration::saturationResponseCallback, this, std::placeholders::_1));
+                    callSaturation(param.as_int());
                 }
-                if (param_name == "rgb_camera_sharpness" && param.as_int() != rgb_camera_sharpness)
+                if (param_name == "rgb_camera_sharpness" && param.as_int() != rgb_camera_sharpness_)
                 {
-                    while (!clientSharpness->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestSharpness = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraSharpness::Request>();
-                    requestSharpness->sharpness = param.as_int();
-
-                    auto resultSharpness = clientSharpness->async_send_request(
-                        requestSharpness, std::bind(&RgbConfiguration::sharpnessResponseCallback, this, std::placeholders::_1));
+                    callSharpness(param.as_int());
                 }
-                if (param_name == "rgb_camera_gamma" && param.as_int() != rgb_camera_gamma)
+                if (param_name == "rgb_camera_gamma" && param.as_int() != rgb_camera_gamma_)
                 {
-                    while (!clientGamma->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestGamma = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraGamma::Request>();
-                    requestGamma->gamma = param.as_int();
-
-                    auto resultGamma = clientGamma->async_send_request(
-                        requestGamma, std::bind(&RgbConfiguration::gammaResponseCallback, this, std::placeholders::_1));
+                    callGamma(param.as_int());
                 }
-                if (param_name == "rgb_camera_gain" && param.as_int() != rgb_camera_gain)
+                if (param_name == "rgb_camera_gain" && param.as_int() != rgb_camera_gain_)
                 {
-                    while (!clientGain->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraGain::Request>();
-                    requestGain->gain = param.as_int();
-
-                    auto resultGain = clientGain->async_send_request(
-                        requestGain, std::bind(&RgbConfiguration::gainResponseCallback, this, std::placeholders::_1));
+                    callGain(param.as_int());
                 }
-                if (param_name == "rgb_camera_auto_white_balance" && param.as_bool() != rgb_camera_auto_white_balance)
+                if (param_name == "rgb_camera_auto_white_balance" && param.as_bool() != rgb_camera_auto_white_balance_)
                 {
-                    while (!clientAutoWhiteBalance->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoWhiteBalance = std::make_shared<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance::Request>();
-                    requestAutoWhiteBalance->enabled = param.as_bool();
-
-                    auto resultAutoWhiteBalance = clientAutoWhiteBalance->async_send_request(
-                        requestAutoWhiteBalance, std::bind(&RgbConfiguration::autoWhiteBalanceResponseCallback, this, std::placeholders::_1));
+                    callAutoWhiteBalance(param.as_bool());
                 }
-                if (param_name == "rgb_camera_white_balance" && param.as_int() != rgb_camera_white_balance)
+                if (param_name == "rgb_camera_white_balance" && param.as_int() != rgb_camera_white_balance_)
                 {
-                    while (!clientWhiteBalance->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestWhiteBalance = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance::Request>();
-                    requestWhiteBalance->white_balance = param.as_int();
-
-                    auto resultWhiteBalance = clientWhiteBalance->async_send_request(
-                        requestWhiteBalance, std::bind(&RgbConfiguration::whiteBalanceResponseCallback, this, std::placeholders::_1));
+                    callWhiteBalance(param.as_int());
                 }
-                if (param_name == "rgb_camera_auto_exposure_time" && param.as_bool() != rgb_camera_auto_exposure_time)
+                if (param_name == "rgb_camera_auto_exposure_time" && param.as_bool() != rgb_camera_auto_exposure_time_)
                 {
-                    while (!clientAutoExposureTime->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoExposureTime = std::make_shared<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime::Request>();
-                    requestAutoExposureTime->enabled = param.as_bool();
-
-                    auto resultAutoExposureTime = clientAutoExposureTime->async_send_request(
-                        requestAutoExposureTime, std::bind(&RgbConfiguration::autoExposureTimeResponseCallback, this, std::placeholders::_1));
+                    callAutoExposureTime(param.as_bool());
                 }
-                if (param_name == "rgb_camera_exposure_time" && param.as_int() != rgb_camera_exposure_time)
+                if (param_name == "rgb_camera_exposure_time" && param.as_int() != rgb_camera_exposure_time_)
                 {
-                    while (!clientExposureTime->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestExposureTime = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraExposureTime::Request>();
-                    requestExposureTime->exposure_time = param.as_int();
-
-                    auto resultExposureTime = clientExposureTime->async_send_request(
-                        requestExposureTime, std::bind(&RgbConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
+                    callExposureTime(param.as_int());
                 }
-                if (param_name == "rgb_streaming_protocol" && param.as_int() != streaming_protocol)
+                if (param_name == "rgb_streaming_protocol" && param.as_int() != streaming_protocol_)
                 {
-                    while (!clientStreamingProtocol->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
-                    requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_econ_rgb;
-                    requestStreamingProtocol->protocol = param.as_int();
-
-                    auto resultStreamingProtocol = clientStreamingProtocol->async_send_request(
-                        requestStreamingProtocol, std::bind(&RgbConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
+                    callStreamingProtocol(param.as_int());
                 }
             }
 
             return result;
         }
 
+        // Service calls
+        void callBrightness(int brightness)
+        {
+            while (!client_brightness_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestBrightness = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraBrightness::Request>();
+            requestBrightness->brightness = brightness;
+
+            auto resultBrightness = client_brightness_->async_send_request(
+                requestBrightness, std::bind(&RgbConfiguration::brightnessResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callContrast(int contrast)
+        {
+            while (!client_contrast_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestContrast = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraContrast::Request>();
+            requestContrast->contrast = contrast;
+
+            auto resultContrast = client_contrast_->async_send_request(
+                requestContrast, std::bind(&RgbConfiguration::contrastResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callSaturation(int saturation)
+        {
+            while (!client_saturation_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestSaturation = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraSaturation::Request>();
+            requestSaturation->saturation = saturation;
+
+            auto resultSaturation = client_saturation_->async_send_request(
+                requestSaturation, std::bind(&RgbConfiguration::saturationResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callSharpness(int sharpness)
+        {
+            while (!client_sharpness_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestSharpness = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraSharpness::Request>();
+            requestSharpness->sharpness = sharpness;
+
+            auto resultSharpness = client_sharpness_->async_send_request(
+                requestSharpness, std::bind(&RgbConfiguration::sharpnessResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callGamma(int gamma)
+        {
+            while (!client_gamma_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestGamma = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraGamma::Request>();
+            requestGamma->gamma = gamma;
+
+            auto resultGamma = client_gamma_->async_send_request(
+                requestGamma, std::bind(&RgbConfiguration::gammaResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callGain(int gain)
+        {
+            while (!client_gain_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraGain::Request>();
+            requestGain->gain = gain;
+
+            auto resultGain = client_gain_->async_send_request(
+                requestGain, std::bind(&RgbConfiguration::gainResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callAutoWhiteBalance(int gain)
+        {
+            while (!client_gain_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraGain::Request>();
+            requestGain->gain = gain;
+
+            auto resultGain = client_gain_->async_send_request(
+                requestGain, std::bind(&RgbConfiguration::gainResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callWhiteBalance(int white_balance)
+        {
+            while (!client_white_balance_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestWhiteBalance = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance::Request>();
+            requestWhiteBalance->white_balance = white_balance;
+
+            auto resultWhiteBalance = client_white_balance_->async_send_request(
+                requestWhiteBalance, std::bind(&RgbConfiguration::whiteBalanceResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callAutoExposureTime(bool enabled)
+        {
+            while (!client_auto_exposure_time_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestAutoExposureTime = std::make_shared<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime::Request>();
+            requestAutoExposureTime->enabled = enabled;
+
+            auto resultAutoExposureTime = client_auto_exposure_time_->async_send_request(
+                requestAutoExposureTime, std::bind(&RgbConfiguration::autoExposureTimeResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callExposureTime(int exposure_time)
+        {
+            while (!client_exposure_time_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestExposureTime = std::make_shared<l3cam_interfaces::srv::ChangeRgbCameraExposureTime::Request>();
+            requestExposureTime->exposure_time = exposure_time;
+
+            auto resultExposureTime = client_exposure_time_->async_send_request(
+                requestExposureTime, std::bind(&RgbConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callStreamingProtocol(int protocol)
+        {
+            while (!client_streaming_protocol_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
+            requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_econ_rgb;
+            requestStreamingProtocol->protocol = protocol;
+
+            auto resultStreamingProtocol = client_streaming_protocol_->async_send_request(
+                requestStreamingProtocol, std::bind(&RgbConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
+        }
+
+        // Service callbacks
         void brightnessResponseCallback(
             rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>::SharedFuture future)
         {
@@ -365,20 +427,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_brightness = this->get_parameter("rgb_camera_brightness").as_int();
+                    rgb_camera_brightness_ = this->get_parameter("rgb_camera_brightness").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_brightness", rgb_camera_brightness));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_brightness", rgb_camera_brightness_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_brightness");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_brightness", rgb_camera_brightness));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_brightness", rgb_camera_brightness_));
             }
         }
 
@@ -392,20 +454,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_contrast = this->get_parameter("rgb_camera_contrast").as_int();
+                    rgb_camera_contrast_ = this->get_parameter("rgb_camera_contrast").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_contrast", rgb_camera_contrast));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_contrast", rgb_camera_contrast_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_contrast");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_contrast", rgb_camera_contrast));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_contrast", rgb_camera_contrast_));
             }
         }
 
@@ -419,20 +481,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_saturation = this->get_parameter("rgb_camera_saturation").as_int();
+                    rgb_camera_saturation_ = this->get_parameter("rgb_camera_saturation").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_saturation", rgb_camera_saturation));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_saturation", rgb_camera_saturation_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_saturation");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_saturation", rgb_camera_saturation));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_saturation", rgb_camera_saturation_));
             }
         }
 
@@ -446,20 +508,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_sharpness = this->get_parameter("rgb_camera_sharpness").as_int();
+                    rgb_camera_sharpness_ = this->get_parameter("rgb_camera_sharpness").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_sharpness", rgb_camera_sharpness));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_sharpness", rgb_camera_sharpness_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_sharpness");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_sharpness", rgb_camera_sharpness));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_sharpness", rgb_camera_sharpness_));
             }
         }
 
@@ -473,20 +535,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_gamma = this->get_parameter("rgb_camera_gamma").as_int();
+                    rgb_camera_gamma_ = this->get_parameter("rgb_camera_gamma").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_gamma", rgb_camera_gamma));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_gamma", rgb_camera_gamma_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_gamma");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_gamma", rgb_camera_gamma));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_gamma", rgb_camera_gamma_));
             }
         }
 
@@ -500,20 +562,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_gain = this->get_parameter("rgb_camera_gain").as_int();
+                    rgb_camera_gain_ = this->get_parameter("rgb_camera_gain").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_gain", rgb_camera_gain));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_gain", rgb_camera_gain_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_gain");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_gain", rgb_camera_gain));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_gain", rgb_camera_gain_));
             }
         }
 
@@ -527,27 +589,27 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_auto_white_balance = this->get_parameter("rgb_camera_auto_white_balance").as_bool();
+                    rgb_camera_auto_white_balance_ = this->get_parameter("rgb_camera_auto_white_balance").as_bool();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_auto_white_balance", rgb_camera_auto_white_balance));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_auto_white_balance", rgb_camera_auto_white_balance_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_rgb_camera_auto_white_balance");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_auto_white_balance", rgb_camera_auto_white_balance));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_auto_white_balance", rgb_camera_auto_white_balance_));
             }
         }
 
         void whiteBalanceResponseCallback(
             rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>::SharedFuture future)
         {
-            if (!rgb_camera_auto_white_balance)
+            if (!rgb_camera_auto_white_balance_)
             {
                 auto status = future.wait_for(1s);
                 if (status == std::future_status::ready)
@@ -556,27 +618,27 @@ namespace l3cam_ros2
                     if (!error)
                     {
                         // Parameter changed successfully, save value
-                        rgb_camera_white_balance = this->get_parameter("rgb_camera_white_balance").as_int();
+                        rgb_camera_white_balance_ = this->get_parameter("rgb_camera_white_balance").as_int();
                     }
                     else
                     {
                         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                         // Parameter could not be changed, reset parameter to value before change
-                        this->set_parameter(rclcpp::Parameter("rgb_camera_white_balance", rgb_camera_white_balance));
+                        this->set_parameter(rclcpp::Parameter("rgb_camera_white_balance", rgb_camera_white_balance_));
                     }
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_white_balance");
                     // Service could not be called, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_white_balance", rgb_camera_white_balance));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_white_balance", rgb_camera_white_balance_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "RGB camera auto white balance must be disabled to change white balance");
                 // Reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_white_balance", rgb_camera_white_balance));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_white_balance", rgb_camera_white_balance_));
             }
         }
 
@@ -590,27 +652,27 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    rgb_camera_auto_exposure_time = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
+                    rgb_camera_auto_exposure_time_ = this->get_parameter("rgb_camera_auto_exposure_time").as_bool();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_auto_exposure_time", rgb_camera_auto_exposure_time));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_auto_exposure_time", rgb_camera_auto_exposure_time_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_rgb_camera_auto_exposure_time");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_auto_exposure_time", rgb_camera_auto_exposure_time));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_auto_exposure_time", rgb_camera_auto_exposure_time_));
             }
         }
 
         void exposureTimeResponseCallback(
             rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>::SharedFuture future)
         {
-            if (!rgb_camera_auto_exposure_time)
+            if (!rgb_camera_auto_exposure_time_)
             {
                 auto status = future.wait_for(1s);
                 if (status == std::future_status::ready)
@@ -619,27 +681,27 @@ namespace l3cam_ros2
                     if (!error)
                     {
                         // Parameter changed successfully, save value
-                        rgb_camera_exposure_time = this->get_parameter("rgb_camera_exposure_time").as_int();
+                        rgb_camera_exposure_time_ = this->get_parameter("rgb_camera_exposure_time").as_int();
                     }
                     else
                     {
                         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                         // Parameter could not be changed, reset parameter to value before change
-                        this->set_parameter(rclcpp::Parameter("rgb_camera_exposure_time", rgb_camera_exposure_time));
+                        this->set_parameter(rclcpp::Parameter("rgb_camera_exposure_time", rgb_camera_exposure_time_));
                     }
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_rgb_camera_exposure_time");
                     // Service could not be called, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_camera_exposure_time", rgb_camera_exposure_time));
+                    this->set_parameter(rclcpp::Parameter("rgb_camera_exposure_time", rgb_camera_exposure_time_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "RGB camera auto exposure time must be disabled to change exposure time");
                 // Reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_camera_exposure_time", rgb_camera_exposure_time));
+                this->set_parameter(rclcpp::Parameter("rgb_camera_exposure_time", rgb_camera_exposure_time_));
             }
         }
 
@@ -653,20 +715,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    streaming_protocol = this->get_parameter("rgb_streaming_protocol").as_int();
+                    streaming_protocol_ = this->get_parameter("rgb_streaming_protocol").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("rgb_streaming_protocol", streaming_protocol));
+                    this->set_parameter(rclcpp::Parameter("rgb_streaming_protocol", streaming_protocol_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_streaming_protocol");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("rgb_streaming_protocol", streaming_protocol));
+                this->set_parameter(rclcpp::Parameter("rgb_streaming_protocol", streaming_protocol_));
             }
         }
 
@@ -686,31 +748,31 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
-        int rgb_camera_brightness;
-        int rgb_camera_contrast;
-        int rgb_camera_saturation;
-        int rgb_camera_sharpness;
-        int rgb_camera_gamma;
-        int rgb_camera_gain;
-        bool rgb_camera_auto_white_balance;
-        int rgb_camera_white_balance;
-        bool rgb_camera_auto_exposure_time;
-        int rgb_camera_exposure_time;
-        int streaming_protocol;
+        int rgb_camera_brightness_;
+        int rgb_camera_contrast_;
+        int rgb_camera_saturation_;
+        int rgb_camera_sharpness_;
+        int rgb_camera_gamma_;
+        int rgb_camera_gain_;
+        bool rgb_camera_auto_white_balance_;
+        int rgb_camera_white_balance_;
+        bool rgb_camera_auto_exposure_time_;
+        int rgb_camera_exposure_time_;
+        int streaming_protocol_;
 
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>::SharedPtr clientBrightness;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraContrast>::SharedPtr clientContrast;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraSaturation>::SharedPtr clientSaturation;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraSharpness>::SharedPtr clientSharpness;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraGamma>::SharedPtr clientGamma;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraGain>::SharedPtr clientGain;
-        rclcpp::Client<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>::SharedPtr clientAutoWhiteBalance;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>::SharedPtr clientWhiteBalance;
-        rclcpp::Client<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>::SharedPtr clientAutoExposureTime;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>::SharedPtr clientExposureTime;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr clientStreamingProtocol;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>::SharedPtr client_brightness_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraContrast>::SharedPtr client_contrast_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraSaturation>::SharedPtr client_saturation_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraSharpness>::SharedPtr client_sharpness_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraGamma>::SharedPtr client_gamma_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraGain>::SharedPtr client_gain_;
+        rclcpp::Client<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>::SharedPtr client_auto_white_balance_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>::SharedPtr client_white_balance_;
+        rclcpp::Client<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>::SharedPtr client_auto_exposure_time_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>::SharedPtr client_exposure_time_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr client_streaming_protocol_;
 
-        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
+        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
@@ -725,18 +787,24 @@ int main(int argc, char **argv)
     std::shared_ptr<l3cam_ros2::RgbConfiguration> node = std::make_shared<l3cam_ros2::RgbConfiguration>();
 
     // Check if RGB is available
-    while (!node->clientGetSensors->wait_for_service(1s))
+    int i = 0;
+    while (!node->client_get_sensors_->wait_for_service(1s))
     {
         if (!rclcpp::ok())
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             return 0;
         }
+        
+        if (i >= node->get_parameter("timeout_secs").as_int())
+            return L3CAM_ROS2_FIND_DEVICES_TIMEOUT_ERROR;
+        ++i;
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
+    node->undeclare_parameter("timeout_secs");
 
     auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
-    auto resultGetSensors = node->clientGetSensors->async_send_request(requestGetSensors);
+    auto resultGetSensors = node->client_get_sensors_->async_send_request(requestGetSensors);
 
     int error = L3CAM_OK;
     bool sensor_is_available = false;
@@ -756,13 +824,13 @@ int main(int argc, char **argv)
         else
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
-            return 1;
+            return error;
         }
     }
     else
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
-        return 1;
+        return L3CAM_ROS2_FAILED_TO_CALL_SERVICE;
     }
 
     if (sensor_is_available)
@@ -775,7 +843,7 @@ int main(int argc, char **argv)
     }
 
     // Get pipeline
-    while (!node->clientGetRtspPipeline->wait_for_service(1s))
+    while (!node->client_get_rtsp_pipeline_->wait_for_service(1s))
     {
         if (!rclcpp::ok())
         {
@@ -787,7 +855,7 @@ int main(int argc, char **argv)
 
     auto requestGetRtspPipeline = std::make_shared<l3cam_interfaces::srv::GetRtspPipeline::Request>();
     requestGetRtspPipeline.get()->sensor_type = (int)sensorTypes::sensor_econ_rgb;
-    auto resultGetRtspPipeline = node->clientGetRtspPipeline->async_send_request(requestGetRtspPipeline);
+    auto resultGetRtspPipeline = node->client_get_rtsp_pipeline_->async_send_request(requestGetRtspPipeline);
 
     if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
     {
@@ -802,13 +870,13 @@ int main(int argc, char **argv)
         else
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting pipeline in " << __func__ << ": " << getBeamErrorDescription(error));
-            return 1;
+            return error;
         }
     }
     else
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_rtsp_pipeline");
-        return 1;
+        return L3CAM_ROS2_FAILED_TO_CALL_SERVICE;
     }
 
     rclcpp::spin(node);

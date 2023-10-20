@@ -25,52 +25,6 @@
     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "l3cam_ros2_errors.hpp"
-#include <libL3Cam.h>
-
-#define ROS2_BMG_UNUSED(x) (void)x;
-
-typedef enum LibL3CamStatus{
-    undefined = 0, // default status
-    error, // error 
-    connected, // after FIND_DEVICE
-    disconnected, //! (TBD) after notification
-    started, // after START_DEVICE
-    streaming, // after START_STREAM
-    terminated // after TERMINATE
-}LibL3CamStatus;
-
-const char *bmg_ros2_error_find_devices_timeout = "Timeout error while finding devices\0";
-const char *bmg_ros2_error_failed_to_call_service = "Failed to call service\0";
-const char *bmg_ros2_error_interrupted = "RCLCPP interrupted\0";
-const char *bmg_ros2_error_undefined_error =  "UNDEFINED L3CAM ERROR\0";
-
-const char* getBeamRos2ErrorDescription(int error_code)
-{
-    switch(error_code)
-    {
-    case L3CAM_ROS2_FIND_DEVICES_TIMEOUT_ERROR:
-        return bmg_ros2_error_find_devices_timeout;
-        break;
-    case L3CAM_ROS2_FAILED_TO_CALL_SERVICE:
-        return bmg_ros2_error_failed_to_call_service;
-        break;
-    case L3CAM_ROS2_RCLCPP_INTERRUPTED:
-        return bmg_ros2_error_interrupted;
-        break;
-    default:
-        return bmg_ros2_error_undefined_error;
-    }
-}
-
-std::string getErrorDescription(int error_code)
-{
-    if (error_code < 0)
-    {
-        return getBeamRos2ErrorDescription(error_code);
-    }
-    else
-    {
-        return getBeamErrorDescription(error_code);
-    }
-}
+#define L3CAM_ROS2_FIND_DEVICES_TIMEOUT_ERROR   -1
+#define L3CAM_ROS2_FAILED_TO_CALL_SERVICE       -2
+#define L3CAM_ROS2_RCLCPP_INTERRUPTED           -3

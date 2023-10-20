@@ -438,7 +438,7 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 **Note:**
 
 - The arg index in the /change_bias_value service must be 1 por right or 2 for left. Any other value will return out of range error.
-- The arg allied_type must be 1 for Wide or 2 for Narrow. Any other value will return out of range error.
+- The arg allied_type must be 0 for Wide or 1 for Narrow (see alliedCamerasIds). Any other value will return out of range error.
 
 ### Sensor msg
 

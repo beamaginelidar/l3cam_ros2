@@ -31,7 +31,7 @@
 #include <beamagine.h>
 #include <l3cam_ros2_utils.hpp>
 
-#include "l3cam_interfaces/srv/lib_l3cam_state.hpp"
+#include "l3cam_interfaces/srv/lib_l3cam_status.hpp"
 #include "l3cam_interfaces/srv/get_version.hpp"
 #include "l3cam_interfaces/srv/initialize.hpp"
 #include "l3cam_interfaces/srv/terminate.hpp"
@@ -126,6 +126,7 @@
 
 namespace l3cam_ros2
 {
+
     class L3Cam : public rclcpp::Node
     {
     public:
@@ -135,18 +136,39 @@ namespace l3cam_ros2
         int startDeviceStream();
         void disconnectAll(int code);
 
-        l3cam devices[1];
-        LibL3CamState m_state;
+        l3cam m_devices[1];
+        LibL3CamStatus m_status;
 
     private:
         void declareParameters();
+        void declareNetworkParameters();
+        void declarePointcloudParameters();
+        void declarePolarimetricParameters();
+        void declareRgbParameters();
+        void declareThermalParameters();
+        void declareAlliedWideParameters();
+        void declareAlliedNarrowParameters();
+
         void initializeServices();
+        void initializePointcloudServices();
+        void initializePolarimetricServices();
+        void initializeRgbServices();
+        void initializeThermalServices();
+        void initializeAlliedWideServices();
+        void initializeAlliedNarrowServices();
 
         inline void printDefaultError(int error, std::string param);
-        void loadBeforeStartParams();
-        void loadDefaultParams();
 
-        void libL3camState(const std::shared_ptr<l3cam_interfaces::srv::LibL3camState::Request> req, std::shared_ptr<l3cam_interfaces::srv::LibL3camState::Response> res);
+        void loadDefaultParams();
+        void loadNetworkDefaultParams();
+        void loadPointcloudDefaultParams();
+        void loadPolarimetricDefaultParams();
+        void loadRgbDefaultParams();
+        void loadThermalDefaultParams();
+        void loadAlliedWideDefaultParams();
+        void loadAlliedNarrowDefaultParams();
+
+        void LibL3camStatus(const std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Request> req, std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Response> res);
         void getVersion(const std::shared_ptr<l3cam_interfaces::srv::GetVersion::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetVersion::Response> res);
         void initialize(const std::shared_ptr<l3cam_interfaces::srv::Initialize::Request> req, std::shared_ptr<l3cam_interfaces::srv::Initialize::Response> res);
         void terminate(const std::shared_ptr<l3cam_interfaces::srv::Terminate::Request> req, std::shared_ptr<l3cam_interfaces::srv::Terminate::Response> res);
@@ -241,109 +263,109 @@ namespace l3cam_ros2
 
         static void errorNotification(const int32_t *error);
 
-        rclcpp::Service<l3cam_interfaces::srv::LibL3camState>::SharedPtr srvLibL3camState;
-        rclcpp::Service<l3cam_interfaces::srv::GetVersion>::SharedPtr srvGetVersion;
-        rclcpp::Service<l3cam_interfaces::srv::Initialize>::SharedPtr srvInitialize;
-        rclcpp::Service<l3cam_interfaces::srv::Terminate>::SharedPtr srvTerminate;
-        rclcpp::Service<l3cam_interfaces::srv::FindDevices>::SharedPtr srvFindDevices;
-        rclcpp::Service<l3cam_interfaces::srv::GetLocalServerAddress>::SharedPtr srvGetLocalServerAddress;
-        rclcpp::Service<l3cam_interfaces::srv::GetDeviceStatus>::SharedPtr srvGetDeviceStatus;
-        rclcpp::Service<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr srvGetSensorsAvailable;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr srvChangeStreamingProtocol;
-        rclcpp::Service<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr srvGetRtspPipeline;
-        rclcpp::Service<l3cam_interfaces::srv::GetNetworkConfiguration>::SharedPtr srvGetNetworkConfiguration;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeNetworkConfiguration>::SharedPtr srvChangeNetworkConfiguration;
-        rclcpp::Service<l3cam_interfaces::srv::PowerOffDevice>::SharedPtr srvPowerOffDevice;
-        rclcpp::Service<l3cam_interfaces::srv::StartDevice>::SharedPtr srvStartDevice;
-        rclcpp::Service<l3cam_interfaces::srv::StopDevice>::SharedPtr srvStopDevice;
-        rclcpp::Service<l3cam_interfaces::srv::StartStream>::SharedPtr srvStartStream;
-        rclcpp::Service<l3cam_interfaces::srv::StopStream>::SharedPtr srvStopStream;
-        rclcpp::Service<l3cam_interfaces::srv::GetDeviceTemperatures>::SharedPtr srvGetDeviceTemperatures;
+        rclcpp::Service<l3cam_interfaces::srv::LibL3camStatus>::SharedPtr srv_lib_l3_cam_status_;
+        rclcpp::Service<l3cam_interfaces::srv::GetVersion>::SharedPtr srv_get_version_;
+        rclcpp::Service<l3cam_interfaces::srv::Initialize>::SharedPtr srv_initialize_;
+        rclcpp::Service<l3cam_interfaces::srv::Terminate>::SharedPtr srv_terminate_;
+        rclcpp::Service<l3cam_interfaces::srv::FindDevices>::SharedPtr srv_find_devices_;
+        rclcpp::Service<l3cam_interfaces::srv::GetLocalServerAddress>::SharedPtr srv_get_local_server_address_;
+        rclcpp::Service<l3cam_interfaces::srv::GetDeviceStatus>::SharedPtr srv_get_device_status_;
+        rclcpp::Service<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr srv_get_sensors_available_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr srv_change_streaming_protocol_;
+        rclcpp::Service<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr srv_get_rtsp_pipeline_;
+        rclcpp::Service<l3cam_interfaces::srv::GetNetworkConfiguration>::SharedPtr srv_get_network_configuration_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeNetworkConfiguration>::SharedPtr srv_change_network_configuration_;
+        rclcpp::Service<l3cam_interfaces::srv::PowerOffDevice>::SharedPtr srv_power_off_device_;
+        rclcpp::Service<l3cam_interfaces::srv::StartDevice>::SharedPtr srv_start_device_;
+        rclcpp::Service<l3cam_interfaces::srv::StopDevice>::SharedPtr srv_stop_device_;
+        rclcpp::Service<l3cam_interfaces::srv::StartStream>::SharedPtr srv_start_stream_;
+        rclcpp::Service<l3cam_interfaces::srv::StopStream>::SharedPtr srv_stop_stream_;
+        rclcpp::Service<l3cam_interfaces::srv::GetDeviceTemperatures>::SharedPtr srv_get_device_temperatures_;
 
-        rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColor>::SharedPtr srvChangePointcloudColor;
-        rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedPtr srvChangePointcloudColorRange;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeDistanceRange>::SharedPtr srvChangeDistanceRange;
-        rclcpp::Service<l3cam_interfaces::srv::EnableAutoBias>::SharedPtr srvEnableAutoBias;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeBiasValue>::SharedPtr srvChangeBiasValue;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColor>::SharedPtr srv_change_pointcloud_color_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedPtr srv_change_pointcloud_color_range_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeDistanceRange>::SharedPtr srv_change_distance_range_;
+        rclcpp::Service<l3cam_interfaces::srv::EnableAutoBias>::SharedPtr srv_enable_auto_bias_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeBiasValue>::SharedPtr srv_change_bias_value_;
 
-        rclcpp::Service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>::SharedPtr srvSetPolarimetricCameraDefaultSettings;
-        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedPtr srvChangePolarimetricCameraBrightness;
-        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedPtr srvChangePolarimetricCameraBlackLevel;
-        rclcpp::Service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>::SharedPtr srvEnablePolarimetricCameraAutoGain;
-        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>::SharedPtr srvChangePolarimetricCameraAutoGainRange;
-        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraGain>::SharedPtr srvChangePolarimetricCameraGain;
-        rclcpp::Service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>::SharedPtr srvEnablePolarimetricCameraAutoExposureTime;
-        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>::SharedPtr srvChangePolarimetricCameraAutoExposureTimeRange;
-        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>::SharedPtr srvChangePolarimetricCameraExposureTime;
+        rclcpp::Service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>::SharedPtr srv_set_polarimetric_camera_default_settings_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedPtr srv_change_polarimetric_camera_brightness_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedPtr srv_change_polarimetric_camera_black_level_;
+        rclcpp::Service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>::SharedPtr srv_enable_polarimetric_camera_auto_gain_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange>::SharedPtr srv_change_polarimetric_camera_auto_gain_range_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraGain>::SharedPtr srv_change_polarimetric_camera_gain_;
+        rclcpp::Service<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime>::SharedPtr srv_enable_polarimetric_camera_auto_exposure_time_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange>::SharedPtr srv_change_polarimetric_camera_auto_exposure_time_range_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime>::SharedPtr srv_change_polarimetric_camera_exposure_time_;
 
-        rclcpp::Service<l3cam_interfaces::srv::SetRgbCameraDefaultSettings>::SharedPtr srvSetRgbCameraDefaultSettings;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraBrightness>::SharedPtr srvChangeRgbCameraBrightness;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraContrast>::SharedPtr srvChangeRgbCameraContrast;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraSaturation>::SharedPtr srvChangeRgbCameraSaturation;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraSharpness>::SharedPtr srvChangeRgbCameraSharpness;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraGamma>::SharedPtr srvChangeRgbCameraGamma;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraGain>::SharedPtr srvChangeRgbCameraGain;
-        rclcpp::Service<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>::SharedPtr srvEnableRgbCameraAutoWhiteBalance;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>::SharedPtr srvChangeRgbCameraWhiteBalance;
-        rclcpp::Service<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>::SharedPtr srvEnableRgbCameraAutoExposureTime;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>::SharedPtr srvChangeRgbCameraExposureTime;
+        rclcpp::Service<l3cam_interfaces::srv::SetRgbCameraDefaultSettings>::SharedPtr srv_set_rgb_camera_default_settings_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraBrightness>::SharedPtr srv_change_rgb_camera_brightness_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraContrast>::SharedPtr srv_change_rgb_camera_contrast_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraSaturation>::SharedPtr srv_change_rgb_camera_saturation_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraSharpness>::SharedPtr srv_change_rgb_camera_sharpness_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraGamma>::SharedPtr srv_change_rgb_camera_gamma_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraGain>::SharedPtr srv_change_rgb_camera_gain_;
+        rclcpp::Service<l3cam_interfaces::srv::EnableRgbCameraAutoWhiteBalance>::SharedPtr srv_enable_rgb_camera_auto_white_balance_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraWhiteBalance>::SharedPtr srv_change_rgb_camera_white_balance_;
+        rclcpp::Service<l3cam_interfaces::srv::EnableRgbCameraAutoExposureTime>::SharedPtr srv_enable_rgb_camera_auto_exposure_time_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeRgbCameraExposureTime>::SharedPtr srv_change_rgb_camera_exposure_time_;
 
-        rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraColormap>::SharedPtr srvChangeThermalCameraColormap;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>::SharedPtr srvChangeThermalCameraTemperatureFilter;
-        rclcpp::Service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>::SharedPtr srvEnableThermalCameraTemperatureFilter;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraColormap>::SharedPtr srv_change_thermal_camera_colormap_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>::SharedPtr srv_change_thermal_camera_temperature_filter_;
+        rclcpp::Service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>::SharedPtr srv_enable_thermal_camera_temperature_filter_;
 
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedPtr srvChangeAlliedCameraExposureTime;
-        rclcpp::Service<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>::SharedPtr srvEnableAlliedCameraAutoExposureTime;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>::SharedPtr srvChangeAlliedCameraAutoExposureTimeRange;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraGain>::SharedPtr srvChangeAlliedCameraGain;
-        rclcpp::Service<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>::SharedPtr srvEnableAlliedCameraAutoGain;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>::SharedPtr srvChangeAlliedCameraAutoGainRange;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraGamma>::SharedPtr srvChangeAlliedCameraGamma;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>::SharedPtr srvChangeAlliedCameraSaturation;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraHue>::SharedPtr srvChangeAlliedCameraHue;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>::SharedPtr srvChangeAlliedCameraIntensityAutoPrecedence;
-        rclcpp::Service<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>::SharedPtr srvEnableAlliedCameraAutoWhiteBalance;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>::SharedPtr srvChangeAlliedCameraBalanceRatioSelector;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>::SharedPtr srvChangeAlliedCameraBalanceRatio;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>::SharedPtr srvChangeAlliedCameraBalanceWhiteAutoRate;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr srvChangeAlliedCameraBalanceWhiteAutoTolerance;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>::SharedPtr srvChangeAlliedCameraIntensityControllerRegion;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>::SharedPtr srvChangeAlliedCameraIntensityControllerTarget;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>::SharedPtr srvGetAlliedCameraBlackLevel;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>::SharedPtr srvGetAlliedCameraExposureTime;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>::SharedPtr srvGetAlliedCameraAutoExposureTime;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>::SharedPtr srvGetAlliedCameraAutoExposureTimeRange;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraGain>::SharedPtr srvGetAlliedCameraGain;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>::SharedPtr srvGetAlliedCameraAutoGain;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>::SharedPtr srvGetAlliedCameraAutoGainRange;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraGamma>::SharedPtr srvGetAlliedCameraGamma;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraSaturation>::SharedPtr srvGetAlliedCameraSaturation;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraSharpness>::SharedPtr srvGetAlliedCameraSharpness;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraHue>::SharedPtr srvGetAlliedCameraHue;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>::SharedPtr srvGetAlliedCameraIntensityAutoPrecedence;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>::SharedPtr srvGetAlliedCameraAutoWhiteBalance;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>::SharedPtr srvGetAlliedCameraBalanceRatioSelector;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>::SharedPtr srvGetAlliedCameraBalanceRatio;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>::SharedPtr srvGetAlliedCameraBalanceWhiteAutoRate;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr srvGetAlliedCameraBalanceWhiteAutoTolerance;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>::SharedPtr srvGetAlliedCameraAutoModeRegion;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>::SharedPtr srvGetAlliedCameraIntensityControllerRegion;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>::SharedPtr srvGetAlliedCameraIntensityControllerTarget;
-        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>::SharedPtr srvGetAlliedCameraMaxDriverBuffersCount;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedPtr srv_change_allied_camera_exposure_time_;
+        rclcpp::Service<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>::SharedPtr srv_enable_allied_camera_auto_exposure_time_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>::SharedPtr srv_change_allied_camera_auto_exposure_time_range_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraGain>::SharedPtr srv_change_allied_camera_gain_;
+        rclcpp::Service<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>::SharedPtr srv_enable_allied_camera_auto_gain_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>::SharedPtr srv_change_allied_camera_auto_gain_range_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraGamma>::SharedPtr srv_change_allied_camera_gamma_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>::SharedPtr srv_change_allied_camera_saturation_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraHue>::SharedPtr srv_change_allied_camera_hue_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>::SharedPtr srv_change_allied_camera_intensity_auto_precedence_;
+        rclcpp::Service<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>::SharedPtr srv_enable_allied_camera_auto_white_balance_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>::SharedPtr srv_change_allied_camera_balance_ratio_selector_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>::SharedPtr srv_change_allied_camera_balance_ratio_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>::SharedPtr srv_change_allied_camera_balance_white_auto_rate_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr srv_change_allied_camera_balance_white_auto_tolerance_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>::SharedPtr srv_change_allied_camera_intensity_controller_region_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>::SharedPtr srv_change_allied_camera_intensity_controller_target_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBlackLevel>::SharedPtr srv_get_allied_camera_black_level_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraExposureTime>::SharedPtr srv_get_allied_camera_exposure_time_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTime>::SharedPtr srv_get_allied_camera_auto_exposure_time_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoExposureTimeRange>::SharedPtr srv_get_allied_camera_auto_exposure_time_range_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraGain>::SharedPtr srv_get_allied_camera_gain_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoGain>::SharedPtr srv_get_allied_camera_auto_gain_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoGainRange>::SharedPtr srv_get_allied_camera_auto_gain_range_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraGamma>::SharedPtr srv_get_allied_camera_gamma_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraSaturation>::SharedPtr srv_get_allied_camera_saturation_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraSharpness>::SharedPtr srv_get_allied_camera_sharpness_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraHue>::SharedPtr srv_get_allied_camera_hue_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityAutoPrecedence>::SharedPtr srv_get_allied_camera_intensity_auto_precedence_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoWhiteBalance>::SharedPtr srv_get_allied_camera_auto_white_balance_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatioSelector>::SharedPtr srv_get_allied_camera_balance_ratio_selector_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceRatio>::SharedPtr srv_get_allied_camera_balance_ratio_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoRate>::SharedPtr srv_get_allied_camera_balance_white_auto_rate_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr srv_get_allied_camera_balance_white_auto_tolerance_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraAutoModeRegion>::SharedPtr srv_get_allied_camera_auto_mode_region_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerRegion>::SharedPtr srv_get_allied_camera_intensity_controller_region_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraIntensityControllerTarget>::SharedPtr srv_get_allied_camera_intensity_controller_target_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>::SharedPtr srv_get_allied_camera_max_driver_buffers_count_;
 
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientNetworkDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientPointCloudStreamDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientPointCloudConfigurationDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientPolWideStreamDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientPolConfigurationDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientRgbNarrowStreamDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientRgbConfigurationDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientThermalStreamDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientThermalConfigurationDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientWideConfigurationDisconnected;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr clientNarrowConfigurationDisconnected;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_network_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_point_cloud_stream_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_point_cloud_configuration_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_pol_wide_stream_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_pol_configuration_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_rgb_narrow_stream_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_rgb_configuration_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_thermal_stream_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_thermal_configuration_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_wide_configuration_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_narrow_configuration_disconnected_;
 
-        sensor av_sensors[6];
+        sensor m_av_sensors[6];
 
         sensor *m_lidar_sensor = NULL;
         sensor *m_rgb_sensor = NULL;
@@ -352,7 +374,7 @@ namespace l3cam_ros2
         sensor *m_allied_wide_sensor = NULL;
         sensor *m_allied_narrow_sensor = NULL;
 
-        int num_devices;
+        int m_num_devices;
 
     }; // class L3Cam
 

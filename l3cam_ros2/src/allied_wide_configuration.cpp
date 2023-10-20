@@ -71,32 +71,33 @@ namespace l3cam_ros2
         explicit AlliedWideConfiguration() : Node("allied_wide_configuration")
         {
             // Create service clients
-            clientGetSensors = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
-            clientExposureTime = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>("change_allied_camera_exposure_time");
-            clientAutoExposureTime = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>("enable_allied_camera_auto_exposure_time");
-            clientAutoExposureTimeRange = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>("change_allied_camera_auto_exposure_time_range");
-            clientGain = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraGain>("change_allied_camera_gain");
-            clientAutoGain = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>("enable_allied_camera_auto_gain");
-            clientAutoGainRange = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>("change_allied_camera_auto_gain_range");
-            clientGamma = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraGamma>("change_allied_camera_gamma");
-            clientHue = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraHue>("change_allied_camera_hue");
-            clientIntensityAutoPrecedence = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>("change_allied_camera_intensity_auto_precedence");
-            clientAutoWhiteBalance = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>("enable_allied_camera_auto_white_balance");
-            clientBalanceRatioSelector = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>("change_allied_camera_balance_ratio_selector");
-            clientBalanceRatio = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>("change_allied_camera_balance_ratio");
-            clientBalanceWhiteAutoRate = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>("change_allied_camera_balance_white_auto_rate");
-            clientBalanceWhiteAutoTolerance = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>("change_allied_camera_balance_white_auto_tolerance");
-            clientIntensityControllerRegion = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>("change_allied_camera_intensity_controller_region");
-            clientIntensityControllerTarget = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>("change_allied_camera_intensity_controller_target");
-            clientStreamingProtocol = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
-            clientGetRtspPipeline = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
-            clientGetExposureTime = this->create_client<l3cam_interfaces::srv::GetAlliedCameraExposureTime>("get_allied_camera_exposure_time");
-            clientGetGain = this->create_client<l3cam_interfaces::srv::GetAlliedCameraGain>("get_allied_camera_gain");
+            client_get_sensors_ = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
+            client_exposure_time_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>("change_allied_camera_exposure_time");
+            client_auto_exposure_time_ = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>("enable_allied_camera_auto_exposure_time");
+            client_auto_exposure_time_range_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>("change_allied_camera_auto_exposure_time_range");
+            client_gain_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraGain>("change_allied_camera_gain");
+            client_auto_gain_ = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>("enable_allied_camera_auto_gain");
+            client_auto_gain_range_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>("change_allied_camera_auto_gain_range");
+            client_gamma_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraGamma>("change_allied_camera_gamma");
+            client_hue_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraHue>("change_allied_camera_hue");
+            client_intensity_auto_precedence_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>("change_allied_camera_intensity_auto_precedence");
+            client_auto_white_balance_ = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>("enable_allied_camera_auto_white_balance");
+            client_balance_ratio_selector_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>("change_allied_camera_balance_ratio_selector");
+            client_balance_ratio_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>("change_allied_camera_balance_ratio");
+            client_balance_white_auto_rate_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>("change_allied_camera_balance_white_auto_rate");
+            client_balance_white_auto_tolerance_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>("change_allied_camera_balance_white_auto_tolerance");
+            client_intensity_controller_region_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>("change_allied_camera_intensity_controller_region");
+            client_intensity_controller_target_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>("change_allied_camera_intensity_controller_target");
+            client_streaming_protocol_ = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
+            client_get_rtsp_pipeline_ = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
+            client_get_exposure_time_ = this->create_client<l3cam_interfaces::srv::GetAlliedCameraExposureTime>("get_allied_camera_exposure_time");
+            client_get_gain_ = this->create_client<l3cam_interfaces::srv::GetAlliedCameraGain>("get_allied_camera_gain");
 
-            declareGetParameters();
+            declareParams();
+            loadDefaultParams();
 
             // Create service server
-            srvSensorDisconnected = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
+            srv_sensor_disconnected_ = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
                 "allied_wide_configuration_disconnected", std::bind(&AlliedWideConfiguration::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
 
             // Callback on parameters changed
@@ -104,16 +105,17 @@ namespace l3cam_ros2
                 std::bind(&AlliedWideConfiguration::parametersCallback, this, std::placeholders::_1));
         }
 
-        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr clientGetSensors;
-        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr clientGetRtspPipeline;
+        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr client_get_sensors_;
+        rclcpp::Client<l3cam_interfaces::srv::GetRtspPipeline>::SharedPtr client_get_rtsp_pipeline_;
 
     private:
-        void declareGetParameters()
+        void declareParams()
         {
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
+            this->declare_parameter("timeout_secs", 60);
             floatRange.set__from_value(63.0).set__to_value(10000000.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_exposure_time", 4992.4, descriptor); // 63 - 10000000
@@ -143,7 +145,7 @@ namespace l3cam_ros2
             floatRange.set__from_value(-40).set__to_value(40.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_hue", 0.0, descriptor); // -40 - 40
-            intRange.set__from_value(0).set__to_value(1);                       // TODO: dynamic reconfigure dropdown menu
+            intRange.set__from_value(0).set__to_value(1);                       // TBD: dynamic reconfigure dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -152,7 +154,7 @@ namespace l3cam_ros2
             this->declare_parameter("allied_wide_camera_intensity_auto_precedence", 0, descriptor); // 0(MinimizeNoise) or 1(MinimizeBlur)
             descriptor.description = "";
             this->declare_parameter("allied_wide_camera_auto_white_balance", false);
-            intRange.set__from_value(0).set__to_value(1); // TODO: dynamic reconfigure dropdown menu
+            intRange.set__from_value(0).set__to_value(1); // TBD: dynamic reconfigure dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -169,7 +171,7 @@ namespace l3cam_ros2
             floatRange.set__from_value(0.0).set__to_value(50.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_balance_white_auto_tolerance", 5.0, descriptor); // 0 - 50
-            intRange.set__from_value(0).set__to_value(4);                                                // TODO: dynamic reconfigure dropdown menu
+            intRange.set__from_value(0).set__to_value(4);                                                // TBD: dynamic reconfigure dropdown menu
             descriptor.integer_range = {intRange};
             descriptor.description =
                 "Value must be:\n"
@@ -183,28 +185,31 @@ namespace l3cam_ros2
             intRange.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {intRange};
             this->declare_parameter("allied_wide_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        }
 
+        void loadDefaultParams()
+        {
             // Get and save parameters
-            allied_wide_camera_exposure_time = this->get_parameter("allied_wide_camera_exposure_time").as_double();
-            allied_wide_camera_auto_exposure_time = this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool();
-            allied_wide_camera_auto_exposure_time_range_min = this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double();
-            allied_wide_camera_auto_exposure_time_range_max = this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double();
-            allied_wide_camera_gain = this->get_parameter("allied_wide_camera_gain").as_double();
-            allied_wide_camera_auto_gain = this->get_parameter("allied_wide_camera_auto_gain").as_bool();
-            allied_wide_camera_auto_gain_range_min = this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double();
-            allied_wide_camera_auto_gain_range_max = this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double();
-            allied_wide_camera_gamma = this->get_parameter("allied_wide_camera_gamma").as_double();
-            allied_wide_camera_saturation = this->get_parameter("allied_wide_camera_saturation").as_double();
-            allied_wide_camera_hue = this->get_parameter("allied_wide_camera_hue").as_double();
-            allied_wide_camera_intensity_auto_precedence = this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int();
-            allied_wide_camera_auto_white_balance = this->get_parameter("allied_wide_camera_auto_white_balance").as_bool();
-            allied_wide_camera_balance_ratio_selector = this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int();
-            allied_wide_camera_balance_ratio = this->get_parameter("allied_wide_camera_balance_ratio").as_double();
-            allied_wide_camera_balance_white_auto_rate = this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double();
-            allied_wide_camera_balance_white_auto_tolerance = this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double();
-            allied_wide_camera_intensity_controller_region = this->get_parameter("allied_wide_camera_intensity_controller_region").as_int();
-            allied_wide_camera_intensity_controller_target = this->get_parameter("allied_wide_camera_intensity_controller_target").as_double();
-            streaming_protocol = this->get_parameter("allied_wide_streaming_protocol").as_int();
+            allied_wide_camera_exposure_time_ = this->get_parameter("allied_wide_camera_exposure_time").as_double();
+            allied_wide_camera_auto_exposure_time_ = this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool();
+            allied_wide_camera_auto_exposure_time_range_min_ = this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double();
+            allied_wide_camera_auto_exposure_time_range_max_ = this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double();
+            allied_wide_camera_gain_ = this->get_parameter("allied_wide_camera_gain").as_double();
+            allied_wide_camera_auto_gain_ = this->get_parameter("allied_wide_camera_auto_gain").as_bool();
+            allied_wide_camera_auto_gain_range_min_ = this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double();
+            allied_wide_camera_auto_gain_range_max_ = this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double();
+            allied_wide_camera_gamma_ = this->get_parameter("allied_wide_camera_gamma").as_double();
+            allied_wide_camera_saturation_ = this->get_parameter("allied_wide_camera_saturation").as_double();
+            allied_wide_camera_hue_ = this->get_parameter("allied_wide_camera_hue").as_double();
+            allied_wide_camera_intensity_auto_precedence_ = this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int();
+            allied_wide_camera_auto_white_balance_ = this->get_parameter("allied_wide_camera_auto_white_balance").as_bool();
+            allied_wide_camera_balance_ratio_selector_ = this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int();
+            allied_wide_camera_balance_ratio_ = this->get_parameter("allied_wide_camera_balance_ratio").as_double();
+            allied_wide_camera_balance_white_auto_rate_ = this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double();
+            allied_wide_camera_balance_white_auto_tolerance_ = this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double();
+            allied_wide_camera_intensity_controller_region_ = this->get_parameter("allied_wide_camera_intensity_controller_region").as_int();
+            allied_wide_camera_intensity_controller_target_ = this->get_parameter("allied_wide_camera_intensity_controller_target").as_double();
+            streaming_protocol_ = this->get_parameter("allied_wide_streaming_protocol").as_int();
         }
 
         rcl_interfaces::msg::SetParametersResult parametersCallback(
@@ -220,376 +225,431 @@ namespace l3cam_ros2
             {
                 std::string param_name = param.get_name();
 
-                if (param_name == "allied_wide_camera_exposure_time" && param.as_double() != allied_wide_camera_exposure_time)
+                if (param_name == "allied_wide_camera_exposure_time" && param.as_double() != allied_wide_camera_exposure_time_)
                 {
-                    while (!clientExposureTime->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestExposureTime = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime::Request>();
-                    requestExposureTime->allied_type = 1;
-                    requestExposureTime->exposure_time = param.as_double();
-
-                    auto resultExposureTime = clientExposureTime->async_send_request(
-                        requestExposureTime, std::bind(&AlliedWideConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
+                    callExposureTime(param.as_double());
                 }
-                if (param_name == "allied_wide_camera_auto_exposure_time" && param.as_bool() != allied_wide_camera_auto_exposure_time)
+                if (param_name == "allied_wide_camera_auto_exposure_time" && param.as_bool() != allied_wide_camera_auto_exposure_time_)
                 {
-                    while (!clientAutoExposureTime->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoExposureTime = std::make_shared<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime::Request>();
-                    requestAutoExposureTime->allied_type = 1;
-                    requestAutoExposureTime->enabled = param.as_bool();
-
-                    auto resultAutoExposureTime = clientAutoExposureTime->async_send_request(
-                        requestAutoExposureTime, std::bind(&AlliedWideConfiguration::autoExposureTimeResponseCallback, this, std::placeholders::_1));
+                    callAutoExposureTime(param.as_bool());
                 }
-                if (param_name == "allied_wide_camera_auto_exposure_time_range_min" && param.as_double() != allied_wide_camera_auto_exposure_time_range_min)
+                if (param_name == "allied_wide_camera_auto_exposure_time_range_min" && param.as_double() != allied_wide_camera_auto_exposure_time_range_min_)
                 {
-                    while (!clientAutoExposureTimeRange->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange::Request>();
-                    requestAutoExposureTimeRange->allied_type = 1;
-                    requestAutoExposureTimeRange->auto_exposure_time_range_min = param.as_double();
-                    requestAutoExposureTimeRange->auto_exposure_time_range_max = allied_wide_camera_auto_exposure_time_range_max;
-
-                    auto resultAutoExposureTimeRange = clientAutoExposureTimeRange->async_send_request(
-                        requestAutoExposureTimeRange, std::bind(&AlliedWideConfiguration::autoExposureTimeRangeResponseCallback, this, std::placeholders::_1));
+                    callAutoExposureTimeRange(param.as_double(), allied_wide_camera_auto_exposure_time_range_max_);
                 }
-                if (param_name == "allied_wide_camera_auto_exposure_time_range_max" && param.as_double() != allied_wide_camera_auto_exposure_time_range_max)
+                if (param_name == "allied_wide_camera_auto_exposure_time_range_max" && param.as_double() != allied_wide_camera_auto_exposure_time_range_max_)
                 {
-                    while (!clientAutoExposureTimeRange->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange::Request>();
-                    requestAutoExposureTimeRange->allied_type = 1;
-                    requestAutoExposureTimeRange->auto_exposure_time_range_min = allied_wide_camera_auto_exposure_time_range_min;
-                    requestAutoExposureTimeRange->auto_exposure_time_range_max = param.as_double();
-
-                    auto resultAutoExposureTimeRange = clientAutoExposureTimeRange->async_send_request(
-                        requestAutoExposureTimeRange, std::bind(&AlliedWideConfiguration::autoExposureTimeRangeResponseCallback, this, std::placeholders::_1));
+                    callAutoExposureTimeRange(allied_wide_camera_auto_exposure_time_range_min_, param.as_double());
                 }
-                if (param_name == "allied_wide_camera_gain" && param.as_double() != allied_wide_camera_gain)
+                if (param_name == "allied_wide_camera_gain" && param.as_double() != allied_wide_camera_gain_)
                 {
-                    while (!clientGain->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraGain::Request>();
-                    requestGain->allied_type = 1;
-                    requestGain->gain = param.as_double();
-
-                    auto resultGain = clientGain->async_send_request(
-                        requestGain, std::bind(&AlliedWideConfiguration::gainResponseCallback, this, std::placeholders::_1));
+                    callGain(param.as_double());
                 }
-                if (param_name == "allied_wide_camera_auto_gain" && param.as_bool() != allied_wide_camera_auto_gain)
+                if (param_name == "allied_wide_camera_auto_gain" && param.as_bool() != allied_wide_camera_auto_gain_)
                 {
-                    while (!clientAutoGain->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoGain = std::make_shared<l3cam_interfaces::srv::EnableAlliedCameraAutoGain::Request>();
-                    requestAutoGain->allied_type = 1;
-                    requestAutoGain->enabled = param.as_bool();
-
-                    auto resultAutoGain = clientAutoGain->async_send_request(
-                        requestAutoGain, std::bind(&AlliedWideConfiguration::autoGainResponseCallback, this, std::placeholders::_1));
+                    callAutoGain(param.as_bool());
                 }
-                if (param_name == "allied_wide_camera_auto_gain_range_min" && param.as_double() != allied_wide_camera_auto_gain_range_min)
+                if (param_name == "allied_wide_camera_auto_gain_range_min" && param.as_double() != allied_wide_camera_auto_gain_range_min_)
                 {
-                    while (!clientAutoGainRange->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange::Request>();
-                    requestAutoGainRange->allied_type = 1;
-                    requestAutoGainRange->auto_gain_range_min = param.as_double();
-                    requestAutoGainRange->auto_gain_range_max = allied_wide_camera_auto_gain_range_max;
-
-                    auto resultAutoGainRange = clientAutoGainRange->async_send_request(
-                        requestAutoGainRange, std::bind(&AlliedWideConfiguration::autoGainRangeResponseCallback, this, std::placeholders::_1));
+                    callAutoGainRange(param.as_double(), allied_wide_camera_auto_gain_range_max_);
                 }
-                if (param_name == "allied_wide_camera_auto_gain_range_max" && param.as_double() != allied_wide_camera_auto_gain_range_max)
+                if (param_name == "allied_wide_camera_auto_gain_range_max" && param.as_double() != allied_wide_camera_auto_gain_range_max_)
                 {
-                    while (!clientAutoGainRange->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange::Request>();
-                    requestAutoGainRange->allied_type = 1;
-                    requestAutoGainRange->auto_gain_range_min = allied_wide_camera_auto_gain_range_min;
-                    requestAutoGainRange->auto_gain_range_max = param.as_double();
-
-                    auto resultAutoGainRange = clientAutoGainRange->async_send_request(
-                        requestAutoGainRange, std::bind(&AlliedWideConfiguration::autoGainRangeResponseCallback, this, std::placeholders::_1));
+                    callAutoGainRange(allied_wide_camera_auto_gain_range_min_, param.as_double());
                 }
-                if (param_name == "allied_wide_camera_gamma" && param.as_double() != allied_wide_camera_gamma)
+                if (param_name == "allied_wide_camera_gamma" && param.as_double() != allied_wide_camera_gamma_)
                 {
-                    while (!clientGamma->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestGamma = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraGamma::Request>();
-                    requestGamma->allied_type = 1;
-                    requestGamma->gamma = param.as_double();
-
-                    auto resultGamma = clientGamma->async_send_request(
-                        requestGamma, std::bind(&AlliedWideConfiguration::gammaResponseCallback, this, std::placeholders::_1));
+                    callGamma(param.as_double());
                 }
-                if (param_name == "allied_wide_camera_hue" && param.as_double() != allied_wide_camera_hue)
+                if (param_name == "allied_wide_camera_hue" && param.as_double() != allied_wide_camera_hue_)
                 {
-                    while (!clientHue->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestHue = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraHue::Request>();
-                    requestHue->allied_type = 1;
-                    requestHue->hue = param.as_double();
-
-                    auto resultHue = clientHue->async_send_request(
-                        requestHue, std::bind(&AlliedWideConfiguration::hueResponseCallback, this, std::placeholders::_1));
+                    callHue(param.as_double());
                 }
-                if (param_name == "allied_wide_camera_intensity_auto_precedence" && param.as_int() != allied_wide_camera_intensity_auto_precedence)
+                if (param_name == "allied_wide_camera_intensity_auto_precedence" && param.as_int() != allied_wide_camera_intensity_auto_precedence_)
                 {
-                    while (!clientIntensityAutoPrecedence->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestIntensityAutoPrecedence = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence::Request>();
-                    requestIntensityAutoPrecedence->allied_type = 1;
-                    requestIntensityAutoPrecedence->intensity_auto_precedence = param.as_int();
-
-                    auto resultIntensityAutoPrecedence = clientIntensityAutoPrecedence->async_send_request(
-                        requestIntensityAutoPrecedence, std::bind(&AlliedWideConfiguration::intensityAutoPrecedenceResponseCallback, this, std::placeholders::_1));
+                    callIntensityAutoPrecedence(param.as_int());
                 }
-                if (param_name == "allied_wide_camera_auto_white_balance" && param.as_bool() != allied_wide_camera_auto_white_balance)
+                if (param_name == "allied_wide_camera_auto_white_balance" && param.as_bool() != allied_wide_camera_auto_white_balance_)
                 {
-                    while (!clientAutoWhiteBalance->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting aWhiteBalance...");
-                    }
-
-                    auto requestAutoWhiteBalance = std::make_shared<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance::Request>();
-                    requestAutoWhiteBalance->allied_type = 1;
-                    requestAutoWhiteBalance->enabled = param.as_bool();
-
-                    auto resultAutoWhiteBalance = clientAutoWhiteBalance->async_send_request(
-                        requestAutoWhiteBalance, std::bind(&AlliedWideConfiguration::autoWhiteBalanceResponseCallback, this, std::placeholders::_1));
+                    callAutoWhiteBalance(param.as_bool());
                 }
-                if (param_name == "allied_wide_camera_balance_ratio_selector" && param.as_int() != allied_wide_camera_balance_ratio_selector)
+                if (param_name == "allied_wide_camera_balance_ratio_selector" && param.as_int() != allied_wide_camera_balance_ratio_selector_)
                 {
-                    while (!clientBalanceRatioSelector->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestBalanceRatioSelector = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector::Request>();
-                    requestBalanceRatioSelector->allied_type = 1;
-                    requestBalanceRatioSelector->white_balance_ratio_selector = param.as_int();
-
-                    auto resultBalanceRatioSelector = clientBalanceRatioSelector->async_send_request(
-                        requestBalanceRatioSelector, std::bind(&AlliedWideConfiguration::balanceRatioSelectorResponseCallback, this, std::placeholders::_1));
+                    callBalanceRatioSelector(param.as_int());
                 }
-                if (param_name == "allied_wide_camera_balance_ratio" && param.as_double() != allied_wide_camera_balance_ratio)
+                if (param_name == "allied_wide_camera_balance_ratio" && param.as_double() != allied_wide_camera_balance_ratio_)
                 {
-                    while (!clientBalanceRatio->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestBalanceRatio = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio::Request>();
-                    requestBalanceRatio->allied_type = 1;
-                    requestBalanceRatio->balance_ratio = param.as_double();
-
-                    auto resultBalanceRatio = clientBalanceRatio->async_send_request(
-                        requestBalanceRatio, std::bind(&AlliedWideConfiguration::balanceRatioResponseCallback, this, std::placeholders::_1));
+                    callBalanceRatio(param.as_double());
                 }
-                if (param_name == "allied_wide_camera_balance_white_auto_rate" && param.as_double() != allied_wide_camera_balance_white_auto_rate)
+                if (param_name == "allied_wide_camera_balance_white_auto_rate" && param.as_double() != allied_wide_camera_balance_white_auto_rate_)
                 {
-                    while (!clientBalanceWhiteAutoRate->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestBalanceWhiteAutoRate = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate::Request>();
-                    requestBalanceWhiteAutoRate->allied_type = 1;
-                    requestBalanceWhiteAutoRate->white_balance_auto_rate = param.as_double();
-
-                    auto resultBalanceWhiteAutoRate = clientBalanceWhiteAutoRate->async_send_request(
-                        requestBalanceWhiteAutoRate, std::bind(&AlliedWideConfiguration::balanceWhiteAutoRateResponseCallback, this, std::placeholders::_1));
+                    callBalanceWhiteAutoRate(param.as_double());
                 }
-                if (param_name == "allied_wide_camera_balance_white_auto_tolerance" && param.as_double() != allied_wide_camera_balance_white_auto_tolerance)
+                if (param_name == "allied_wide_camera_balance_white_auto_tolerance" && param.as_double() != allied_wide_camera_balance_white_auto_tolerance_)
                 {
-                    while (!clientBalanceWhiteAutoTolerance->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestBalanceWhiteAutoTolerance = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance::Request>();
-                    requestBalanceWhiteAutoTolerance->allied_type = 1;
-                    requestBalanceWhiteAutoTolerance->white_balance_auto_tolerance = param.as_double();
-
-                    auto resultBalanceWhiteAutoTolerance = clientBalanceWhiteAutoTolerance->async_send_request(
-                        requestBalanceWhiteAutoTolerance, std::bind(&AlliedWideConfiguration::balanceWhiteAutoToleranceResponseCallback, this, std::placeholders::_1));
+                    callBalanceWhiteAutoTolerance(param.as_double());
                 }
-                if (param_name == "allied_wide_camera_intensity_controller_region" && param.as_int() != allied_wide_camera_intensity_controller_region)
+                if (param_name == "allied_wide_camera_intensity_controller_region" && param.as_int() != allied_wide_camera_intensity_controller_region_)
                 {
-                    while (!clientIntensityControllerRegion->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestIntensityControllerRegion = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion::Request>();
-                    requestIntensityControllerRegion->allied_type = 1;
-                    requestIntensityControllerRegion->intensity_controller_region = param.as_int();
-
-                    auto resultIntensityControllerRegion = clientIntensityControllerRegion->async_send_request(
-                        requestIntensityControllerRegion, std::bind(&AlliedWideConfiguration::intensityControllerRegionResponseCallback, this, std::placeholders::_1));
+                    callIntensityControllerRegion(param.as_int());
                 }
-                if (param_name == "allied_wide_camera_intensity_controller_target" && param.as_double() != allied_wide_camera_intensity_controller_target)
+                if (param_name == "allied_wide_camera_intensity_controller_target" && param.as_double() != allied_wide_camera_intensity_controller_target_)
                 {
-                    while (!clientIntensityControllerTarget->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestIntensityControllerTarget = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget::Request>();
-                    requestIntensityControllerTarget->allied_type = 1;
-                    requestIntensityControllerTarget->intensity_controller_target = param.as_double();
-
-                    auto resultIntensityControllerTarget = clientIntensityControllerTarget->async_send_request(
-                        requestIntensityControllerTarget, std::bind(&AlliedWideConfiguration::intensityControllerTargetResponseCallback, this, std::placeholders::_1));
+                    callIntensityControllerTarget(param.as_double());
                 }
-                if (param_name == "allied_wide_streaming_protocol" && param.as_int() != streaming_protocol)
+                if (param_name == "allied_wide_streaming_protocol" && param.as_int() != streaming_protocol_)
                 {
-                    while (!clientStreamingProtocol->wait_for_service(1s))
-                    {
-                        if (!rclcpp::ok())
-                        {
-                            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                            break;
-                        }
-                        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
-                    }
-
-                    auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
-                    requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_allied_wide;
-                    requestStreamingProtocol->protocol = param.as_int();
-
-                    auto resultStreamingProtocol = clientStreamingProtocol->async_send_request(
-                        requestStreamingProtocol, std::bind(&AlliedWideConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
+                    callStreamingProtocol(param.as_int());
                 }
             }
 
             return result;
         }
 
+        // Service calls
+        void callExposureTime(double exposure_time)
+        {
+            while (!client_exposure_time_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestExposureTime = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime::Request>();
+            requestExposureTime->allied_type = alliedCamerasIds::wide_camera;
+            requestExposureTime->exposure_time = exposure_time;
+
+            auto resultExposureTime = client_exposure_time_->async_send_request(
+                requestExposureTime, std::bind(&AlliedWideConfiguration::exposureTimeResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callAutoExposureTime(bool enabled)
+        {
+            while (!client_auto_exposure_time_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestAutoExposureTime = std::make_shared<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime::Request>();
+            requestAutoExposureTime->allied_type = alliedCamerasIds::wide_camera;
+            requestAutoExposureTime->enabled = enabled;
+
+            auto resultAutoExposureTime = client_auto_exposure_time_->async_send_request(
+                requestAutoExposureTime, std::bind(&AlliedWideConfiguration::autoExposureTimeResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callAutoExposureTimeRange(double range_min, double range_max)
+        {
+            while (!client_auto_exposure_time_range_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange::Request>();
+            requestAutoExposureTimeRange->allied_type = alliedCamerasIds::wide_camera;
+            requestAutoExposureTimeRange->auto_exposure_time_range_min = range_min;
+            requestAutoExposureTimeRange->auto_exposure_time_range_max = range_max;
+
+            auto resultAutoExposureTimeRange = client_auto_exposure_time_range_->async_send_request(
+                requestAutoExposureTimeRange, std::bind(&AlliedWideConfiguration::autoExposureTimeRangeResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callGain(double gain)
+        {
+            while (!client_gain_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraGain::Request>();
+            requestGain->allied_type = alliedCamerasIds::wide_camera;
+            requestGain->gain = gain;
+
+            auto resultGain = client_gain_->async_send_request(
+                requestGain, std::bind(&AlliedWideConfiguration::gainResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callAutoGain(bool enabled)
+        {
+            while (!client_auto_gain_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestAutoGain = std::make_shared<l3cam_interfaces::srv::EnableAlliedCameraAutoGain::Request>();
+            requestAutoGain->allied_type = alliedCamerasIds::wide_camera;
+            requestAutoGain->enabled = enabled;
+
+            auto resultAutoGain = client_auto_gain_->async_send_request(
+                requestAutoGain, std::bind(&AlliedWideConfiguration::autoGainResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callAutoGainRange(double range_min, double range_max)
+        {
+            while (!client_auto_gain_range_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange::Request>();
+            requestAutoGainRange->allied_type = alliedCamerasIds::wide_camera;
+            requestAutoGainRange->auto_gain_range_min = range_min;
+            requestAutoGainRange->auto_gain_range_max = range_max;
+
+            auto resultAutoGainRange = client_auto_gain_range_->async_send_request(
+                requestAutoGainRange, std::bind(&AlliedWideConfiguration::autoGainRangeResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callGamma(double gamma)
+        {
+            while (!client_gamma_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestGamma = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraGamma::Request>();
+            requestGamma->allied_type = alliedCamerasIds::wide_camera;
+            requestGamma->gamma = gamma;
+
+            auto resultGamma = client_gamma_->async_send_request(
+                requestGamma, std::bind(&AlliedWideConfiguration::gammaResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callHue(double hue)
+        {
+            while (!client_hue_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestHue = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraHue::Request>();
+            requestHue->allied_type = alliedCamerasIds::wide_camera;
+            requestHue->hue = hue;
+
+            auto resultHue = client_hue_->async_send_request(
+                requestHue, std::bind(&AlliedWideConfiguration::hueResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callIntensityAutoPrecedence(int intensity_auto_precedence)
+        {
+            while (!client_intensity_auto_precedence_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestIntensityAutoPrecedence = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence::Request>();
+            requestIntensityAutoPrecedence->allied_type = alliedCamerasIds::wide_camera;
+            requestIntensityAutoPrecedence->intensity_auto_precedence = intensity_auto_precedence;
+
+            auto resultIntensityAutoPrecedence = client_intensity_auto_precedence_->async_send_request(
+                requestIntensityAutoPrecedence, std::bind(&AlliedWideConfiguration::intensityAutoPrecedenceResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callAutoWhiteBalance(bool enabled)
+        {
+            while (!client_auto_white_balance_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting aWhiteBalance...");
+            }
+
+            auto requestAutoWhiteBalance = std::make_shared<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance::Request>();
+            requestAutoWhiteBalance->allied_type = alliedCamerasIds::wide_camera;
+            requestAutoWhiteBalance->enabled = enabled;
+
+            auto resultAutoWhiteBalance = client_auto_white_balance_->async_send_request(
+                requestAutoWhiteBalance, std::bind(&AlliedWideConfiguration::autoWhiteBalanceResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callBalanceRatioSelector(int white_balance_ratio_selector)
+        {
+            while (!client_balance_ratio_selector_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestBalanceRatioSelector = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector::Request>();
+            requestBalanceRatioSelector->allied_type = alliedCamerasIds::wide_camera;
+            requestBalanceRatioSelector->white_balance_ratio_selector = white_balance_ratio_selector;
+
+            auto resultBalanceRatioSelector = client_balance_ratio_selector_->async_send_request(
+                requestBalanceRatioSelector, std::bind(&AlliedWideConfiguration::balanceRatioSelectorResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callBalanceRatio(double balance_ratio)
+        {
+            while (!client_balance_ratio_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestBalanceRatio = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio::Request>();
+            requestBalanceRatio->allied_type = alliedCamerasIds::wide_camera;
+            requestBalanceRatio->balance_ratio = balance_ratio;
+
+            auto resultBalanceRatio = client_balance_ratio_->async_send_request(
+                requestBalanceRatio, std::bind(&AlliedWideConfiguration::balanceRatioResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callBalanceWhiteAutoRate(double white_balance_auto_rate)
+        {
+            while (!client_balance_white_auto_rate_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestBalanceWhiteAutoRate = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate::Request>();
+            requestBalanceWhiteAutoRate->allied_type = alliedCamerasIds::wide_camera;
+            requestBalanceWhiteAutoRate->white_balance_auto_rate = white_balance_auto_rate;
+
+            auto resultBalanceWhiteAutoRate = client_balance_white_auto_rate_->async_send_request(
+                requestBalanceWhiteAutoRate, std::bind(&AlliedWideConfiguration::balanceWhiteAutoRateResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callBalanceWhiteAutoTolerance(double white_balance_auto_tolerance)
+        {
+            while (!client_balance_white_auto_tolerance_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestBalanceWhiteAutoTolerance = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance::Request>();
+            requestBalanceWhiteAutoTolerance->allied_type = alliedCamerasIds::wide_camera;
+            requestBalanceWhiteAutoTolerance->white_balance_auto_tolerance = white_balance_auto_tolerance;
+
+            auto resultBalanceWhiteAutoTolerance = client_balance_white_auto_tolerance_->async_send_request(
+                requestBalanceWhiteAutoTolerance, std::bind(&AlliedWideConfiguration::balanceWhiteAutoToleranceResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callIntensityControllerRegion(int intensity_controller_region)
+        {
+            while (!client_intensity_controller_region_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestIntensityControllerRegion = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion::Request>();
+            requestIntensityControllerRegion->allied_type = alliedCamerasIds::wide_camera;
+            requestIntensityControllerRegion->intensity_controller_region = intensity_controller_region;
+
+            auto resultIntensityControllerRegion = client_intensity_controller_region_->async_send_request(
+                requestIntensityControllerRegion, std::bind(&AlliedWideConfiguration::intensityControllerRegionResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callIntensityControllerTarget(double intensity_controller_target)
+        {
+            while (!client_intensity_controller_target_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestIntensityControllerTarget = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget::Request>();
+            requestIntensityControllerTarget->allied_type = alliedCamerasIds::wide_camera;
+            requestIntensityControllerTarget->intensity_controller_target = intensity_controller_target;
+
+            auto resultIntensityControllerTarget = client_intensity_controller_target_->async_send_request(
+                requestIntensityControllerTarget, std::bind(&AlliedWideConfiguration::intensityControllerTargetResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callStreamingProtocol(int protocol)
+        {
+            while (!client_streaming_protocol_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            }
+
+            auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
+            requestStreamingProtocol->sensor_type = (int)sensorTypes::sensor_allied_wide;
+            requestStreamingProtocol->protocol = protocol;
+
+            auto resultStreamingProtocol = client_streaming_protocol_->async_send_request(
+                requestStreamingProtocol, std::bind(&AlliedWideConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
+        }
+
+        // Service callbacks
         void exposureTimeResponseCallback(
             rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedFuture future)
         {
@@ -600,20 +660,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully
-                    allied_wide_camera_exposure_time = this->get_parameter("allied_wide_camera_exposure_time").as_double();
+                    allied_wide_camera_exposure_time_ = this->get_parameter("allied_wide_camera_exposure_time").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_exposure_time", allied_wide_camera_exposure_time));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_exposure_time", allied_wide_camera_exposure_time_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_exposure_time");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_exposure_time", allied_wide_camera_exposure_time));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_exposure_time", allied_wide_camera_exposure_time_));
             }
         }
 
@@ -627,12 +687,12 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully
-                    allied_wide_camera_auto_exposure_time = this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool();
+                    allied_wide_camera_auto_exposure_time_ = this->get_parameter("allied_wide_camera_auto_exposure_time").as_bool();
 
                     // If auto exposure time deactivated we have to get the actual exposure time to know its value
-                    if (!allied_wide_camera_auto_exposure_time)
+                    if (!allied_wide_camera_auto_exposure_time_)
                     {
-                        while (!clientGetExposureTime->wait_for_service(1s))
+                        while (!client_get_exposure_time_->wait_for_service(1s))
                         {
                             if (!rclcpp::ok())
                             {
@@ -643,9 +703,9 @@ namespace l3cam_ros2
                         }
 
                         auto requestGetExposureTime = std::make_shared<l3cam_interfaces::srv::GetAlliedCameraExposureTime::Request>();
-                        requestGetExposureTime->allied_type = 1;
+                        requestGetExposureTime->allied_type = alliedCamerasIds::wide_camera;
 
-                        auto resultGetExposureTime = clientGetExposureTime->async_send_request(
+                        auto resultGetExposureTime = client_get_exposure_time_->async_send_request(
                             requestGetExposureTime, std::bind(&AlliedWideConfiguration::getExposureTimeResponseCallback, this, std::placeholders::_1));
                     }
                 }
@@ -653,14 +713,14 @@ namespace l3cam_ros2
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time", allied_wide_camera_auto_exposure_time));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time", allied_wide_camera_auto_exposure_time_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_allied_camera_auto_exposure_time");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time", allied_wide_camera_auto_exposure_time));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time", allied_wide_camera_auto_exposure_time_));
             }
         }
 
@@ -674,23 +734,23 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameters changed successfully
-                    allied_wide_camera_auto_exposure_time_range_min = this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double();
-                    allied_wide_camera_auto_exposure_time_range_max = this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double();
+                    allied_wide_camera_auto_exposure_time_range_min_ = this->get_parameter("allied_wide_camera_auto_exposure_time_range_min").as_double();
+                    allied_wide_camera_auto_exposure_time_range_max_ = this->get_parameter("allied_wide_camera_auto_exposure_time_range_max").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_min", allied_wide_camera_auto_exposure_time_range_min));
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_max", allied_wide_camera_auto_exposure_time_range_max));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_min", allied_wide_camera_auto_exposure_time_range_min_));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_max", allied_wide_camera_auto_exposure_time_range_max_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_auto_exposure_time_range");
                 // Service could not be called, reset parameters to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_min", allied_wide_camera_auto_exposure_time_range_min));
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_max", allied_wide_camera_auto_exposure_time_range_min));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_min", allied_wide_camera_auto_exposure_time_range_min_));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_exposure_time_range_max", allied_wide_camera_auto_exposure_time_range_min_));
             }
         }
 
@@ -704,20 +764,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully
-                    allied_wide_camera_gain = this->get_parameter("allied_wide_camera_gain").as_double();
+                    allied_wide_camera_gain_ = this->get_parameter("allied_wide_camera_gain").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_gain", allied_wide_camera_gain));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_gain", allied_wide_camera_gain_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_gain");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_gain", allied_wide_camera_gain));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_gain", allied_wide_camera_gain_));
             }
         }
 
@@ -731,12 +791,12 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully
-                    allied_wide_camera_auto_gain = this->get_parameter("allied_wide_camera_auto_gain").as_bool();
+                    allied_wide_camera_auto_gain_ = this->get_parameter("allied_wide_camera_auto_gain").as_bool();
 
                     // If auto gain deactivated we have to get the actual gain to know its value
-                    if (!allied_wide_camera_auto_gain)
+                    if (!allied_wide_camera_auto_gain_)
                     {
-                        while (!clientGetGain->wait_for_service(1s))
+                        while (!client_get_gain_->wait_for_service(1s))
                         {
                             if (!rclcpp::ok())
                             {
@@ -747,9 +807,9 @@ namespace l3cam_ros2
                         }
 
                         auto requestGetGain = std::make_shared<l3cam_interfaces::srv::GetAlliedCameraGain::Request>();
-                        requestGetGain->allied_type = 1;
+                        requestGetGain->allied_type = alliedCamerasIds::wide_camera;
 
-                        auto resultGetGain = clientGetGain->async_send_request(
+                        auto resultGetGain = client_get_gain_->async_send_request(
                             requestGetGain, std::bind(&AlliedWideConfiguration::getGainResponseCallback, this, std::placeholders::_1));
                     }
                 }
@@ -757,14 +817,14 @@ namespace l3cam_ros2
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain", allied_wide_camera_auto_gain));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain", allied_wide_camera_auto_gain_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_allied_camera_auto_gain");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain", allied_wide_camera_auto_gain));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain", allied_wide_camera_auto_gain_));
             }
         }
 
@@ -778,23 +838,23 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameters changed successfully, save values
-                    allied_wide_camera_auto_gain_range_min = this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double();
-                    allied_wide_camera_auto_gain_range_max = this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double();
+                    allied_wide_camera_auto_gain_range_min_ = this->get_parameter("allied_wide_camera_auto_gain_range_min").as_double();
+                    allied_wide_camera_auto_gain_range_max_ = this->get_parameter("allied_wide_camera_auto_gain_range_max").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_min", allied_wide_camera_auto_gain_range_min));
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_max", allied_wide_camera_auto_gain_range_max));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_min", allied_wide_camera_auto_gain_range_min_));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_max", allied_wide_camera_auto_gain_range_max_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_auto_gain_range");
                 // Service could not be called, reset parameters to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_min", allied_wide_camera_auto_gain_range_min));
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_max", allied_wide_camera_auto_gain_range_min));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_min", allied_wide_camera_auto_gain_range_min_));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_gain_range_max", allied_wide_camera_auto_gain_range_min_));
             }
         }
 
@@ -808,20 +868,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_gamma = this->get_parameter("allied_wide_camera_gamma").as_double();
+                    allied_wide_camera_gamma_ = this->get_parameter("allied_wide_camera_gamma").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_gamma", allied_wide_camera_gamma));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_gamma", allied_wide_camera_gamma_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_gamma");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_gamma", allied_wide_camera_gamma));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_gamma", allied_wide_camera_gamma_));
             }
         }
 
@@ -835,20 +895,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_hue = this->get_parameter("allied_wide_camera_hue").as_double();
+                    allied_wide_camera_hue_ = this->get_parameter("allied_wide_camera_hue").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_hue", allied_wide_camera_hue));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_hue", allied_wide_camera_hue_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_hue");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_hue", allied_wide_camera_hue));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_hue", allied_wide_camera_hue_));
             }
         }
 
@@ -862,20 +922,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_intensity_auto_precedence = this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int();
+                    allied_wide_camera_intensity_auto_precedence_ = this->get_parameter("allied_wide_camera_intensity_auto_precedence").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_auto_precedence", allied_wide_camera_intensity_auto_precedence));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_auto_precedence", allied_wide_camera_intensity_auto_precedence_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_intensity_auto_precedence");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_auto_precedence", allied_wide_camera_intensity_auto_precedence));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_auto_precedence", allied_wide_camera_intensity_auto_precedence_));
             }
         }
 
@@ -889,20 +949,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_auto_white_balance = this->get_parameter("allied_wide_camera_auto_white_balance").as_bool();
+                    allied_wide_camera_auto_white_balance_ = this->get_parameter("allied_wide_camera_auto_white_balance").as_bool();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_white_balance", allied_wide_camera_auto_white_balance));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_white_balance", allied_wide_camera_auto_white_balance_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service enable_allied_camera_auto_white_balance");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_white_balance", allied_wide_camera_auto_white_balance));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_auto_white_balance", allied_wide_camera_auto_white_balance_));
             }
         }
 
@@ -916,20 +976,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_balance_ratio_selector = this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int();
+                    allied_wide_camera_balance_ratio_selector_ = this->get_parameter("allied_wide_camera_balance_ratio_selector").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio_selector", allied_wide_camera_balance_ratio_selector));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio_selector", allied_wide_camera_balance_ratio_selector_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_balance_ratio_selector");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio_selector", allied_wide_camera_balance_ratio_selector));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio_selector", allied_wide_camera_balance_ratio_selector_));
             }
         }
 
@@ -943,20 +1003,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_balance_ratio = this->get_parameter("allied_wide_camera_balance_ratio").as_double();
+                    allied_wide_camera_balance_ratio_ = this->get_parameter("allied_wide_camera_balance_ratio").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio", allied_wide_camera_balance_ratio));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio", allied_wide_camera_balance_ratio_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_balance_ratio");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio", allied_wide_camera_balance_ratio));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_ratio", allied_wide_camera_balance_ratio_));
             }
         }
 
@@ -970,20 +1030,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_balance_white_auto_rate = this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double();
+                    allied_wide_camera_balance_white_auto_rate_ = this->get_parameter("allied_wide_camera_balance_white_auto_rate").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_rate", allied_wide_camera_balance_white_auto_rate));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_rate", allied_wide_camera_balance_white_auto_rate_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_balance_white_auto_rate");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_rate", allied_wide_camera_balance_white_auto_rate));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_rate", allied_wide_camera_balance_white_auto_rate_));
             }
         }
 
@@ -997,20 +1057,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_balance_white_auto_tolerance = this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double();
+                    allied_wide_camera_balance_white_auto_tolerance_ = this->get_parameter("allied_wide_camera_balance_white_auto_tolerance").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_tolerance", allied_wide_camera_balance_white_auto_tolerance));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_tolerance", allied_wide_camera_balance_white_auto_tolerance_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_balance_white_auto_tolerance");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_tolerance", allied_wide_camera_balance_white_auto_tolerance));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_balance_white_auto_tolerance", allied_wide_camera_balance_white_auto_tolerance_));
             }
         }
 
@@ -1024,20 +1084,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_intensity_controller_region = this->get_parameter("allied_wide_camera_intensity_controller_region").as_int();
+                    allied_wide_camera_intensity_controller_region_ = this->get_parameter("allied_wide_camera_intensity_controller_region").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_region", allied_wide_camera_intensity_controller_region));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_region", allied_wide_camera_intensity_controller_region_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_intensity_controller_region");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_region", allied_wide_camera_intensity_controller_region));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_region", allied_wide_camera_intensity_controller_region_));
             }
         }
 
@@ -1051,20 +1111,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    allied_wide_camera_intensity_controller_target = this->get_parameter("allied_wide_camera_intensity_controller_target").as_double();
+                    allied_wide_camera_intensity_controller_target_ = this->get_parameter("allied_wide_camera_intensity_controller_target").as_double();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_target", allied_wide_camera_intensity_controller_target));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_target", allied_wide_camera_intensity_controller_target_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_allied_camera_intensity_controller_target");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_target", allied_wide_camera_intensity_controller_target));
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_intensity_controller_target", allied_wide_camera_intensity_controller_target_));
             }
         }
 
@@ -1078,7 +1138,7 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Got parameter successfully
-                    allied_wide_camera_exposure_time = future.get()->exposure_time;
+                    allied_wide_camera_exposure_time_ = future.get()->exposure_time;
                     this->set_parameter(rclcpp::Parameter("allied_wide_camera_exposure_time", future.get()->exposure_time));
                 }
                 else
@@ -1102,7 +1162,7 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Got parameter successfully
-                    allied_wide_camera_gain = future.get()->gain;
+                    allied_wide_camera_gain_ = future.get()->gain;
                     this->set_parameter(rclcpp::Parameter("allied_wide_camera_gain", future.get()->gain));
                 }
                 else
@@ -1126,20 +1186,20 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    streaming_protocol = this->get_parameter("allied_wide_streaming_protocol").as_int();
+                    streaming_protocol_ = this->get_parameter("allied_wide_streaming_protocol").as_int();
                 }
                 else
                 {
                     RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("allied_wide_streaming_protocol", streaming_protocol));
+                    this->set_parameter(rclcpp::Parameter("allied_wide_streaming_protocol", streaming_protocol_));
                 }
             }
             else
             {
                 RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_streaming_protocol");
                 // Service could not be called, reset parameter to value before change
-                this->set_parameter(rclcpp::Parameter("allied_wide_streaming_protocol", streaming_protocol));
+                this->set_parameter(rclcpp::Parameter("allied_wide_streaming_protocol", streaming_protocol_));
             }
         }
 
@@ -1159,48 +1219,48 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
-        double allied_wide_camera_exposure_time;
-        bool allied_wide_camera_auto_exposure_time;
-        double allied_wide_camera_auto_exposure_time_range_min;
-        double allied_wide_camera_auto_exposure_time_range_max;
-        double allied_wide_camera_gain;
-        bool allied_wide_camera_auto_gain;
-        double allied_wide_camera_auto_gain_range_min;
-        double allied_wide_camera_auto_gain_range_max;
-        double allied_wide_camera_gamma;
-        double allied_wide_camera_saturation;
-        double allied_wide_camera_hue;
-        int allied_wide_camera_intensity_auto_precedence;
-        bool allied_wide_camera_auto_white_balance;
-        int allied_wide_camera_balance_ratio_selector;
-        double allied_wide_camera_balance_ratio;
-        double allied_wide_camera_balance_white_auto_rate;
-        double allied_wide_camera_balance_white_auto_tolerance;
-        int allied_wide_camera_intensity_controller_region;
-        double allied_wide_camera_intensity_controller_target;
-        int streaming_protocol;
+        double allied_wide_camera_exposure_time_;
+        bool allied_wide_camera_auto_exposure_time_;
+        double allied_wide_camera_auto_exposure_time_range_min_;
+        double allied_wide_camera_auto_exposure_time_range_max_;
+        double allied_wide_camera_gain_;
+        bool allied_wide_camera_auto_gain_;
+        double allied_wide_camera_auto_gain_range_min_;
+        double allied_wide_camera_auto_gain_range_max_;
+        double allied_wide_camera_gamma_;
+        double allied_wide_camera_saturation_;
+        double allied_wide_camera_hue_;
+        int allied_wide_camera_intensity_auto_precedence_;
+        bool allied_wide_camera_auto_white_balance_;
+        int allied_wide_camera_balance_ratio_selector_;
+        double allied_wide_camera_balance_ratio_;
+        double allied_wide_camera_balance_white_auto_rate_;
+        double allied_wide_camera_balance_white_auto_tolerance_;
+        int allied_wide_camera_intensity_controller_region_;
+        double allied_wide_camera_intensity_controller_target_;
+        int streaming_protocol_;
 
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedPtr clientExposureTime;
-        rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>::SharedPtr clientAutoExposureTime;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>::SharedPtr clientAutoExposureTimeRange;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraGain>::SharedPtr clientGain;
-        rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>::SharedPtr clientAutoGain;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>::SharedPtr clientAutoGainRange;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraGamma>::SharedPtr clientGamma;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraHue>::SharedPtr clientHue;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>::SharedPtr clientIntensityAutoPrecedence;
-        rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>::SharedPtr clientAutoWhiteBalance;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>::SharedPtr clientBalanceRatioSelector;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>::SharedPtr clientBalanceRatio;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>::SharedPtr clientBalanceWhiteAutoRate;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr clientBalanceWhiteAutoTolerance;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>::SharedPtr clientIntensityControllerRegion;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>::SharedPtr clientIntensityControllerTarget;
-        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr clientStreamingProtocol;
-        rclcpp::Client<l3cam_interfaces::srv::GetAlliedCameraExposureTime>::SharedPtr clientGetExposureTime;
-        rclcpp::Client<l3cam_interfaces::srv::GetAlliedCameraGain>::SharedPtr clientGetGain;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedPtr client_exposure_time_;
+        rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>::SharedPtr client_auto_exposure_time_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>::SharedPtr client_auto_exposure_time_range_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraGain>::SharedPtr client_gain_;
+        rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>::SharedPtr client_auto_gain_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>::SharedPtr client_auto_gain_range_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraGamma>::SharedPtr client_gamma_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraHue>::SharedPtr client_hue_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>::SharedPtr client_intensity_auto_precedence_;
+        rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>::SharedPtr client_auto_white_balance_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatioSelector>::SharedPtr client_balance_ratio_selector_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceRatio>::SharedPtr client_balance_ratio_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoRate>::SharedPtr client_balance_white_auto_rate_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraBalanceWhiteAutoTolerance>::SharedPtr client_balance_white_auto_tolerance_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerRegion>::SharedPtr client_intensity_controller_region_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityControllerTarget>::SharedPtr client_intensity_controller_target_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr client_streaming_protocol_;
+        rclcpp::Client<l3cam_interfaces::srv::GetAlliedCameraExposureTime>::SharedPtr client_get_exposure_time_;
+        rclcpp::Client<l3cam_interfaces::srv::GetAlliedCameraGain>::SharedPtr client_get_gain_;
 
-        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srvSensorDisconnected;
+        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
@@ -1215,18 +1275,24 @@ int main(int argc, char **argv)
     std::shared_ptr<l3cam_ros2::AlliedWideConfiguration> node = std::make_shared<l3cam_ros2::AlliedWideConfiguration>();
 
     // Check if Allied Wide is available
-    while (!node->clientGetSensors->wait_for_service(1s))
+    int i = 0;
+    while (!node->client_get_sensors_->wait_for_service(1s))
     {
         if (!rclcpp::ok())
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             return 0;
         }
+        
+        if (i >= node->get_parameter("timeout_secs").as_int())
+            return L3CAM_ROS2_FIND_DEVICES_TIMEOUT_ERROR;
+        ++i;
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
+    node->undeclare_parameter("timeout_secs");
 
     auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
-    auto resultGetSensors = node->clientGetSensors->async_send_request(requestGetSensors);
+    auto resultGetSensors = node->client_get_sensors_->async_send_request(requestGetSensors);
 
     int error = L3CAM_OK;
     bool sensor_is_available = false;
@@ -1246,13 +1312,13 @@ int main(int argc, char **argv)
         else
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
-            return 1;
+            return error;
         }
     }
     else
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_sensors_available");
-        return 1;
+        return L3CAM_ROS2_FAILED_TO_CALL_SERVICE;
     }
 
     if (sensor_is_available)
@@ -1265,7 +1331,7 @@ int main(int argc, char **argv)
     }
 
     // Get pipeline
-    while (!node->clientGetRtspPipeline->wait_for_service(1s))
+    while (!node->client_get_rtsp_pipeline_->wait_for_service(1s))
     {
         if (!rclcpp::ok())
         {
@@ -1277,7 +1343,7 @@ int main(int argc, char **argv)
 
     auto requestGetRtspPipeline = std::make_shared<l3cam_interfaces::srv::GetRtspPipeline::Request>();
     requestGetRtspPipeline.get()->sensor_type = (int)sensorTypes::sensor_allied_wide;
-    auto resultGetRtspPipeline = node->clientGetRtspPipeline->async_send_request(requestGetRtspPipeline);
+    auto resultGetRtspPipeline = node->client_get_rtsp_pipeline_->async_send_request(requestGetRtspPipeline);
 
     if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
     {
@@ -1292,13 +1358,13 @@ int main(int argc, char **argv)
         else
         {
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting pipeline in " << __func__ << ": " << getBeamErrorDescription(error));
-            return 1;
+            return error;
         }
     }
     else
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service get_rtsp_pipeline");
-        return 1;
+        return L3CAM_ROS2_FAILED_TO_CALL_SERVICE;
     }
 
     rclcpp::spin(node);

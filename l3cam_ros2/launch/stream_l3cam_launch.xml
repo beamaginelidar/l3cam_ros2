@@ -1,11 +1,18 @@
 <launch>
-    <arg name="rviz2" default="false" />
+    <arg name="timeout_secs" default="60" />
 
     <!-- Stream -->
-    <node pkg="l3cam_ros2" exec="pointcloud_stream" name="pointcloud_stream" />
-    <node pkg="l3cam_ros2" exec="polarimetric_wide_stream" name="polarimetric_wide_stream" />
-    <node pkg="l3cam_ros2" exec="rgb_narrow_stream" name="rgb_narrow_stream" />
-    <node pkg="l3cam_ros2" exec="thermal_stream" name="thermal_stream" />
+    <node pkg="l3cam_ros2" exec="pointcloud_stream" name="pointcloud_stream">
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+    </node>
+    <node pkg="l3cam_ros2" exec="polarimetric_wide_stream" name="polarimetric_wide_stream">
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+    </node>
+    <node pkg="l3cam_ros2" exec="rgb_narrow_stream" name="rgb_narrow_stream">
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+    </node>
+    <node pkg="l3cam_ros2" exec="thermal_stream" name="thermal_stream">
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+    </node>
 
-    <node pkg="rviz2" exec="rviz2" name="rviz2" if="$(var rviz2)" />
 </launch>

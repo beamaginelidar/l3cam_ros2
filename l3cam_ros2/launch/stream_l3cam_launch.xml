@@ -1,18 +1,30 @@
 <launch>
     <arg name="timeout_secs" default="60" />
+    <arg name="lidar_topic" default="PC2_lidar" />
+    <arg name="polarimetric_topic" default="img_pol" />
+    <arg name="rgb_topic" default="img_rgb" />
+    <arg name="thermal_topic" default="img_thermal" />
+    <arg name="allied_wide_topic" default="img_wide" />
+    <arg name="allied_narrow_topic" default="img_narrow" />
 
     <!-- Stream -->
     <node pkg="l3cam_ros2" exec="pointcloud_stream" name="pointcloud_stream">
         <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="PC2_lidar" to="$(var lidar_topic)" />
     </node>
     <node pkg="l3cam_ros2" exec="polarimetric_wide_stream" name="polarimetric_wide_stream">
         <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="img_pol" to="$(var polarimetric_topic)" />
+        <remap from="img_wide" to="$(var allied_wide_topic)" />
     </node>
     <node pkg="l3cam_ros2" exec="rgb_narrow_stream" name="rgb_narrow_stream">
         <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="img_rgb" to="$(var rgb_topic)" />
+        <remap from="img_narrow" to="$(var allied_narrow_topic)" />
     </node>
     <node pkg="l3cam_ros2" exec="thermal_stream" name="thermal_stream">
         <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="img_thermal" to="$(var thermal_topic)" />
     </node>
 
 </launch>

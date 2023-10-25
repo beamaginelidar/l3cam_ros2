@@ -8,8 +8,14 @@
 
     <group>
         <push-ros-namespace namespace="$(var namespace)" />
-        
+
         <arg name="timeout_secs" default="60" />
+        <arg name="lidar_topic" default="PC2_lidar" />
+        <arg name="polarimetric_topic" default="img_pol" />
+        <arg name="rgb_topic" default="img_rgb" />
+        <arg name="thermal_topic" default="img_thermal" />
+        <arg name="allied_wide_topic" default="img_wide" />
+        <arg name="allied_narrow_topic" default="img_narrow" />
 
         <!-- Network configuration -->
         <arg name="local_address" default="" />
@@ -316,6 +322,12 @@
         <!-- Start streaming the available sensors. -->
         <include file="$(dirname)/stream_l3cam_launch.xml">
             <arg name="timeout_secs" value="$(var timeout_secs)" />
+            <arg name="lidar_topic" value="$(var lidar_topic)" />
+            <arg name="polarimetric_topic" value="$(var polarimetric_topic)" />
+            <arg name="rgb_topic" value="$(var rgb_topic)" />
+            <arg name="thermal_topic" value="$(var thermal_topic)" />
+            <arg name="allied_wide_topic" value="$(var allied_wide_topic)" />
+            <arg name="allied_narrow_topic" value="$(var allied_narrow_topic)" />
         </include>
 
         <!-- The nodes that don't have their sensor available will automatically shut down -->

@@ -67,7 +67,7 @@ pthread_t stream_thread;
 
 bool g_listening = false;
 
-bool m_rgb; // true if rgb sensor available, false if narrow available
+bool g_rgb; // true if rgb sensor available, false if narrow available
 
 struct threadData
 {
@@ -129,7 +129,7 @@ void *ImageThread(void *functionData)
     }
 
     g_listening = true;
-    if (m_rgb)
+    if (g_rgb)
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "RGB streaming.");
     else
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Allied Narrow streaming.");
@@ -176,7 +176,7 @@ void *ImageThread(void *functionData)
             sensor_msgs::msg::Image img_msg; // message to be sent
 
             std_msgs::msg::Header header;
-            header.frame_id = m_rgb ? "rgb" : "allied_narrow";
+            header.frame_id = g_rgb ? "rgb" : "allied_narrow";
             // m_timestamp format: hhmmsszzz
             header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
@@ -225,7 +225,7 @@ namespace l3cam_ros2
 
         void declareServiceServers()
         {
-            std::string sensor = m_rgb ? "rgb" : "narrow";
+            std::string sensor = g_rgb ? "rgb" : "narrow";
             srv_sensor_disconnected_ = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
                 sensor + "_stream_disconnected", std::bind(&RgbNarrowStream::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
         }
@@ -275,7 +275,7 @@ int main(int argc, char const *argv[])
         }
         
         if (i >= node->get_parameter("timeout_secs").as_int())
-            return L3CAM_ROS2_FIND_DEVICES_TIMEOUT_ERROR;
+            return 0;
         ++i;
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
@@ -298,12 +298,12 @@ int main(int argc, char const *argv[])
                 if (resultGetSensors.get()->sensors[i].sensor_type == sensor_econ_rgb && resultGetSensors.get()->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
-                    m_rgb = true;
+                    g_rgb = true;
                 }
                 else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_narrow && resultGetSensors.get()->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
-                    m_rgb = false;
+                    g_rgb = false;
                 }
             }
         }
@@ -321,7 +321,7 @@ int main(int argc, char const *argv[])
 
     if (sensor_is_available)
     {
-        std::string sensor = (m_rgb ? "RGB" : "Allied Narrow");
+        std::string sensor = (g_rgb ? "RGB" : "Allied Narrow");
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), sensor << " camera available for streaming");
         node->declareServiceServers();
     }
@@ -330,7 +330,7 @@ int main(int argc, char const *argv[])
         return 0;
     }
 
-    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(m_rgb ? "img_rgb" : "img_narrow", 10);
+    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(g_rgb ? "img_rgb" : "img_narrow", 10);
 
     threadData *data = (struct threadData *)malloc(sizeof(struct threadData));
     data->publisher = node->publisher_;

@@ -411,7 +411,7 @@ int main(int argc, char **argv)
         }
         
         if (i >= node->get_parameter("timeout_secs").as_int())
-            return L3CAM_ROS2_FIND_DEVICES_TIMEOUT_ERROR;
+            return 0;
         ++i;
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }

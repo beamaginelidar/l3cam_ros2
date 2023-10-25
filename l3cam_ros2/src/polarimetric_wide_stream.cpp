@@ -67,7 +67,7 @@ pthread_t stream_thread;
 
 bool g_listening = false;
 
-bool m_pol = false; // true if polarimetric available, false if wide available
+bool g_pol = false; // true if polarimetric available, false if wide available
 
 struct threadData
 {
@@ -129,7 +129,7 @@ void *ImageThread(void *functionData)
     }
 
     g_listening = true;
-    if (m_pol)
+    if (g_pol)
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Polarimetric streaming.");
     else
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Allied Wide streaming.");
@@ -185,7 +185,7 @@ void *ImageThread(void *functionData)
             sensor_msgs::msg::Image img_msg; // message to be sent
 
             std_msgs::msg::Header header;
-            header.frame_id = m_pol ? "polarimetric" : "allied_wide";
+            header.frame_id = g_pol ? "polarimetric" : "allied_wide";
             // m_timestamp format: hhmmsszzz
             header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
@@ -234,7 +234,7 @@ namespace l3cam_ros2
 
         void declareServiceServers()
         {
-            std::string sensor = m_pol ? "polarimetric" : "wide";
+            std::string sensor = g_pol ? "polarimetric" : "wide";
             srv_sensor_disconnected_ = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
                 sensor + "_stream_disconnected", std::bind(&PolarimetricWideStream::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
         }
@@ -284,7 +284,7 @@ int main(int argc, char const *argv[])
         }
         
         if (i >= node->get_parameter("timeout_secs").as_int())
-            return L3CAM_ROS2_FIND_DEVICES_TIMEOUT_ERROR;
+            return 0;
         ++i;
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
@@ -307,12 +307,12 @@ int main(int argc, char const *argv[])
                 if (resultGetSensors.get()->sensors[i].sensor_type == sensor_pol && resultGetSensors.get()->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
-                    m_pol = true;
+                    g_pol = true;
                 }
                 else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_wide && resultGetSensors.get()->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
-                    m_pol = false;
+                    g_pol = false;
                 }
             }
         }
@@ -330,7 +330,7 @@ int main(int argc, char const *argv[])
 
     if (sensor_is_available)
     {
-        std::string sensor = (m_pol ? "Polarimetric" : "Allied Wide");
+        std::string sensor = (g_pol ? "Polarimetric" : "Allied Wide");
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), sensor << " camera available for streaming");
         node->declareServiceServers();
     }
@@ -339,7 +339,7 @@ int main(int argc, char const *argv[])
         return 0;
     }
 
-    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(m_pol ? "img_pol" : "img_wide", 10);
+    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(g_pol ? "img_pol" : "img_wide", 10);
 
     threadData *data = (struct threadData *)malloc(sizeof(struct threadData));
     data->publisher = node->publisher_;

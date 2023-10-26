@@ -87,7 +87,6 @@ namespace l3cam_ros2
 
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while finding devices in " << __func__ << ". Exiting.");
                 return L3CAM_ROS2_RCLCPP_INTERRUPTED;
             }
 
@@ -1018,9 +1017,9 @@ namespace l3cam_ros2
         int error = GET_NETWORK_CONFIGURATION(m_devices[0], &ip_address, &netmask, &gateway);
         if (!error)
         {
-            node->set_parameter(rclcpp::Parameter("ip_address", std::string(ip_address)));
-            node->set_parameter(rclcpp::Parameter("netmask", std::string(netmask)));
-            node->set_parameter(rclcpp::Parameter("gateway", std::string(gateway)));
+            this->set_parameter(rclcpp::Parameter("ip_address", std::string(ip_address)));
+            this->set_parameter(rclcpp::Parameter("netmask", std::string(netmask)));
+            this->set_parameter(rclcpp::Parameter("gateway", std::string(gateway)));
         }
     }
 
@@ -2688,8 +2687,10 @@ int main(int argc, char **argv)
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while initializing device: " << getErrorDescription(error));
         l3cam_ros2::node->disconnectAll(error);
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminating...");
         TERMINATE(l3cam_ros2::node->m_devices[0]);
         l3cam_ros2::node->m_status = LibL3CamStatus::terminated;
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
         return error;
     }
 
@@ -2722,6 +2723,7 @@ int main(int argc, char **argv)
     STOP_DEVICE(l3cam_ros2::node->m_devices[0]);
     TERMINATE(l3cam_ros2::node->m_devices[0]);
     l3cam_ros2::node->m_status = LibL3CamStatus::terminated;
+    l3cam_ros2::node = NULL; //! Without this, the node becomes zombie
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
 
     rclcpp::shutdown();

@@ -126,6 +126,11 @@ void *ImageThread(void *functionData)
         return 0;
     }
 
+    // 1 second timeout for socket
+    struct timeval read_timeout;
+    read_timeout.tv_sec = 1;
+    setsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
+
     g_listening = true;
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Thermal streaming.");
 
@@ -204,8 +209,11 @@ void *ImageThread(void *functionData)
                     m_is_reading_image = false;
             }
         }
+        // size_read == -1 --> timeout
     }
 
+    data->publisher = NULL; //! Without this, the node becomes zombie
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Exiting thermal streaming thread");
     free(buffer);
     free(m_image_buffer);
 
@@ -331,7 +339,7 @@ int main(int argc, char const *argv[])
     rclcpp::spin(node);
 
     g_listening = false;
-    usleep(500000);
+    usleep(2000000);
 
     rclcpp::shutdown();
     return 0;

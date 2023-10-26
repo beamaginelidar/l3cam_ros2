@@ -2690,6 +2690,7 @@ int main(int argc, char **argv)
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminating...");
         TERMINATE(l3cam_ros2::node->m_devices[0]);
         l3cam_ros2::node->m_status = LibL3CamStatus::terminated;
+        l3cam_ros2::node = NULL; //! Without this, the node becomes zombie
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
         return error;
     }
@@ -2710,6 +2711,7 @@ int main(int argc, char **argv)
             STOP_DEVICE(l3cam_ros2::node->m_devices[0]);
             TERMINATE(l3cam_ros2::node->m_devices[0]);
             l3cam_ros2::node->m_status = LibL3CamStatus::terminated;
+            l3cam_ros2::node = NULL; //! Without this, the node becomes zombie
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
             return error;
         }

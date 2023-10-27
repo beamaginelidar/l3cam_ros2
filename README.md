@@ -186,8 +186,6 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 
 ### Initialization parameters
 
-<!-- TODO: new params -->
-
 | Parameter           | Type   | Default     |
 | ------------------- | ------ | ----------- |
 | stream              | bool   | true        |

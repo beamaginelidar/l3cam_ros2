@@ -190,7 +190,7 @@ void *ImageThread(void *functionData)
             PC2_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                        (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
                                        (uint32_t)((m_timestamp / 1000) % 100);         // ss
-            PC2_msg.header.stamp.nanosec = m_timestamp % 1000;                         // zzz
+            PC2_msg.header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
 
             data->publisher->publish(PC2_msg);
 
@@ -287,7 +287,7 @@ int main(int argc, char const *argv[])
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             return 0;
         }
-        
+
         if (i >= node->get_parameter("timeout_secs").as_int())
             return 0;
         ++i;

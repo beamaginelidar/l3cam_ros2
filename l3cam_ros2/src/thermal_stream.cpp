@@ -190,7 +190,7 @@ void *ImageThread(void *functionData)
             header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
                                (uint32_t)((m_timestamp / 1000) % 100);         // ss
-            header.stamp.nanosec = m_timestamp % 1000;                         // zzz
+            header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
 
             img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::BGR8, img_data);
             img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
@@ -281,7 +281,7 @@ int main(int argc, char const *argv[])
             RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
             return 0;
         }
-        
+
         if (i >= node->get_parameter("timeout_secs").as_int())
             return 0;
         ++i;

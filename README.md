@@ -184,6 +184,25 @@ ros2 param describe <NODE> <PARAM>
 
 When using `rqt_reconfigure`, if the parameter has a description and you hover over the parameter name, the description will show too. With `rqt_reconfigure` for ROS2 it is not possible to have dropdown menus for this kind of parameters anymore, so be careful with this kind of parameters.
 
+### Initialization parameters
+
+<!-- TODO: new params -->
+
+| Parameter           | Type   | Default     |
+| ------------------- | ------ | ----------- |
+| stream              | bool   | true        |
+| configure           | bool   | true        |
+| rviz2               | bool   | true        |
+| rqt_reconfigure     | bool   | true        |
+| namespace           | string | /l3cam      |
+| timeout_secs        | int    | 60          |
+| lidar_topic         | string | PC2_lidar   |
+| polarimetric_topic  | string | img_pol     |
+| rgb_topic           | string | img_rgb     |
+| thermal_topic       | string | img_thermal |
+| allied_wide_topic   | string | img_wide    |
+| allied_narrow_topic | string | img_narrow  |
+
 ### Network parameters
 
 | Parameter        | Type   | Default       |
@@ -434,6 +453,16 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `get_allied_camera_intensity_controller_region`        | int allied_type                                                                         | int error, int mode                                                                                                                                                                            |
 | `get_allied_camera_intensity_controller_target`        | int allied_type                                                                         | int error, float intensity_controller_target                                                                                                                                                   |
 | `get_allied_camera_max_driver_buffers_count`           | int allied_type                                                                         | int error, int max_driver_buffers_count                                                                                                                                                        |
+| `pointcloud_stream_disconnected`                       | int code                                                                                | -                                                                                                                                                                                              |
+| `pointcloud_configuration_disconnected`                | int code                                                                                | -                                                                                                                                                                                              |
+| `polarimetric_wide_stream_disconnected`                | int code                                                                                | -                                                                                                                                                                                              |
+| `polarimetric_configuration_disconnected`              | int code                                                                                | -                                                                                                                                                                                              |
+| `rgb_narrow_stream_disconnected`                       | int code                                                                                | -                                                                                                                                                                                              |
+| `rgb_configuration_disconnected`                       | int code                                                                                | -                                                                                                                                                                                              |
+| `thermal_stream_disconnected`                          | int code                                                                                | -                                                                                                                                                                                              |
+| `thermal_configuration_disconnected`                   | int code                                                                                | -                                                                                                                                                                                              |
+| `allied_wide_configuration_disconnected`               | int code                                                                                | -                                                                                                                                                                                              |
+| `allied_narrow_configuration_disconnected`             | int code                                                                                | -                                                                                                                                                                                              |
 
 **Note:**
 

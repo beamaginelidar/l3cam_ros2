@@ -211,10 +211,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestBrightness = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness::Request>();
@@ -230,10 +230,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestBlackLevel = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel::Request>();
@@ -249,10 +249,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestAutoGain = std::make_shared<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain::Request>();
@@ -268,10 +268,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestAutoGainRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoGainRange::Request>();
@@ -288,10 +288,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestGain = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraGain::Request>();
@@ -307,10 +307,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestAutoExposureTime = std::make_shared<l3cam_interfaces::srv::EnablePolarimetricCameraAutoExposureTime::Request>();
@@ -326,10 +326,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting aExposureTime...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting aExposureTime...");
             }
 
             auto requestAutoExposureTimeRange = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraAutoExposureTimeRange::Request>();
@@ -346,10 +346,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestExposureTime = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraExposureTime::Request>();
@@ -365,10 +365,10 @@ namespace l3cam_ros2
             {
                 if (!rclcpp::ok())
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                     break;
                 }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
             }
 
             auto requestStreamingProtocol = std::make_shared<l3cam_interfaces::srv::ChangeStreamingProtocol::Request>();
@@ -394,14 +394,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_brightness", polarimetric_camera_brightness_));
                 }
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_brightness");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_brightness");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_brightness", polarimetric_camera_brightness_));
             }
@@ -421,14 +421,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_black_level", polarimetric_camera_black_level_));
                 }
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_black_level");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_black_level");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_black_level", polarimetric_camera_black_level_));
             }
@@ -448,14 +448,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain", polarimetric_camera_auto_gain_));
                 }
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_gain");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_auto_gain");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain", polarimetric_camera_auto_gain_));
             }
@@ -476,7 +476,7 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_minimum", polarimetric_camera_auto_gain_range_minimum_));
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_maximum", polarimetric_camera_auto_gain_range_maximum_));
@@ -485,7 +485,7 @@ namespace l3cam_ros2
             else
             {
                 // Service could not be called, reset parameters to value before change
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_gain_range");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_auto_gain_range");
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_minimum", polarimetric_camera_auto_gain_range_minimum_));
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_gain_range_maximum", polarimetric_camera_auto_gain_range_minimum_));
             }
@@ -505,14 +505,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_gain", polarimetric_camera_gain_));
                 }
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_gain");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_gain");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_gain", polarimetric_camera_gain_));
             }
@@ -532,14 +532,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time", polarimetric_camera_auto_exposure_time_));
                 }
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_exposure_time");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_auto_exposure_time");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time", polarimetric_camera_auto_exposure_time_));
             }
@@ -560,7 +560,7 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_minimum", polarimetric_camera_auto_exposure_time_range_minimum_));
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_maximum", polarimetric_camera_auto_exposure_time_range_maximum_));
@@ -568,7 +568,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_auto_exposure_time_range");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_auto_exposure_time_range");
                 // Service could not be called, reset parameters to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_minimum", polarimetric_camera_auto_exposure_time_range_minimum_));
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_auto_exposure_time_range_maximum", polarimetric_camera_auto_exposure_time_range_minimum_));
@@ -589,14 +589,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_camera_exposure_time", polarimetric_camera_exposure_time_));
                 }
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_polarimetric_camera_exposure_time");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_exposure_time");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_camera_exposure_time", polarimetric_camera_exposure_time_));
             }
@@ -616,14 +616,14 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getBeamErrorDescription(error));
                     // Parameter could not be changed, reset parameter to value before change
                     this->set_parameter(rclcpp::Parameter("polarimetric_streaming_protocol", streaming_protocol_));
                 }
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Failed to call service change_streaming_protocol");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_streaming_protocol");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("polarimetric_streaming_protocol", streaming_protocol_));
             }
@@ -635,11 +635,11 @@ namespace l3cam_ros2
             ROS2_BMG_UNUSED(res);
             if (req->code == 0)
             {
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting cleanly.");
+                RCLCPP_INFO(this->get_logger(), "Exiting cleanly.");
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
             }
 
             rclcpp::shutdown();

@@ -100,7 +100,7 @@ namespace l3cam_ros2
         if (error)
             return error;
         m_status = LibL3CamStatus::connected;
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Device found " << std::string(m_devices[0].ip_address)
+        RCLCPP_INFO_STREAM(this->get_logger(), "Device found " << std::string(m_devices[0].ip_address)
                                                                          << ", model " << (int)m_devices[0].model
                                                                          << ", serial number " << std::string(m_devices[0].serial_number)
                                                                          << ", app version " << std::string(m_devices[0].app_version));
@@ -109,7 +109,7 @@ namespace l3cam_ros2
         error = GET_DEVICE_STATUS(m_devices[0], &status);
         if (error)
             return error;
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Device status " << status);
+        RCLCPP_INFO_STREAM(this->get_logger(), "Device status " << status);
 
         int num_sensors = 0;
         error = GET_SENSORS_AVAILABLE(m_devices[0], m_av_sensors, &num_sensors);
@@ -141,7 +141,7 @@ namespace l3cam_ros2
             }
         }
 
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), num_sensors << ((num_sensors == 1) ? " sensor" : " sensors") << " available");
+        RCLCPP_INFO_STREAM(this->get_logger(), num_sensors << ((num_sensors == 1) ? " sensor" : " sensors") << " available");
 
         initializeServices();
 
@@ -159,7 +159,7 @@ namespace l3cam_ros2
         }
 
         m_status = LibL3CamStatus::started;
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Device started");
+        RCLCPP_INFO(this->get_logger(), "Device started");
 
         loadDefaultParams();
 
@@ -168,7 +168,7 @@ namespace l3cam_ros2
             return error;
 
         m_status = LibL3CamStatus::streaming;
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Device streaming ready\n");
+        RCLCPP_INFO(this->get_logger(), "Device streaming ready\n");
 
         return L3CAM_OK;
     }
@@ -682,7 +682,7 @@ namespace l3cam_ros2
             initializeAlliedNarrowServices();
         }
 
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Services ready");
+        RCLCPP_INFO(this->get_logger(), "Services ready");
     }
 
     void L3Cam::initializePointcloudServices()
@@ -929,7 +929,7 @@ namespace l3cam_ros2
     {
         if (error != L3CAM_OK)
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"),
+            RCLCPP_ERROR_STREAM(this->get_logger(),
                                 "ERROR " << error << " while setting default parameter " << param << ": "
                                          << getErrorDescription(error));
         }
@@ -947,7 +947,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: LiDAR not available.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR: LiDAR not available.");
             }
         }
         if (m_polarimetric_sensor != NULL) // if polarimetric should be available in the L3Cam
@@ -958,7 +958,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Polarimetric camera not available.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR: Polarimetric camera not available.");
             }
         }
         if (m_rgb_sensor != NULL) // if rgb should be available in the L3Cam
@@ -969,7 +969,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: RGB camera not available.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR: RGB camera not available.");
             }
         }
         if (m_thermal_sensor != NULL) // if thermal should be available in the L3Cam
@@ -980,7 +980,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Thermal camera not available.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR: Thermal camera not available.");
             }
         }
         if (m_allied_wide_sensor != NULL) // if allied wide should be available in the L3Cam
@@ -991,7 +991,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Allied Wide camera not available.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR: Allied Wide camera not available.");
             }
         }
         if (m_allied_narrow_sensor != NULL) // if allied narrow should be available in the L3Cam
@@ -1002,11 +1002,11 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR: Allied Narrow camera not available.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR: Allied Narrow camera not available.");
             }
         }
 
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Default parameters loaded");
+        RCLCPP_INFO(this->get_logger(), "Default parameters loaded");
     }
 
     void L3Cam::loadNetworkDefaultParams()
@@ -1611,7 +1611,7 @@ namespace l3cam_ros2
         res->error = error;
         if (error != L3CAM_OK)
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error " << error << " in temperatures error: " << getErrorDescription(error));
+            RCLCPP_ERROR_STREAM(this->get_logger(), "Error " << error << " in temperatures error: " << getErrorDescription(error));
             res->bcpu_temp = 0;
             res->mcpu_temp = 0;
             res->gpu_temp = 0;
@@ -2434,10 +2434,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestNetworkDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2453,10 +2453,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestPointCloudStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2469,10 +2469,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestPointCloudConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2488,10 +2488,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestPolWideStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2504,10 +2504,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestPolConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2523,10 +2523,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestRgbNarrowStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2539,10 +2539,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestRgbConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2558,10 +2558,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestPolWideStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2574,10 +2574,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestWideConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2593,10 +2593,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestRgbStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2609,10 +2609,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestNarrowConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2628,10 +2628,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestThermalStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2644,10 +2644,10 @@ namespace l3cam_ros2
         {
             if (!rclcpp::ok())
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
                 break;
             }
-            // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
         auto requestThermalConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
@@ -2658,7 +2658,7 @@ namespace l3cam_ros2
 
     void L3Cam::errorNotification(const int32_t *error)
     {
-        // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Error notification received");
+        // RCLCPP_INFO(this->get_logger(), "Error notification received");
         int errort = *error;
 
         switch (errort)

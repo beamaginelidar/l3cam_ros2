@@ -256,11 +256,11 @@ namespace l3cam_ros2
 
             if (req->code == 0)
             {
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting cleanly.");
+                RCLCPP_INFO(this->get_logger(), "Exiting cleanly.");
             }
             else
             {
-                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
             }
 
             rclcpp::shutdown();

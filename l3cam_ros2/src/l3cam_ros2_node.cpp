@@ -1742,7 +1742,6 @@ namespace l3cam_ros2
                                           std::shared_ptr<l3cam_interfaces::srv::ChangeRgbCameraBrightness::Response> res)
     {
         res->error = CHANGE_RGB_CAMERA_BRIGHTNESS(m_devices[0], req->brightness);
-        rgbDisconnected(0);
     }
 
     void L3Cam::changeRgbCameraContrast(const std::shared_ptr<l3cam_interfaces::srv::ChangeRgbCameraContrast::Request> req,

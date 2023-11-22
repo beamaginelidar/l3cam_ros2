@@ -483,9 +483,9 @@ All sensors stream their data to each topic:
 
 | Sensor        | Topic               | Data type                  |
 | ------------- | ------------------- | -------------------------- |
-| Pointcloud    | `/PC2_lidar`        | `sensor_msgs::PointCloud2` |
-| Polarimetric  | `/img_polarimetric` | `sensor_msgs::Image`       |
-| RGB           | `/img_rgb`          | `sensor_msgs::Image`       |
-| Thermal       | `/img_thermal`      | `sensor_msgs::Image`       |
-| Allied Wide   | `/img_wide`         | `sensor_msgs::Image`       |
-| Allied Narrow | `/img_narrow`       | `sensor_msgs::Image`       |
+| Pointcloud    | `/L3Cam/PC2_lidar`        | `sensor_msgs::PointCloud2` |
+| Polarimetric  | `/L3Cam/img_polarimetric` | `sensor_msgs::Image`       |
+| RGB           | `/L3Cam/img_rgb`          | `sensor_msgs::Image`       |
+| Thermal       | `/L3Cam/img_thermal`      | `sensor_msgs::Image`       |
+| Allied Wide   | `/L3Cam/img_wide`         | `sensor_msgs::Image`       |
+| Allied Narrow | `/L3Cam/img_narrow`       | `sensor_msgs::Image`       |

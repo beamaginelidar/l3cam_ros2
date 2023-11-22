@@ -175,7 +175,15 @@ void *ImageThread(void *functionData)
             bytes_count = 0;
             memcpy(image_pointer, m_image_buffer, m_image_data_size);
 
-            cv::Mat img_data(m_image_height, m_image_width, CV_8UC3, image_pointer);
+            cv::Mat img_data;
+            if (m_image_channels == 1)
+            {
+                img_data = cv::Mat(m_image_height, m_image_width, CV_8UC1, image_pointer);
+            }
+            else if (m_image_channels == 3)
+            {
+                img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);
+            }
 
             cv_bridge::CvImage img_bridge;
             sensor_msgs::msg::Image img_msg; // message to be sent
@@ -188,7 +196,7 @@ void *ImageThread(void *functionData)
                                (uint32_t)((m_timestamp / 1000) % 100);         // ss
             header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
 
-            img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::BGR8, img_data);
+            img_bridge = cv_bridge::CvImage(header, m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8, img_data);
             img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
 
             data->publisher->publish(img_msg);

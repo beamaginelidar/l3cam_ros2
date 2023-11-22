@@ -174,7 +174,6 @@ void *ImageThread(void *functionData)
             if (m_image_channels == 1)
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC1, image_pointer);
-                cv::cvtColor(img_data, img_data, cv::COLOR_GRAY2BGR);
             }
             else if (m_image_channels == 3)
             {
@@ -192,7 +191,7 @@ void *ImageThread(void *functionData)
                                (uint32_t)((m_timestamp / 1000) % 100);         // ss
             header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
 
-            img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::BGR8, img_data);
+            img_bridge = cv_bridge::CvImage(header, m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8, img_data);
             img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
 
             data->publisher->publish(img_msg);

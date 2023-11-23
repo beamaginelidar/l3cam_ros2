@@ -150,7 +150,7 @@ namespace l3cam_ros2
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing network configuration in " << __func__ << ": " << getBeamErrorDescription(error));
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing network configuration in " << __func__ << ": " << getErrorDescription(error));
                     // Parameters could not be changed, reset parameters to value before change
                     this->set_parameter(rclcpp::Parameter("ip_address", ip_address_));
                     this->set_parameter(rclcpp::Parameter("netmask", netmask_));
@@ -180,7 +180,7 @@ namespace l3cam_ros2
             }
             else
             {
-                RCLCPP_ERROR_STREAM(this->get_logger(), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Exiting. Sensor got disconnected with error " << req->code << ": " << getErrorDescription(req->code));
             }
 
             rclcpp::shutdown();
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting network configuration in " << __func__ << ": " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while getting network configuration in " << __func__ << ": " << getErrorDescription(error));
             return error;
         }
     }

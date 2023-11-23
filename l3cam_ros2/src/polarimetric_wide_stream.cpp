@@ -25,9 +25,9 @@
     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <iostream>
+#include "sensor_stream.hpp"
+
 #include <chrono>
-#include "rclcpp/rclcpp.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -53,13 +53,6 @@
 #include <libL3Cam.h>
 #include <beamagine.h>
 #include <beamErrors.h>
-
-#include "l3cam_interfaces/msg/sensor.hpp"
-#include "l3cam_interfaces/srv/get_sensors_available.hpp"
-
-#include "l3cam_interfaces/srv/sensor_disconnected.hpp"
-
-#include "l3cam_ros2_utils.hpp"
 
 using namespace std::chrono_literals;
 
@@ -229,46 +222,19 @@ void *ImageThread(void *functionData)
 
 namespace l3cam_ros2
 {
-    class PolarimetricWideStream : public rclcpp::Node
+    class PolarimetricWideStream : public SensorStream
     {
     public:
-        explicit PolarimetricWideStream() : Node("polarimetric_wide_stream")
+        explicit PolarimetricWideStream() : SensorStream("polarimetric_wide_stream")
         {
-            client_get_sensors_ = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
-
-            this->declare_parameter("timeout_secs", 60);
-        }
-
-        void declareServiceServers()
-        {
-            std::string sensor = g_pol ? "polarimetric" : "wide";
-            srv_sensor_disconnected_ = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
-                sensor + "_stream_disconnected", std::bind(&PolarimetricWideStream::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
         }
 
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
-        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr client_get_sensors_;
 
     private:
-        void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
-                                        std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
-        {
-            ROS2_BMG_UNUSED(res);
+        void stopListening(){
             g_listening = false;
-
-            if (req->code == 0)
-            {
-                RCLCPP_INFO(this->get_logger(), "Exiting cleanly.");
-            }
-            else
-            {
-                RCLCPP_ERROR_STREAM(this->get_logger(), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
-            }
-
-            rclcpp::shutdown();
         }
-
-        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
     }; // class PolarimetricWideStream
 
@@ -325,7 +291,7 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getErrorDescription(error));
             return error;
         }
     }
@@ -339,7 +305,7 @@ int main(int argc, char const *argv[])
     {
         std::string sensor = (g_pol ? "Polarimetric" : "Allied Wide");
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), sensor << " camera available for streaming");
-        node->declareServiceServers();
+        node->declareServiceServers(g_pol ? "polarimetric" : "wide");
     }
     else
     {

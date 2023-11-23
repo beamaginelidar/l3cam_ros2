@@ -55,19 +55,19 @@ add_executable(allied_narrow_configuration src/allied_narrow_configuration.cpp)
 ament_target_dependencies(allied_narrow_configuration "rclcpp" "l3cam_interfaces")
 target_link_libraries(allied_narrow_configuration ${l3cam_LIBRARIES})
 
-add_executable(pointcloud_stream src/pointcloud_stream.cpp)
+add_executable(pointcloud_stream src/pointcloud_stream.cpp src/sensor_stream.cpp)
 ament_target_dependencies(pointcloud_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
 target_link_libraries(pointcloud_stream ${l3cam_LIBRARIES})
 
-add_executable(polarimetric_wide_stream src/polarimetric_wide_stream.cpp)
+add_executable(polarimetric_wide_stream src/polarimetric_wide_stream.cpp src/sensor_stream.cpp)
 ament_target_dependencies(polarimetric_wide_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
 target_link_libraries(polarimetric_wide_stream ${l3cam_LIBRARIES})
 
-add_executable(rgb_narrow_stream src/rgb_narrow_stream.cpp)
+add_executable(rgb_narrow_stream src/rgb_narrow_stream.cpp src/sensor_stream.cpp)
 ament_target_dependencies(rgb_narrow_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
 target_link_libraries(rgb_narrow_stream ${l3cam_LIBRARIES})
 
-add_executable(thermal_stream src/thermal_stream.cpp)
+add_executable(thermal_stream src/thermal_stream.cpp src/sensor_stream.cpp)
 ament_target_dependencies(thermal_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
 target_link_libraries(thermal_stream ${l3cam_LIBRARIES})
 

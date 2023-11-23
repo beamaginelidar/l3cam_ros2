@@ -25,9 +25,7 @@
     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <iostream>
 #include <chrono>
-#include "rclcpp/rclcpp.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -54,12 +52,7 @@
 #include <beamagine.h>
 #include <beamErrors.h>
 
-#include "l3cam_interfaces/msg/sensor.hpp"
-#include "l3cam_interfaces/srv/get_sensors_available.hpp"
-
-#include "l3cam_interfaces/srv/sensor_disconnected.hpp"
-
-#include "l3cam_ros2_utils.hpp"
+#include "sensor_stream.hpp"
 
 using namespace std::chrono_literals;
 
@@ -224,42 +217,20 @@ void *ImageThread(void *functionData)
 
 namespace l3cam_ros2
 {
-    class ThermalStream : public rclcpp::Node
+    class ThermalStream : public SensorStream
     {
     public:
-        explicit ThermalStream() : Node("thermal_stream")
+        explicit ThermalStream() : SensorStream("thermal_stream")
         {
-            client_get_sensors_ = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
-
-            srv_sensor_disconnected_ = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
-                "thermal_stream_disconnected", std::bind(&ThermalStream::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
-
-            this->declare_parameter("timeout_secs", 60);
+            declareServiceServers("thermal");
         }
 
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
-        rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr client_get_sensors_;
 
     private:
-        void sensorDisconnectedCallback(const std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Request> req,
-                                        std::shared_ptr<l3cam_interfaces::srv::SensorDisconnected::Response> res)
-        {
-            ROS2_BMG_UNUSED(res);
+        void stopListening(){
             g_listening = false;
-
-            if (req->code == 0)
-            {
-                RCLCPP_INFO(this->get_logger(), "Exiting cleanly.");
-            }
-            else
-            {
-                RCLCPP_ERROR_STREAM(this->get_logger(), "Exiting. Sensor got disconnected with error " << req->code << ": " << getBeamErrorDescription(req->code));
-            }
-
-            rclcpp::shutdown();
         }
-
-        rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
     }; // class ThermalStream
 
@@ -310,7 +281,7 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getBeamErrorDescription(error));
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getErrorDescription(error));
             return error;
         }
     }

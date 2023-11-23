@@ -168,7 +168,7 @@ namespace l3cam_ros2
         void loadAlliedWideDefaultParams();
         void loadAlliedNarrowDefaultParams();
 
-        void LibL3camStatus(const std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Request> req, std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Response> res);
+        void libL3camStatus(const std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Request> req, std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Response> res);
         void getVersion(const std::shared_ptr<l3cam_interfaces::srv::GetVersion::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetVersion::Response> res);
         void initialize(const std::shared_ptr<l3cam_interfaces::srv::Initialize::Request> req, std::shared_ptr<l3cam_interfaces::srv::Initialize::Response> res);
         void terminate(const std::shared_ptr<l3cam_interfaces::srv::Terminate::Request> req, std::shared_ptr<l3cam_interfaces::srv::Terminate::Response> res);

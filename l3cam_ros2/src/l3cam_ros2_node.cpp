@@ -56,7 +56,7 @@ namespace l3cam_ros2
         m_status = LibL3CamStatus::undefined;
         srv_lib_l3_cam_status_ = this->create_service<l3cam_interfaces::srv::LibL3camStatus>(
             "libl3cam_status",
-            std::bind(&L3Cam::LibL3camStatus, this, std::placeholders::_1, std::placeholders::_2));
+            std::bind(&L3Cam::libL3camStatus, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     int L3Cam::initializeDevice()
@@ -1359,7 +1359,7 @@ namespace l3cam_ros2
     }
 
     // Service callbacks
-    void L3Cam::LibL3camStatus(const std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Request> req,
+    void L3Cam::libL3camStatus(const std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Request> req,
                                std::shared_ptr<l3cam_interfaces::srv::LibL3camStatus::Response> res)
     {
         ROS2_BMG_UNUSED(req);

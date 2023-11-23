@@ -40,12 +40,12 @@ typedef enum LibL3CamStatus{
     terminated // after TERMINATE
 }LibL3CamStatus;
 
-const char *bmg_ros2_error_find_devices_timeout = "Timeout error while finding devices\0";
-const char *bmg_ros2_error_failed_to_call_service = "Failed to call service\0";
-const char *bmg_ros2_error_interrupted = "RCLCPP interrupted\0";
-const char *bmg_ros2_error_undefined_error =  "UNDEFINED L3CAM ERROR\0";
+static const char *bmg_ros2_error_find_devices_timeout = "Timeout error while finding devices\0";
+static const char *bmg_ros2_error_failed_to_call_service = "Failed to call service\0";
+static const char *bmg_ros2_error_interrupted = "RCLCPP interrupted\0";
+static const char *bmg_ros2_error_undefined_error =  "UNDEFINED L3CAM ERROR\0";
 
-const char* getBeamRos2ErrorDescription(int error_code)
+static const char* getBeamRos2ErrorDescription(int error_code)
 {
     switch(error_code)
     {
@@ -63,7 +63,7 @@ const char* getBeamRos2ErrorDescription(int error_code)
     }
 }
 
-std::string getErrorDescription(int error_code)
+static std::string getErrorDescription(int error_code)
 {
     if (error_code < 0)
     {

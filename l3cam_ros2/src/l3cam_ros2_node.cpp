@@ -26,7 +26,6 @@
 */
 
 #include "l3cam_ros2_node.hpp"
-#include "l3cam_ros2_errors.hpp"
 
 #include <libL3Cam.h>
 #include <libL3Cam_allied.h>

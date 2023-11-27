@@ -308,7 +308,7 @@ int main(int argc, char const *argv[])
     {
         std::string sensor = (g_rgb ? "RGB" : "Allied Narrow");
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), sensor << " camera available for streaming");
-        node->declareServiceServers(g_rgb ? "rgb" : "narrow");
+        node->declareServiceServers(sensor);
     }
     else
     {

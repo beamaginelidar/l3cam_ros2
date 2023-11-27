@@ -309,7 +309,7 @@ int main(int argc, char const *argv[])
     {
         std::string sensor = (g_pol ? "Polarimetric" : "Allied Wide");
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), sensor << " camera available for streaming");
-        node->declareServiceServers(g_pol ? "polarimetric" : "wide");
+        node->declareServiceServers(sensor);
     }
     else
     {

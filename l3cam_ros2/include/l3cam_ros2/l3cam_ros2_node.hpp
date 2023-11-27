@@ -142,7 +142,7 @@ namespace l3cam_ros2
     private:
         void declareParameters();
         void declareNetworkParameters();
-        void declarePointcloudParameters();
+        void declareLidarParameters();
         void declarePolarimetricParameters();
         void declareRgbParameters();
         void declareThermalParameters();
@@ -150,7 +150,7 @@ namespace l3cam_ros2
         void declareAlliedNarrowParameters();
 
         void initializeServices();
-        void initializePointcloudServices();
+        void initializeLidarServices();
         void initializePolarimetricServices();
         void initializeRgbServices();
         void initializeThermalServices();
@@ -161,7 +161,7 @@ namespace l3cam_ros2
 
         void loadDefaultParams();
         void loadNetworkDefaultParams();
-        void loadPointcloudDefaultParams();
+        void loadLidarDefaultParams();
         void loadPolarimetricDefaultParams();
         void loadRgbDefaultParams();
         void loadThermalDefaultParams();
@@ -257,13 +257,13 @@ namespace l3cam_ros2
         void lidarDisconnected(int code);
         void polDisconnected(int code);
         void rgbDisconnected(int code);
+        void thermalDisconnected(int code);
         void alliedwideDisconnected(int code);
         void alliedNarrowDisconnect(int code);
-        void thermalDisconnected(int code);
 
         static void errorNotification(const int32_t *error);
 
-        rclcpp::Service<l3cam_interfaces::srv::LibL3camStatus>::SharedPtr srv_lib_l3_cam_status_;
+        rclcpp::Service<l3cam_interfaces::srv::LibL3camStatus>::SharedPtr srv_libl3cam_status_;
         rclcpp::Service<l3cam_interfaces::srv::GetVersion>::SharedPtr srv_get_version_;
         rclcpp::Service<l3cam_interfaces::srv::Initialize>::SharedPtr srv_initialize_;
         rclcpp::Service<l3cam_interfaces::srv::Terminate>::SharedPtr srv_terminate_;
@@ -354,8 +354,8 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::GetAlliedCameraMaxDriverBuffersCount>::SharedPtr srv_get_allied_camera_max_driver_buffers_count_;
 
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_network_disconnected_;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_point_cloud_stream_disconnected_;
-        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_point_cloud_configuration_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_lidar_stream_disconnected_;
+        rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_lidar_configuration_disconnected_;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_pol_wide_stream_disconnected_;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_pol_configuration_disconnected_;
         rclcpp::Client<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr client_rgb_narrow_stream_disconnected_;

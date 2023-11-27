@@ -21,7 +21,7 @@
         <arg name="local_address" default="" />
         <arg name="device_address" default="" />
 
-        <!-- Pointcloud configuration -->
+        <!-- Lidar configuration -->
         <arg name="pointcloud_color" default="0" /> <!-- see pointCloudColor -->
         <arg name="pointcloud_color_range_minimum" default="0" /> <!-- 0 - 400000 -->
         <arg name="pointcloud_color_range_maximum" default="400000" /> <!-- 0 - 400000 -->

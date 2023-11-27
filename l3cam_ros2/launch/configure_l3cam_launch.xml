@@ -2,7 +2,7 @@
     <arg name="network_conf" default="true" />
     <arg name="timeout_secs" default="60" />
 
-    <!-- Pointcloud configuration -->
+    <!-- Lidar configuration -->
     <arg name="pointcloud_color" default="0" />
     <arg name="pointcloud_color_range_minimum" default="0" />
     <arg name="pointcloud_color_range_maximum" default="400000" />
@@ -95,7 +95,7 @@
         <param name="timeout_secs" value="$(var timeout_secs)" />
     </node>
     
-    <node pkg="l3cam_ros2" exec="pointcloud_configuration" name="pointcloud_configuration">
+    <node pkg="l3cam_ros2" exec="lidar_configuration" name="lidar_configuration">
         <param name="timeout_secs" value="$(var timeout_secs)" />
         <param name="pointcloud_color" value="$(var pointcloud_color)" type="int" />
         <param name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" type="int" />

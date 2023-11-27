@@ -40,10 +40,10 @@
 
 using namespace std::chrono_literals;
 
+std::shared_ptr<l3cam_ros2::L3Cam> node;
+
 namespace l3cam_ros2
 {
-    std::shared_ptr<L3Cam> node;
-
     L3Cam::L3Cam() : Node("l3cam_ros2_node")
     {
         // Register callback for sensor disconnection errors
@@ -53,7 +53,7 @@ namespace l3cam_ros2
 
         // L3Cam node status
         m_status = LibL3CamStatus::undefined;
-        srv_lib_l3_cam_status_ = this->create_service<l3cam_interfaces::srv::LibL3camStatus>(
+        srv_libl3cam_status_ = this->create_service<l3cam_interfaces::srv::LibL3camStatus>(
             "libl3cam_status",
             std::bind(&L3Cam::libL3camStatus, this, std::placeholders::_1, std::placeholders::_2));
     }
@@ -100,9 +100,9 @@ namespace l3cam_ros2
             return error;
         m_status = LibL3CamStatus::connected;
         RCLCPP_INFO_STREAM(this->get_logger(), "Device found " << std::string(m_devices[0].ip_address)
-                                                                         << ", model " << (int)m_devices[0].model
-                                                                         << ", serial number " << std::string(m_devices[0].serial_number)
-                                                                         << ", app version " << std::string(m_devices[0].app_version));
+                                                               << ", model " << (int)m_devices[0].model
+                                                               << ", serial number " << std::string(m_devices[0].serial_number)
+                                                               << ", app version " << std::string(m_devices[0].app_version));
 
         int status = 0;
         error = GET_DEVICE_STATUS(m_devices[0], &status);
@@ -206,7 +206,7 @@ namespace l3cam_ros2
     {
         this->declare_parameter("timeout_secs", 60);
         declareNetworkParameters();
-        declarePointcloudParameters();
+        declareLidarParameters();
         declarePolarimetricParameters();
         declareRgbParameters();
         declareThermalParameters();
@@ -224,7 +224,7 @@ namespace l3cam_ros2
         this->declare_parameter("device_address", "");
     }
 
-    void L3Cam::declarePointcloudParameters()
+    void L3Cam::declareLidarParameters()
     {
         rcl_interfaces::msg::ParameterDescriptor descriptor;
         descriptor.read_only = true;
@@ -653,7 +653,7 @@ namespace l3cam_ros2
 
         if (m_lidar_sensor != NULL && m_lidar_sensor->sensor_available) // if lidar is available
         {
-            initializePointcloudServices();
+            initializeLidarServices();
         }
 
         if (m_polarimetric_sensor != NULL && m_polarimetric_sensor->sensor_available) // if polarimetric is available
@@ -684,7 +684,7 @@ namespace l3cam_ros2
         RCLCPP_INFO(this->get_logger(), "Services ready");
     }
 
-    void L3Cam::initializePointcloudServices()
+    void L3Cam::initializeLidarServices()
     {
         srv_change_pointcloud_color_ = this->create_service<l3cam_interfaces::srv::ChangePointcloudColor>(
             "change_pointcloud_color",
@@ -702,8 +702,8 @@ namespace l3cam_ros2
             "change_bias_value",
             std::bind(&L3Cam::changeBiasValue, this, std::placeholders::_1, std::placeholders::_2));
 
-        client_point_cloud_stream_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_stream_disconnected");
-        client_point_cloud_configuration_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("pointcloud_configuration_disconnected");
+        client_lidar_stream_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("lidar_stream_disconnected");
+        client_lidar_configuration_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("lidar_configuration_disconnected");
     }
 
     void L3Cam::initializePolarimetricServices()
@@ -942,7 +942,7 @@ namespace l3cam_ros2
         {
             if (m_lidar_sensor->sensor_available) // if lidar is available
             {
-                loadPointcloudDefaultParams();
+                loadLidarDefaultParams();
             }
             else
             {
@@ -1022,7 +1022,7 @@ namespace l3cam_ros2
         }
     }
 
-    void L3Cam::loadPointcloudDefaultParams()
+    void L3Cam::loadLidarDefaultParams()
     {
         printDefaultError(CHANGE_POINT_CLOUD_COLOR(m_devices[0],
                                                    this->get_parameter("pointcloud_color").as_int()),
@@ -2447,7 +2447,7 @@ namespace l3cam_ros2
     void L3Cam::lidarDisconnected(int code)
     {
         // Stream
-        while (!client_point_cloud_stream_disconnected_->wait_for_service(1s))
+        while (!client_lidar_stream_disconnected_->wait_for_service(1s))
         {
             if (!rclcpp::ok())
             {
@@ -2457,13 +2457,13 @@ namespace l3cam_ros2
             // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
-        auto requestPointCloudStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
-        requestPointCloudStreamDisconnected->code = code;
+        auto requestLidarStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
+        requestLidarStreamDisconnected->code = code;
 
-        auto resultPointCloudStreamDisconnected = client_point_cloud_stream_disconnected_->async_send_request(requestPointCloudStreamDisconnected);
+        auto resultLidarStreamDisconnected = client_lidar_stream_disconnected_->async_send_request(requestLidarStreamDisconnected);
 
         // Configuration
-        while (!client_point_cloud_configuration_disconnected_->wait_for_service(1s))
+        while (!client_lidar_configuration_disconnected_->wait_for_service(1s))
         {
             if (!rclcpp::ok())
             {
@@ -2473,10 +2473,10 @@ namespace l3cam_ros2
             // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
         }
 
-        auto requestPointCloudConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
-        requestPointCloudConfigurationDisconnected->code = code;
+        auto requestLidarConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
+        requestLidarConfigurationDisconnected->code = code;
 
-        auto resultPointCloudConfigurationDisconnected = client_point_cloud_configuration_disconnected_->async_send_request(requestPointCloudConfigurationDisconnected);
+        auto resultLidarConfigurationDisconnected = client_lidar_configuration_disconnected_->async_send_request(requestLidarConfigurationDisconnected);
     }
 
     void L3Cam::polDisconnected(int code)
@@ -2549,6 +2549,41 @@ namespace l3cam_ros2
         auto resultRgbConfigurationDisconnected = client_rgb_configuration_disconnected_->async_send_request(requestRgbConfigurationDisconnected);
     }
 
+    void L3Cam::thermalDisconnected(int code)
+    {
+        // Stream
+        while (!client_thermal_stream_disconnected_->wait_for_service(1s))
+        {
+            if (!rclcpp::ok())
+            {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                break;
+            }
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+        }
+
+        auto requestThermalStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
+        requestThermalStreamDisconnected->code = code;
+
+        auto resultThermalStreamDisconnected = client_thermal_stream_disconnected_->async_send_request(requestThermalStreamDisconnected);
+
+        // Configuration
+        while (!client_thermal_configuration_disconnected_->wait_for_service(1s))
+        {
+            if (!rclcpp::ok())
+            {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                break;
+            }
+            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+        }
+
+        auto requestThermalConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
+        requestThermalConfigurationDisconnected->code = code;
+
+        auto resultThermalConfigurationDisconnected = client_thermal_configuration_disconnected_->async_send_request(requestThermalConfigurationDisconnected);
+    }
+
     void L3Cam::alliedwideDisconnected(int code)
     {
         // Stream
@@ -2619,41 +2654,6 @@ namespace l3cam_ros2
         auto resultNarrowConfigurationDisconnected = client_narrow_configuration_disconnected_->async_send_request(requestNarrowConfigurationDisconnected);
     }
 
-    void L3Cam::thermalDisconnected(int code)
-    {
-        // Stream
-        while (!client_thermal_stream_disconnected_->wait_for_service(1s))
-        {
-            if (!rclcpp::ok())
-            {
-                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                break;
-            }
-            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
-        }
-
-        auto requestThermalStreamDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
-        requestThermalStreamDisconnected->code = code;
-
-        auto resultThermalStreamDisconnected = client_thermal_stream_disconnected_->async_send_request(requestThermalStreamDisconnected);
-
-        // Configuration
-        while (!client_thermal_configuration_disconnected_->wait_for_service(1s))
-        {
-            if (!rclcpp::ok())
-            {
-                RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
-                break;
-            }
-            // RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
-        }
-
-        auto requestThermalConfigurationDisconnected = std::make_shared<l3cam_interfaces::srv::SensorDisconnected::Request>();
-        requestThermalConfigurationDisconnected->code = code;
-
-        auto resultThermalConfigurationDisconnected = client_thermal_configuration_disconnected_->async_send_request(requestThermalConfigurationDisconnected);
-    }
-
     void L3Cam::errorNotification(const int32_t *error)
     {
         // RCLCPP_INFO(this->get_logger(), "Error notification received");
@@ -2677,53 +2677,53 @@ int main(int argc, char **argv)
     rclcpp::init(argc, argv);
     RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "L3Cam version " << GET_VERSION() << "\n");
 
-    l3cam_ros2::node = std::make_shared<l3cam_ros2::L3Cam>();
+    node = std::make_shared<l3cam_ros2::L3Cam>();
 
     int error = L3CAM_OK;
-    error = l3cam_ros2::node->initializeDevice();
+    error = node->initializeDevice();
     if (error)
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while initializing device: " << getErrorDescription(error));
-        l3cam_ros2::node->disconnectAll(error);
+        node->disconnectAll(error);
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminating...");
-        TERMINATE(l3cam_ros2::node->m_devices[0]);
-        l3cam_ros2::node->m_status = LibL3CamStatus::terminated;
-        l3cam_ros2::node = NULL; //! Without this, the node becomes zombie
+        TERMINATE(node->m_devices[0]);
+        node->m_status = LibL3CamStatus::terminated;
+        node = NULL; //! Without this, the node becomes zombie
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
         return error;
     }
 
-    error = l3cam_ros2::node->startDeviceStream();
+    error = node->startDeviceStream();
     if (error)
     {
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while starting device and stream: " << getErrorDescription(error));
         if (error == L3CAM_TIMEOUT_ERROR)
         {
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Device is not " << (l3cam_ros2::node->m_status == connected ? "started." : "streaming."));
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Device is not " << (node->m_status == connected ? "started." : "streaming."));
         }
         else
         {
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminating...");
-            l3cam_ros2::node->disconnectAll(error);
-            STOP_STREAM(l3cam_ros2::node->m_devices[0]);
-            STOP_DEVICE(l3cam_ros2::node->m_devices[0]);
-            TERMINATE(l3cam_ros2::node->m_devices[0]);
-            l3cam_ros2::node->m_status = LibL3CamStatus::terminated;
-            l3cam_ros2::node = NULL; //! Without this, the node becomes zombie
+            node->disconnectAll(error);
+            STOP_STREAM(node->m_devices[0]);
+            STOP_DEVICE(node->m_devices[0]);
+            TERMINATE(node->m_devices[0]);
+            node->m_status = LibL3CamStatus::terminated;
+            node = NULL; //! Without this, the node becomes zombie
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
             return error;
         }
     }
 
-    rclcpp::spin(l3cam_ros2::node);
+    rclcpp::spin(node);
 
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminating...");
     // Before exiting stop stream, device and terminate
-    STOP_STREAM(l3cam_ros2::node->m_devices[0]);
-    STOP_DEVICE(l3cam_ros2::node->m_devices[0]);
-    TERMINATE(l3cam_ros2::node->m_devices[0]);
-    l3cam_ros2::node->m_status = LibL3CamStatus::terminated;
-    l3cam_ros2::node = NULL; //! Without this, the node becomes zombie
+    STOP_STREAM(node->m_devices[0]);
+    STOP_DEVICE(node->m_devices[0]);
+    TERMINATE(node->m_devices[0]);
+    node->m_status = LibL3CamStatus::terminated;
+    node = NULL; //! Without this, the node becomes zombie
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
 
     rclcpp::shutdown();

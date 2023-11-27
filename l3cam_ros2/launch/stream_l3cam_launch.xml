@@ -8,7 +8,7 @@
     <arg name="allied_narrow_topic" default="img_narrow" />
 
     <!-- Stream -->
-    <node pkg="l3cam_ros2" exec="pointcloud_stream" name="pointcloud_stream">
+    <node pkg="l3cam_ros2" exec="lidar_stream" name="lidar_stream">
         <param name="timeout_secs" value="$(var timeout_secs)" />
         <remap from="PC2_lidar" to="$(var lidar_topic)" />
     </node>

@@ -98,7 +98,7 @@ More parameters can be set if wanted for the default network and sensors paramet
 
 ### stream_l3cam
 
-This launch file launches all the [stream nodes](#pointcloud_stream) for all the sensors and `rviz2` if specified. Once the main node connects to the L3Cam it will only keep open the stream nodes of the sensors the L3Cam has available, the other ones will shut down automatically.
+This launch file launches all the [stream nodes](#lidar_stream) for all the sensors and `rviz2` if specified. Once the main node connects to the L3Cam it will only keep open the stream nodes of the sensors the L3Cam has available, the other ones will shut down automatically.
 
 The stream nodes stream automatically their sensor data to each sensor topic when data is available.
 
@@ -120,9 +120,9 @@ The l3cam_ros2_node is the main node that connects to the L3Cam and configures i
 
 - If in any case this node dies without printing `Terminating...` and `Terminated.` you might have problems with the sensors as the library might have terminated wrongly. If this happens, reboot the device.
 
-### pointcloud_stream
+### lidar_stream
 
-The pointcloud_stream is the node that publishes pointcloud frames if the LiDAR sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
+The lidar_stream is the node that publishes pointcloud frames if the LiDAR sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
 
 ### polarimetric_wide_stream
 
@@ -140,9 +140,9 @@ The thermal_stream is the node that publishes thermal image frames if the therma
 
 The network_configuration is a node that configures the network parameters by using dynamic reconfigure and the services to communicate with the l3cam_ros2_node. See the [network parameters](#network-parameters) section for documentation regarding the various parameters that can be used to configure the network parameters of the L3Cam.
 
-### pointcloud_configuration
+### lidar_configuration
 
-The pointcloud_configuration is a node that configures the pointcloud parameters (if a LiDAR sensor is available) by using dynamic reconfigure and the services to communicate with the l3cam_ros2_node. See the [pointcloud parameters](#pointcloud-parameters) section for documentation regarding the various parameters that can be used to configure the pointcloud parameters of the L3Cam.
+The lidar_configuration is a node that configures the lidar parameters (if a LiDAR sensor is available) by using dynamic reconfigure and the services to communicate with the l3cam_ros2_node. See the [lidar parameters](#lidar-parameters) section for documentation regarding the various parameters that can be used to configure the lidar parameters of the L3Cam.
 
 ### polarimetric_configuration
 
@@ -212,7 +212,7 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `local_address`  | string | NULL          |
 | `device_address` | string | NULL          |
 
-### Pointcloud parameters
+### Lidar parameters
 
 | Parameter                        | Type   | Default | Range                    |
 | -------------------------------- | ------ | ------- | ------------------------ |
@@ -451,8 +451,8 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `get_allied_camera_intensity_controller_region`        | int allied_type                                                                         | int error, int mode                                                                                                                                                                            |
 | `get_allied_camera_intensity_controller_target`        | int allied_type                                                                         | int error, float intensity_controller_target                                                                                                                                                   |
 | `get_allied_camera_max_driver_buffers_count`           | int allied_type                                                                         | int error, int max_driver_buffers_count                                                                                                                                                        |
-| `pointcloud_stream_disconnected`                       | int code                                                                                | -                                                                                                                                                                                              |
-| `pointcloud_configuration_disconnected`                | int code                                                                                | -                                                                                                                                                                                              |
+| `lidar_stream_disconnected`                            | int code                                                                                | -                                                                                                                                                                                              |
+| `lidar_configuration_disconnected`                     | int code                                                                                | -                                                                                                                                                                                              |
 | `polarimetric_wide_stream_disconnected`                | int code                                                                                | -                                                                                                                                                                                              |
 | `polarimetric_configuration_disconnected`              | int code                                                                                | -                                                                                                                                                                                              |
 | `rgb_narrow_stream_disconnected`                       | int code                                                                                | -                                                                                                                                                                                              |
@@ -481,9 +481,9 @@ Being protocol a number contained in the enum `streamingProtocols` and sensor_ty
 
 All sensors stream their data to each topic:
 
-| Sensor        | Topic               | Data type                  |
-| ------------- | ------------------- | -------------------------- |
-| Pointcloud    | `/L3Cam/PC2_lidar`        | `sensor_msgs::PointCloud2` |
+| Sensor        | Topic                     | Data type                  |
+| ------------- | ------------------------- | -------------------------- |
+| Lidar         | `/L3Cam/PC2_lidar`        | `sensor_msgs::PointCloud2` |
 | Polarimetric  | `/L3Cam/img_polarimetric` | `sensor_msgs::Image`       |
 | RGB           | `/L3Cam/img_rgb`          | `sensor_msgs::Image`       |
 | Thermal       | `/L3Cam/img_thermal`      | `sensor_msgs::Image`       |

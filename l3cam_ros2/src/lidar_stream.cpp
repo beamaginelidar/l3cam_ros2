@@ -44,10 +44,6 @@
 #include "sensor_msgs/msg/point_cloud.hpp"
 #include "sensor_msgs/point_cloud_conversion.hpp"
 
-#include "cv_bridge/cv_bridge.h"
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
 #include <libL3Cam.h>
 #include <beamagine.h>
 #include <beamErrors.h>
@@ -63,14 +59,14 @@ struct threadData
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher;
 };
 
-void *ImageThread(void *functionData)
+void *PointCloudThread(void *functionData)
 {
     threadData *data = (struct threadData *)functionData;
 
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
     std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
-    int m_udp_port = 6050;             // For the pointcloud it's 6050
+    int m_udp_port = 6050;             // For the lidar it's 6050
 
     socklen_t socket_len = sizeof(m_socket);
     char *buffer;
@@ -88,7 +84,7 @@ void *ImageThread(void *functionData)
         perror("Opening socket");
         return 0;
     }
-    // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket Pointcloud created");
+    // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket Lidar created");
 
     memset((char *)&m_socket, 0, sizeof(struct sockaddr_in));
     m_socket.sin_addr.s_addr = inet_addr((char *)m_address.c_str());
@@ -211,7 +207,7 @@ void *ImageThread(void *functionData)
     }
 
     data->publisher = NULL; //! Without this, the node becomes zombie
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Exiting point cloud streaming thread");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting lidar streaming thread");
     free(buffer);
     free(m_pointcloud_data);
 
@@ -223,12 +219,12 @@ void *ImageThread(void *functionData)
 
 namespace l3cam_ros2
 {
-    class PointCloudStream : public SensorStream
+    class LidarStream : public SensorStream
     {
     public:
-        explicit PointCloudStream() : SensorStream("pointcloud_stream")
+        explicit LidarStream() : SensorStream("lidar_stream")
         {
-            declareServiceServers("pointcloud");
+            declareServiceServers("lidar");
         }
 
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
@@ -238,7 +234,7 @@ namespace l3cam_ros2
             g_listening = false;
         }
 
-    }; // class PointCloudStream
+    }; // class LidarStream
 
 } // namespace l3cam_ros2
 
@@ -246,7 +242,7 @@ int main(int argc, char const *argv[])
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<l3cam_ros2::PointCloudStream> node = std::make_shared<l3cam_ros2::PointCloudStream>();
+    std::shared_ptr<l3cam_ros2::LidarStream> node = std::make_shared<l3cam_ros2::LidarStream>();
 
     // Check if LiDAR is available
     int i = 0;
@@ -310,7 +306,7 @@ int main(int argc, char const *argv[])
 
     threadData *data = (struct threadData *)malloc(sizeof(struct threadData));
     data->publisher = node->publisher_;
-    pthread_create(&stream_thread, NULL, &ImageThread, (void *)data);
+    pthread_create(&stream_thread, NULL, &PointCloudThread, (void *)data);
 
     rclcpp::spin(node);
 

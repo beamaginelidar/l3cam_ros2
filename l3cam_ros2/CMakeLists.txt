@@ -31,9 +31,9 @@ add_executable(network_configuration src/network_configuration.cpp)
 ament_target_dependencies(network_configuration "rclcpp" "l3cam_interfaces")
 target_link_libraries(network_configuration ${l3cam_LIBRARIES})
 
-add_executable(pointcloud_configuration src/pointcloud_configuration.cpp)
-ament_target_dependencies(pointcloud_configuration "rclcpp" "l3cam_interfaces")
-target_link_libraries(pointcloud_configuration ${l3cam_LIBRARIES})
+add_executable(lidar_configuration src/lidar_configuration.cpp)
+ament_target_dependencies(lidar_configuration "rclcpp" "l3cam_interfaces")
+target_link_libraries(lidar_configuration ${l3cam_LIBRARIES})
 
 add_executable(polarimetric_configuration src/polarimetric_configuration.cpp)
 ament_target_dependencies(polarimetric_configuration "rclcpp" "l3cam_interfaces")
@@ -55,9 +55,9 @@ add_executable(allied_narrow_configuration src/allied_narrow_configuration.cpp)
 ament_target_dependencies(allied_narrow_configuration "rclcpp" "l3cam_interfaces")
 target_link_libraries(allied_narrow_configuration ${l3cam_LIBRARIES})
 
-add_executable(pointcloud_stream src/pointcloud_stream.cpp src/sensor_stream.cpp)
-ament_target_dependencies(pointcloud_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
-target_link_libraries(pointcloud_stream ${l3cam_LIBRARIES})
+add_executable(lidar_stream src/lidar_stream.cpp src/sensor_stream.cpp)
+ament_target_dependencies(lidar_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
+target_link_libraries(lidar_stream ${l3cam_LIBRARIES})
 
 add_executable(polarimetric_wide_stream src/polarimetric_wide_stream.cpp src/sensor_stream.cpp)
 ament_target_dependencies(polarimetric_wide_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
@@ -74,13 +74,13 @@ target_link_libraries(thermal_stream ${l3cam_LIBRARIES})
 install(TARGETS 
     l3cam_ros2_node
     network_configuration
-    pointcloud_configuration
+    lidar_configuration
     polarimetric_configuration
     rgb_configuration
     thermal_configuration
     allied_wide_configuration
     allied_narrow_configuration
-    pointcloud_stream
+    lidar_stream
     polarimetric_wide_stream
     rgb_narrow_stream
     thermal_stream

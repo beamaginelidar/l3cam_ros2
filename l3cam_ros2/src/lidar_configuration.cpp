@@ -52,10 +52,10 @@ using namespace std::chrono_literals;
 
 namespace l3cam_ros2
 {
-    class PointCloudConfiguration : public rclcpp::Node
+    class LidarConfiguration : public rclcpp::Node
     {
     public:
-        explicit PointCloudConfiguration() : Node("pointcloud_configuration")
+        explicit LidarConfiguration() : Node("lidar_configuration")
         {
             // Create service clients
             client_get_sensors_ = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
@@ -72,11 +72,11 @@ namespace l3cam_ros2
 
             // Create service server
             srv_sensor_disconnected_ = this->create_service<l3cam_interfaces::srv::SensorDisconnected>(
-                "pointcloud_configuration_disconnected", std::bind(&PointCloudConfiguration::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
+                "lidar_configuration_disconnected", std::bind(&LidarConfiguration::sensorDisconnectedCallback, this, std::placeholders::_1, std::placeholders::_2));
 
             // Callback on parameters changed
             callback_handle_ = this->add_on_set_parameters_callback(
-                std::bind(&PointCloudConfiguration::parametersCallback, this, std::placeholders::_1));
+                std::bind(&LidarConfiguration::parametersCallback, this, std::placeholders::_1));
         }
 
         rclcpp::Client<l3cam_interfaces::srv::GetSensorsAvailable>::SharedPtr client_get_sensors_;
@@ -211,7 +211,7 @@ namespace l3cam_ros2
             requestColor->visualization_color = visualization_color;
 
             auto resultColor = client_color_->async_send_request(
-                requestColor, std::bind(&PointCloudConfiguration::colorResponseCallback, this, std::placeholders::_1));
+                requestColor, std::bind(&LidarConfiguration::colorResponseCallback, this, std::placeholders::_1));
         }
 
         void callColorRange(int range_min, int range_max)
@@ -231,7 +231,7 @@ namespace l3cam_ros2
             requestColorRange->max_value = range_max;
 
             auto resultColorRange = client_color_range_->async_send_request(
-                requestColorRange, std::bind(&PointCloudConfiguration::colorRangeResponseCallback, this, std::placeholders::_1));
+                requestColorRange, std::bind(&LidarConfiguration::colorRangeResponseCallback, this, std::placeholders::_1));
         }
 
         void callDistanceRange(int range_min, int range_max)
@@ -251,7 +251,7 @@ namespace l3cam_ros2
             requestDistanceRange->max_value = range_max;
 
             auto resultDistanceRange = client_distance_range_->async_send_request(
-                requestDistanceRange, std::bind(&PointCloudConfiguration::distanceRangeResponseCallback, this, std::placeholders::_1));
+                requestDistanceRange, std::bind(&LidarConfiguration::distanceRangeResponseCallback, this, std::placeholders::_1));
         }
 
         void callAutoBias(bool enabled)
@@ -270,7 +270,7 @@ namespace l3cam_ros2
             requestAutoBias->enabled = enabled;
 
             auto resultAutoBias = client_auto_bias_->async_send_request(
-                requestAutoBias, std::bind(&PointCloudConfiguration::autoBiasResponseCallback, this, std::placeholders::_1));
+                requestAutoBias, std::bind(&LidarConfiguration::autoBiasResponseCallback, this, std::placeholders::_1));
         }
 
         void callBiasValue(int index, int bias)
@@ -290,7 +290,7 @@ namespace l3cam_ros2
             requestBiasValueRight->bias = bias;
 
             auto resultBiasValueRight = client_bias_value_->async_send_request(
-                requestBiasValueRight, std::bind(&PointCloudConfiguration::biasValueRightResponseCallback, this, std::placeholders::_1));
+                requestBiasValueRight, std::bind(&LidarConfiguration::biasValueRightResponseCallback, this, std::placeholders::_1));
         }
 
         void callStreamingProtocol(int protocol)
@@ -310,7 +310,7 @@ namespace l3cam_ros2
             requestStreamingProtocol->protocol = protocol;
 
             auto resultStreamingProtocol = client_streaming_protocol_->async_send_request(
-                requestStreamingProtocol, std::bind(&PointCloudConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
+                requestStreamingProtocol, std::bind(&LidarConfiguration::streamingProtocolResponseCallback, this, std::placeholders::_1));
         }
 
         // Service callbacks
@@ -516,7 +516,7 @@ namespace l3cam_ros2
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
-    }; // class PointCloudConfiguration
+    }; // class LidarConfiguration
 
 } // namespace l3cam_ros2
 
@@ -524,7 +524,7 @@ int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<l3cam_ros2::PointCloudConfiguration> node = std::make_shared<l3cam_ros2::PointCloudConfiguration>();
+    std::shared_ptr<l3cam_ros2::LidarConfiguration> node = std::make_shared<l3cam_ros2::LidarConfiguration>();
 
     // Check if LiDAR is available
     int i = 0;

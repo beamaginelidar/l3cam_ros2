@@ -230,8 +230,9 @@ namespace l3cam_ros2
 
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
 
-    private: 
-        void stopListening(){
+    private:
+        void stopListening()
+        {
             g_listening = false;
         }
 

@@ -47,7 +47,7 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(res);
         stopListening();
-        
+
         if (req->code == 0)
         {
             RCLCPP_INFO(this->get_logger(), "Exiting cleanly.");

@@ -43,6 +43,7 @@ typedef enum LibL3CamStatus{
 static const char *bmg_ros2_error_find_devices_timeout = "Timeout error while finding devices\0";
 static const char *bmg_ros2_error_failed_to_call_service = "Failed to call service\0";
 static const char *bmg_ros2_error_interrupted = "RCLCPP interrupted\0";
+static const char *bmg_ros2_error_service_availability_timeout =  "Timeout error while looking for service availability\0";
 static const char *bmg_ros2_error_undefined_error =  "UNDEFINED L3CAM ERROR\0";
 
 static const char* getBeamRos2ErrorDescription(int error_code)
@@ -57,6 +58,9 @@ static const char* getBeamRos2ErrorDescription(int error_code)
         break;
     case L3CAM_ROS2_RCLCPP_INTERRUPTED:
         return bmg_ros2_error_interrupted;
+        break;
+    case L3CAM_ROS2_SERVICE_AVAILABILITY_TIMEOUT_ERROR:
+        return bmg_ros2_error_service_availability_timeout;
         break;
     default:
         return bmg_ros2_error_undefined_error;

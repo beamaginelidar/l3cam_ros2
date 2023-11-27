@@ -1285,7 +1285,10 @@ int main(int argc, char **argv)
         }
         
         if (i >= node->get_parameter("timeout_secs").as_int())
-            return 0;
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Error: " << getErrorDescription(L3CAM_ROS2_SERVICE_AVAILABILITY_TIMEOUT_ERROR));
+            return L3CAM_ROS2_SERVICE_AVAILABILITY_TIMEOUT_ERROR;
+        }
         ++i;
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }

@@ -43,6 +43,7 @@
 #include "l3cam_interfaces/srv/enable_allied_camera_auto_gain.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_auto_gain_range.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_gamma.hpp"
+#include "l3cam_interfaces/srv/change_allied_camera_saturation.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_hue.hpp"
 #include "l3cam_interfaces/srv/change_allied_camera_intensity_auto_precedence.hpp"
 #include "l3cam_interfaces/srv/enable_allied_camera_auto_white_balance.hpp"
@@ -79,6 +80,7 @@ namespace l3cam_ros2
             client_auto_gain_ = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>("enable_allied_camera_auto_gain");
             client_auto_gain_range_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>("change_allied_camera_auto_gain_range");
             client_gamma_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraGamma>("change_allied_camera_gamma");
+            client_saturation_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>("change_allied_camera_saturation");
             client_hue_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraHue>("change_allied_camera_hue");
             client_intensity_auto_precedence_ = this->create_client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>("change_allied_camera_intensity_auto_precedence");
             client_auto_white_balance_ = this->create_client<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>("enable_allied_camera_auto_white_balance");
@@ -260,6 +262,10 @@ namespace l3cam_ros2
                 if (param_name == "allied_wide_camera_gamma" && param.as_double() != allied_wide_camera_gamma_)
                 {
                     callGamma(param.as_double());
+                }
+                if (param_name == "allied_wide_camera_saturation" && param.as_double() != allied_wide_camera_saturation_)
+                {
+                    callSaturation(param.as_double());
                 }
                 if (param_name == "allied_wide_camera_hue" && param.as_double() != allied_wide_camera_hue_)
                 {
@@ -447,6 +453,26 @@ namespace l3cam_ros2
 
             auto resultGamma = client_gamma_->async_send_request(
                 requestGamma, std::bind(&AlliedWideConfiguration::gammaResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callSaturation(double saturation)
+        {
+            while (!client_saturation_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+            }
+
+            auto requestSaturation = std::make_shared<l3cam_interfaces::srv::ChangeAlliedCameraSaturation::Request>();
+            requestSaturation->allied_type = alliedCamerasIds::wide_camera;
+            requestSaturation->saturation = saturation;
+
+            auto resultSaturation = client_saturation_->async_send_request(
+                requestSaturation, std::bind(&AlliedWideConfiguration::saturationResponseCallback, this, std::placeholders::_1));
         }
 
         void callHue(double hue)
@@ -885,6 +911,33 @@ namespace l3cam_ros2
             }
         }
 
+        void saturationResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    allied_wide_camera_saturation_ = this->get_parameter("allied_wide_camera_saturation").as_double();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("allied_wide_camera_saturation", allied_wide_camera_saturation_));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_allied_camera_saturation");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("allied_wide_camera_saturation", allied_wide_camera_saturation_));
+            }
+        }
+
         void hueResponseCallback(
             rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraHue>::SharedFuture future)
         {
@@ -1247,6 +1300,7 @@ namespace l3cam_ros2
         rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoGain>::SharedPtr client_auto_gain_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraAutoGainRange>::SharedPtr client_auto_gain_range_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraGamma>::SharedPtr client_gamma_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraSaturation>::SharedPtr client_saturation_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraHue>::SharedPtr client_hue_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraIntensityAutoPrecedence>::SharedPtr client_intensity_auto_precedence_;
         rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoWhiteBalance>::SharedPtr client_auto_white_balance_;

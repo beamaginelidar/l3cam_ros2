@@ -748,18 +748,6 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
-        int rgb_camera_brightness_;
-        int rgb_camera_contrast_;
-        int rgb_camera_saturation_;
-        int rgb_camera_sharpness_;
-        int rgb_camera_gamma_;
-        int rgb_camera_gain_;
-        bool rgb_camera_auto_white_balance_;
-        int rgb_camera_white_balance_;
-        bool rgb_camera_auto_exposure_time_;
-        int rgb_camera_exposure_time_;
-        int streaming_protocol_;
-
         rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraBrightness>::SharedPtr client_brightness_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraContrast>::SharedPtr client_contrast_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeRgbCameraSaturation>::SharedPtr client_saturation_;
@@ -775,6 +763,18 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+
+        int rgb_camera_brightness_;
+        int rgb_camera_contrast_;
+        int rgb_camera_saturation_;
+        int rgb_camera_sharpness_;
+        int rgb_camera_gamma_;
+        int rgb_camera_gain_;
+        bool rgb_camera_auto_white_balance_;
+        int rgb_camera_white_balance_;
+        bool rgb_camera_auto_exposure_time_;
+        int rgb_camera_exposure_time_;
+        int streaming_protocol_;
 
     }; // class RgbConfiguration
 

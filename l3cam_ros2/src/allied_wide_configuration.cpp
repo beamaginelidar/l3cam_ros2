@@ -1272,27 +1272,6 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
-        double allied_wide_camera_exposure_time_;
-        bool allied_wide_camera_auto_exposure_time_;
-        double allied_wide_camera_auto_exposure_time_range_min_;
-        double allied_wide_camera_auto_exposure_time_range_max_;
-        double allied_wide_camera_gain_;
-        bool allied_wide_camera_auto_gain_;
-        double allied_wide_camera_auto_gain_range_min_;
-        double allied_wide_camera_auto_gain_range_max_;
-        double allied_wide_camera_gamma_;
-        double allied_wide_camera_saturation_;
-        double allied_wide_camera_hue_;
-        int allied_wide_camera_intensity_auto_precedence_;
-        bool allied_wide_camera_auto_white_balance_;
-        int allied_wide_camera_balance_ratio_selector_;
-        double allied_wide_camera_balance_ratio_;
-        double allied_wide_camera_balance_white_auto_rate_;
-        double allied_wide_camera_balance_white_auto_tolerance_;
-        int allied_wide_camera_intensity_controller_region_;
-        double allied_wide_camera_intensity_controller_target_;
-        int streaming_protocol_;
-
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedPtr client_exposure_time_;
         rclcpp::Client<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime>::SharedPtr client_auto_exposure_time_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeAlliedCameraAutoExposureTimeRange>::SharedPtr client_auto_exposure_time_range_;
@@ -1317,6 +1296,27 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+
+        double allied_wide_camera_exposure_time_;
+        bool allied_wide_camera_auto_exposure_time_;
+        double allied_wide_camera_auto_exposure_time_range_min_;
+        double allied_wide_camera_auto_exposure_time_range_max_;
+        double allied_wide_camera_gain_;
+        bool allied_wide_camera_auto_gain_;
+        double allied_wide_camera_auto_gain_range_min_;
+        double allied_wide_camera_auto_gain_range_max_;
+        double allied_wide_camera_gamma_;
+        double allied_wide_camera_saturation_;
+        double allied_wide_camera_hue_;
+        int allied_wide_camera_intensity_auto_precedence_;
+        bool allied_wide_camera_auto_white_balance_;
+        int allied_wide_camera_balance_ratio_selector_;
+        double allied_wide_camera_balance_ratio_;
+        double allied_wide_camera_balance_white_auto_rate_;
+        double allied_wide_camera_balance_white_auto_tolerance_;
+        int allied_wide_camera_intensity_controller_region_;
+        double allied_wide_camera_intensity_controller_target_;
+        int streaming_protocol_;
 
     }; // class AlliedWideConfiguration
 

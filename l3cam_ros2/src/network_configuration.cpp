@@ -186,15 +186,15 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
-        std::string ip_address_;
-        std::string netmask_;
-        std::string gateway_;
-        bool dhcp_;
-
         rclcpp::Client<l3cam_interfaces::srv::ChangeNetworkConfiguration>::SharedPtr client_network_;
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_network_disconnected_;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+
+        std::string ip_address_;
+        std::string netmask_;
+        std::string gateway_;
+        bool dhcp_;
 
     }; // class NetworkConfiguration
 

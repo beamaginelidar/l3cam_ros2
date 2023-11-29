@@ -375,12 +375,6 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
-        int thermal_camera_colormap_;
-        bool thermal_camera_temperature_filter_;
-        int thermal_camera_temperature_filter_min_;
-        int thermal_camera_temperature_filter_max_;
-        int streaming_protocol_;
-
         rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraColormap>::SharedPtr client_colormap_;
         rclcpp::Client<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>::SharedPtr client_temperature_filter_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>::SharedPtr client_temperature_filter_range_;
@@ -389,6 +383,12 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+
+        int thermal_camera_colormap_;
+        bool thermal_camera_temperature_filter_;
+        int thermal_camera_temperature_filter_min_;
+        int thermal_camera_temperature_filter_max_;
+        int streaming_protocol_;
 
     }; // class ThermalConfiguration
 

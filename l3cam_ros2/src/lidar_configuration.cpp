@@ -495,16 +495,6 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
-        int pointcloud_color_;
-        int pointcloud_color_range_minimum_;
-        int pointcloud_color_range_maximum_;
-        int distance_range_minimum_;
-        int distance_range_maximum_;
-        bool auto_bias_;
-        int bias_value_right_;
-        int bias_value_left_;
-        int streaming_protocol_;
-
         rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColor>::SharedPtr client_color_;
         rclcpp::Client<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedPtr client_color_range_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeDistanceRange>::SharedPtr client_distance_range_;
@@ -515,6 +505,16 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+
+        int pointcloud_color_;
+        int pointcloud_color_range_minimum_;
+        int pointcloud_color_range_maximum_;
+        int distance_range_minimum_;
+        int distance_range_maximum_;
+        bool auto_bias_;
+        int bias_value_right_;
+        int bias_value_left_;
+        int streaming_protocol_;
 
     }; // class LidarConfiguration
 

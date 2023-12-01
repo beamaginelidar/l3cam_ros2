@@ -4,7 +4,7 @@
     <arg name="rviz2" default="false" />
     <arg name="configure" default="true" />
     <arg name="rqt_reconfigure" default="false" />
-    <arg name="namespace" default="/l3cam" />
+    <arg name="namespace" default="/L3Cam" />
 
     <group>
         <push-ros-namespace namespace="$(var namespace)" />
@@ -235,7 +235,7 @@
         </node>
 
         <!-- Start dyanmic reconfigure -->
-        <include file="$(dirname)/configure_l3cam_launch.xml">
+        <include file="$(dirname)/configure_l3cam_launch.xml" if="$(var configure)">
             <arg name="timeout_secs" value="$(var timeout_secs)" />
 
             <arg name="pointcloud_color" value="$(var pointcloud_color)" />
@@ -320,7 +320,7 @@
         </include>
 
         <!-- Start streaming the available sensors. -->
-        <include file="$(dirname)/stream_l3cam_launch.xml">
+        <include file="$(dirname)/stream_l3cam_launch.xml" if="$(var stream)">
             <arg name="timeout_secs" value="$(var timeout_secs)" />
             <arg name="lidar_topic" value="$(var lidar_topic)" />
             <arg name="polarimetric_topic" value="$(var polarimetric_topic)" />

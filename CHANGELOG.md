@@ -31,13 +31,13 @@ All notable changes to the l3cam_ros2 package will be documented in this file.
   - `rgb_camera_white_balance` depends on `rgb_camera_auto_white_balance`.
   - `rgb_camera_exposure_time` depends on `rgb_camera_auto_exposure_time`.
 
-- The following parameters will change when the parameter they depend on changes. These changes will not be shown directly in `rqt_reconfigure`, so you might have to hide and show the parameter's node.
+- The following parameters will change when the parameter they depend on changes. These changes might not be shown directly in `rqt_reconfigure`, so you might have to hide and show the parameter's node.
 
   - `allied_wide_camera_exposure_time` changes when `allied_wide_camera_auto_exposure_time` is set to false.
   - `allied_wide_camera_gain` changes when `allied_wide_camera_auto_gain` is set to false.
   - `allied_narrow_camera_exposure_time` changes when `allied_narrow_camera_auto_exposure_time` is set to false.
   - `allied_narrow_camera_gain` changes when `allied_narrow_camera_auto_gain` is set to false.
 
-- Some error codes returned from the library are returned as unit interpreted as int.
+- Some error codes returned from the library are returned as uint interpreted as int.
 
 - l3cam_ros2_node exits with -11 (SIGSEGV) when exiting if executed from ros2 launch.

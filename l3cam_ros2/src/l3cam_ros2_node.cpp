@@ -928,7 +928,7 @@ namespace l3cam_ros2
     {
         if (error != L3CAM_OK)
         {
-            RCLCPP_ERROR_STREAM(this->get_logger(),
+            RCLCPP_WARN_STREAM(this->get_logger(),
                                 "ERROR " << error << " while setting default parameter " << param << ": "
                                          << getErrorDescription(error));
         }

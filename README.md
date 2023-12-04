@@ -118,7 +118,7 @@ The l3cam_ros2_node is the main node that connects to the L3Cam and configures i
 
 **Note:**
 
-- If in any case this node dies without printing `Terminating...` and `Terminated.` you might have problems with the sensors as the library might have terminated wrongly. If this happens, reboot the device.
+- If in any case this node dies without printing `Terminating...` and `Terminated.` you might have problems with the sensors as the library might have terminated wrongly. If this happens, it will output error 235 (Error binding TCP socket) when trying to run it again, reboot the device to solve the problem.
 
 ### lidar_stream
 

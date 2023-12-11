@@ -163,9 +163,9 @@ void *PointCloudThread(void *functionData)
 
                 cloud_.points[i].x = (double)data_received[5 * i + 3] / 1000.0;
 
-                intensity_channel.values[i] = data_received[5 * i + 4];
+                intensity_channel.values[i] = (double)data_received[5 * i + 4];
 
-                rgb_channel.values[i] = data_received[5 * i + 5];
+                rgb_channel.values[i] = (double)data_received[5 * i + 5];
             }
 
             cloud_.channels.push_back(intensity_channel);

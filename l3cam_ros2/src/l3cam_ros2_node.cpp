@@ -1566,7 +1566,9 @@ namespace l3cam_ros2
         ROS2_BMG_UNUSED(req);
         res->error = START_DEVICE(m_devices[0]);
         if (!res->error)
+        {
             m_status = LibL3CamStatus::started;
+        }
     }
 
     void L3Cam::stopDevice(const std::shared_ptr<l3cam_interfaces::srv::StopDevice::Request> req,
@@ -1579,7 +1581,9 @@ namespace l3cam_ros2
             m_status = LibL3CamStatus::started;
             res->error = STOP_DEVICE(m_devices[0]);
             if (!res->error)
+            {
                 m_status = LibL3CamStatus::connected;
+            }
         }
     }
 
@@ -1589,7 +1593,9 @@ namespace l3cam_ros2
         ROS2_BMG_UNUSED(req);
         res->error = START_STREAM(m_devices[0]);
         if (!res->error)
+        {
             m_status = LibL3CamStatus::streaming;
+        }
     }
 
     void L3Cam::stopStream(const std::shared_ptr<l3cam_interfaces::srv::StopStream::Request> req,
@@ -1598,7 +1604,9 @@ namespace l3cam_ros2
         ROS2_BMG_UNUSED(req);
         res->error = STOP_STREAM(m_devices[0]);
         if (!res->error)
+        {
             m_status = LibL3CamStatus::started;
+        }
     }
 
     void L3Cam::getDeviceTemperatures(const std::shared_ptr<l3cam_interfaces::srv::GetDeviceTemperatures::Request> req,

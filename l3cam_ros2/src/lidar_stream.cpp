@@ -41,8 +41,9 @@
 
 #include <pthread.h>
 
-#include "sensor_msgs/msg/point_cloud.hpp"
-#include "sensor_msgs/point_cloud_conversion.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
+#include <sensor_msgs/msg/point_field.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <libL3Cam.h>
 #include <beamagine.h>
@@ -144,43 +145,62 @@ void *PointCloudThread(void *functionData)
 
             int size_pc = data_received[0];
 
-            sensor_msgs::msg::PointCloud cloud_;
-            cloud_.points.resize(size_pc);
-            cloud_.header.frame_id = "map";
+            sensor_msgs::msg::PointCloud2 pcl_msg;
 
-            sensor_msgs::msg::ChannelFloat32 intensity_channel;
-            intensity_channel.set__name("intensity");
-            intensity_channel.values.resize(size_pc);
-            sensor_msgs::msg::ChannelFloat32 rgb_channel;
-            rgb_channel.set__name("rgb");
-            rgb_channel.values.resize(size_pc);
-
-            for (int i = 0; i < size_pc; i++)
-            {
-                cloud_.points[i].y = -(double)data_received[5 * i + 1] / 1000.0;
-
-                cloud_.points[i].z = -(double)data_received[5 * i + 2] / 1000.0;
-
-                cloud_.points[i].x = (double)data_received[5 * i + 3] / 1000.0;
-
-                intensity_channel.values[i] = (double)data_received[5 * i + 4];
-
-                rgb_channel.values[i] = (double)data_received[5 * i + 5];
-            }
-
-            cloud_.channels.push_back(intensity_channel);
-            cloud_.channels.push_back(rgb_channel);
-
-            sensor_msgs::msg::PointCloud2 PC2_msg;
-            sensor_msgs::convertPointCloudToPointCloud2(cloud_, PC2_msg);
-            PC2_msg.header.frame_id = "lidar";
+            // Msg header
+            pcl_msg.header = std_msgs::msg::Header();
+            pcl_msg.header.frame_id = "lidar";
             // m_timestamp format: hhmmsszzz
-            PC2_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
+            pcl_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                        (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
                                        (uint32_t)((m_timestamp / 1000) % 100);         // ss
-            PC2_msg.header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
+            pcl_msg.header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
 
-            data->publisher->publish(PC2_msg);
+            pcl_msg.height = 1;
+            pcl_msg.width = size_pc;
+            pcl_msg.is_dense = true;
+
+            // Total number of bytes per point
+            pcl_msg.point_step = sizeof(float) * 3 + sizeof(uint16_t) + sizeof(uint32_t); // x(4) + y(4) + z(4) + intensity(2) + rgb(4)
+            pcl_msg.row_step = pcl_msg.point_step * pcl_msg.width;
+            pcl_msg.data.resize(pcl_msg.row_step);
+
+            // Modifier to describe what the fields are.
+            sensor_msgs::PointCloud2Modifier modifier(pcl_msg);
+            modifier.setPointCloud2Fields(5,
+                                          "x", 1, sensor_msgs::msg::PointField::FLOAT32,
+                                          "y", 1, sensor_msgs::msg::PointField::FLOAT32,
+                                          "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+                                          "intensity", 1, sensor_msgs::msg::PointField::UINT16,
+                                          "rgb", 1, sensor_msgs::msg::PointField::UINT32);
+
+            // Iterators for PointCloud msg
+            sensor_msgs::PointCloud2Iterator<float> iterX(pcl_msg, pcl_msg.fields[0].name);
+            sensor_msgs::PointCloud2Iterator<float> iterY(pcl_msg, pcl_msg.fields[1].name);
+            sensor_msgs::PointCloud2Iterator<float> iterZ(pcl_msg, pcl_msg.fields[2].name);
+            sensor_msgs::PointCloud2Iterator<uint16_t> iterIntensity(pcl_msg, pcl_msg.fields[3].name);
+            sensor_msgs::PointCloud2Iterator<uint32_t> iterRgb(pcl_msg, pcl_msg.fields[4].name);
+
+            for (int i = 0; i < size_pc; ++i)
+            {
+                *iterY = -(float)data_received[5 * i + 1] / 1000.0;
+
+                *iterZ = -(float)data_received[5 * i + 2] / 1000.0;
+
+                *iterX = (float)data_received[5 * i + 3] / 1000.0;
+
+                *iterIntensity = (uint16_t)data_received[5 * i + 4];
+
+                *iterRgb = (uint32_t)data_received[5 * i + 5];
+
+                ++iterY;
+                ++iterZ;
+                ++iterX;
+                ++iterIntensity;
+                ++iterRgb;
+            }
+
+            data->publisher->publish(pcl_msg);
 
             free(m_pointcloud_data);
             points_received = 0;

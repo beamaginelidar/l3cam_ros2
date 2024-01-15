@@ -76,7 +76,7 @@ void *PointCloudThread(void *functionData)
     int32_t m_pointcloud_size;
     int32_t *m_pointcloud_data;
     uint32_t m_timestamp;
-    bool m_is_reading_pointcloud;
+    bool m_is_reading_pointcloud = false;
     int points_received = 1;
     int pointcloud_index = 1;
 
@@ -122,7 +122,7 @@ void *PointCloudThread(void *functionData)
 
     while (g_listening)
     {
-        int size_read = recvfrom(m_socket_descriptor, buffer, 64004, 0, (struct sockaddr *)&m_socket, &socket_len);
+        int size_read = recvfrom(m_socket_descriptor, buffer, 64000, 0, (struct sockaddr *)&m_socket, &socket_len);
 
         if (size_read == 17) // Header
         {
@@ -137,7 +137,7 @@ void *PointCloudThread(void *functionData)
             points_received = 0;
             pointcloud_index = 1;
         }
-        else if (size_read == 1) // End, send point cloud
+        else if (size_read == 1 && points_received == m_pointcloud_size) // End, send point cloud
         {
             m_is_reading_pointcloud = false;
             int32_t *data_received = (int32_t *)malloc(sizeof(int32_t) * (m_pointcloud_size * 5) + 1);
@@ -206,22 +206,19 @@ void *PointCloudThread(void *functionData)
             points_received = 0;
             pointcloud_index = 1;
         }
-        else if (size_read > 0) // Data
+        else if (size_read > 0 && m_is_reading_pointcloud) // Data
         {
-            if (m_is_reading_pointcloud)
-            {
-                int32_t points = 0;
-                memcpy(&points, &buffer[0], 4);
-                memcpy(&m_pointcloud_data[pointcloud_index], &buffer[4], (sizeof(int32_t) * (points * 5)));
+            int32_t points = 0;
+            memcpy(&points, &buffer[0], 4);
+            memcpy(&m_pointcloud_data[pointcloud_index], &buffer[4], (sizeof(int32_t) * (points * 5)));
 
-                pointcloud_index += (points * 5);
+            pointcloud_index += (points * 5);
 
-                points_received += points;
+            points_received += points;
 
-                // check if under size
-                if (points_received >= m_pointcloud_size)
-                    m_is_reading_pointcloud = false;
-            }
+            // check if under size
+            if (points_received >= m_pointcloud_size)
+                m_is_reading_pointcloud = false;
         }
         // size_read == -1 --> timeout
     }

@@ -85,7 +85,7 @@ void *ImageThread(void *functionData)
     uint8_t m_image_channels;
     uint32_t m_timestamp;
     int m_image_data_size;
-    bool m_is_reading_image;
+    bool m_is_reading_image = false;
     char *m_image_buffer = NULL;
     int bytes_count = 0;
 
@@ -136,7 +136,7 @@ void *ImageThread(void *functionData)
 
     while (g_listening)
     {
-        int size_read = recvfrom(m_socket_descriptor, buffer, 64004, 0, (struct sockaddr *)&m_socket, &socket_len);
+        int size_read = recvfrom(m_socket_descriptor, buffer, 64000, 0, (struct sockaddr *)&m_socket, &socket_len);
         if (size_read == 11) // Header
         {
             memcpy(&m_image_height, &buffer[1], 2);
@@ -162,7 +162,7 @@ void *ImageThread(void *functionData)
             m_is_reading_image = true;
             bytes_count = 0;
         }
-        else if (size_read == 1) // End, send image
+        else if (size_read == 1 && bytes_count == m_image_data_size) // End, send image
         {
             m_is_reading_image = false;
             bytes_count = 0;
@@ -178,9 +178,6 @@ void *ImageThread(void *functionData)
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);
             }
 
-            cv_bridge::CvImage img_bridge;
-            sensor_msgs::msg::Image img_msg; // message to be sent
-
             std_msgs::msg::Header header;
             header.frame_id = g_pol ? "polarimetric" : "allied_wide";
             // m_timestamp format: hhmmsszzz
@@ -189,22 +186,19 @@ void *ImageThread(void *functionData)
                                (uint32_t)((m_timestamp / 1000) % 100);         // ss
             header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
 
-            img_bridge = cv_bridge::CvImage(header, m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8, img_data);
-            img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
+            const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
+            std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
 
-            data->publisher->publish(img_msg);
+            data->publisher->publish(*img_msg);
         }
-        else if (size_read > 0) // Data
+        else if (size_read > 0 && m_is_reading_image) // Data
         {
-            if (m_is_reading_image)
-            {
-                memcpy(&m_image_buffer[bytes_count], buffer, size_read);
-                bytes_count += size_read;
+            memcpy(&m_image_buffer[bytes_count], buffer, size_read);
+            bytes_count += size_read;
 
-                // check if under size
-                if (bytes_count >= m_image_data_size)
-                    m_is_reading_image = false;
-            }
+            // check if under size
+            if (bytes_count >= m_image_data_size)
+                m_is_reading_image = false;
         }
         // size_read == -1 --> timeout
     }

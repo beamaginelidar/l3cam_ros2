@@ -151,10 +151,16 @@ void *PointCloudThread(void *functionData)
             pcl_msg.header = std_msgs::msg::Header();
             pcl_msg.header.frame_id = "lidar";
             // m_timestamp format: hhmmsszzz
-            pcl_msg.header.stamp.sec = (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
+            time_t t = time(NULL);
+            std::tm *time_info = std::localtime(&t);
+            time_info->tm_sec = 0;
+            time_info->tm_min = 0;
+            time_info->tm_hour = 0;
+            pcl_msg.header.stamp.sec = std::mktime(time_info) +
+                                       (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
                                        (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
                                        (uint32_t)((m_timestamp / 1000) % 100);         // ss
-            pcl_msg.header.stamp.nanosec = (m_timestamp % 1000) * 10e6;                // zzz
+            pcl_msg.header.stamp.nanosec = (m_timestamp % 1000) * 1e6;                 // zzz
 
             pcl_msg.height = 1;
             pcl_msg.width = size_pc;

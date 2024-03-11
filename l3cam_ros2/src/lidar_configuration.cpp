@@ -124,6 +124,10 @@ namespace l3cam_ros2
             this->declare_parameter("bias_value_left", 1380, descriptor);  // 700 - 3500
             range.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {range};
+            descriptor.description = 
+                "Value must be:\n"
+                "\tprotocol_raw_udp = 0\n"
+                "\tprotocol_gstreamer = 1";
             this->declare_parameter("lidar_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
         }
 

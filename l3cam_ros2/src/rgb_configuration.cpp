@@ -125,6 +125,10 @@ namespace l3cam_ros2
             this->declare_parameter("rgb_camera_exposure_time", 156, descriptor); // 1 - 10000
             range.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {range};
+            descriptor.description = 
+                "Value must be:\n"
+                "\tprotocol_raw_udp = 0\n"
+                "\tprotocol_gstreamer = 1";
             this->declare_parameter("rgb_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
         }
 

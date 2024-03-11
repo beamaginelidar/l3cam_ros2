@@ -39,6 +39,8 @@
 #include "l3cam_interfaces/srv/change_thermal_camera_colormap.hpp"
 #include "l3cam_interfaces/srv/enable_thermal_camera_temperature_filter.hpp"
 #include "l3cam_interfaces/srv/change_thermal_camera_temperature_filter.hpp"
+#include "l3cam_interfaces/srv/change_thermal_camera_pipeline.hpp"
+#include "l3cam_interfaces/srv/enable_thermal_camera_temperature_data_udp.hpp"
 #include "l3cam_interfaces/srv/change_streaming_protocol.hpp"
 #include "l3cam_interfaces/srv/get_rtsp_pipeline.hpp"
 
@@ -60,6 +62,8 @@ namespace l3cam_ros2
             client_colormap_ = this->create_client<l3cam_interfaces::srv::ChangeThermalCameraColormap>("change_thermal_camera_colormap");
             client_temperature_filter_ = this->create_client<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>("enable_thermal_camera_temperature_filter");
             client_temperature_filter_range_ = this->create_client<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>("change_thermal_camera_temperature_filter");
+            client_pipeline_ = this->create_client<l3cam_interfaces::srv::ChangeThermalCameraPipeline>("change_thermal_camera_pipeline");
+            client_temperature_data_udp_ = this->create_client<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp>("enable_thermal_camera_temperature_data_udp");
             client_streaming_protocol_ = this->create_client<l3cam_interfaces::srv::ChangeStreamingProtocol>("change_streaming_protocol");
             client_get_rtsp_pipeline_ = this->create_client<l3cam_interfaces::srv::GetRtspPipeline>("get_rtsp_pipeline");
 
@@ -85,29 +89,20 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
             this->declare_parameter("timeout_secs", 60);
-            range.set__from_value(1).set__to_value(108); // TBD: dynamic reconfigure dropdown menu thermalTypes
+            range.set__from_value(1).set__to_value(108); // TBD: dynamic reconfigure dropdown menu newThermalTypes
             descriptor.integer_range = {range};
             descriptor.description =
-                "Value must be: (thermalTypes)\n"
-                "\tthermal_WHITE = 1\n"
-                "\tthermal_BLACK = 17\n"
-                "\tthermal_IRON = 20\n"
-                "\tthermal_COOL = 2\n"
-                "\tthermal_AMBER = 9\n"
-                "\tthermal_INDIGO = 10\n"
-                "\tthermal_TYRIAN = 16\n"
-                "\tthermal_GLORY = 8\n"
-                "\tthermal_ENVY = 16\n"
-                "\tthermal_WHITE_NEW = 100\n"
-                "\tthermal_BLACK_NEW = 101\n"
-                "\tthermal_SPECTRA = 102\n"
-                "\tthermal_PRISM = 103\n"
-                "\tthermal_TYRIAN_NEW = 104\n"
-                "\tthermal_AMBER_NEW = 105\n"
-                "\tthermal_IRON_NEW = 106\n"
-                "\tthermal_HI = 107\n"
-                "\tthermal_HILO = 108";
-            this->declare_parameter("thermal_camera_colormap", 1, descriptor); // see thermalTypes
+                "Value must be: (newThermalTypes)\n"
+                "\tnew_thermal_WHITE_HOT = 0\n"
+                "\tnew_thermal_BLACK_HOT = 1\n"
+                "\tnew_thermal_SPECTRA = 2\n"
+                "\tnew_thermal_PRISM = 3\n"
+                "\tnew_thermal_TYRIAN = 4\n"
+                "\tnew_thermal_IRON = 5\n"
+                "\tnew_thermal_AMBER = 6\n"
+                "\tnew_thermal_HI = 7\n"
+                "\tnew_thermal_GREEN = 8";
+            this->declare_parameter("thermal_camera_colormap", 1, descriptor); // see newThermalTypes
             descriptor.description = "";
             this->declare_parameter("thermal_camera_temperature_filter", false);
             range.set__from_value(-40).set__to_value(200);
@@ -116,8 +111,22 @@ namespace l3cam_ros2
             range.set__from_value(-40).set__to_value(200);
             descriptor.integer_range = {range};
             this->declare_parameter("thermal_camera_temperature_filter_max", 50, descriptor); // -40 - 200
+            range.set__from_value(0).set__to_value(2); // TBD: dynamic reconfigure enumerate thermalPipelines
+            descriptor.integer_range = {range};
+            descriptor.description = 
+                "Value must be: (thermalPipelines)\n"
+                "\tthermal_LITE = 0\n"
+                "\tthermal_LEGACY = 1\n"
+                "\tthermal_SEEK = 2";
+            this->declare_parameter("thermal_camera_pipeline", 1, descriptor); // 0 - 2
+            descriptor.description = "";
+            this->declare_parameter("thermal_camera_temperature_data_udp", false);
             range.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {range};
+            descriptor.description = 
+                "Value must be:\n"
+                "\tprotocol_raw_udp = 0\n"
+                "\tprotocol_gstreamer = 1";
             this->declare_parameter("thermal_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
         }
 
@@ -128,6 +137,8 @@ namespace l3cam_ros2
             thermal_camera_temperature_filter_ = this->get_parameter("thermal_camera_temperature_filter").as_bool();
             thermal_camera_temperature_filter_min_ = this->get_parameter("thermal_camera_temperature_filter_min").as_int();
             thermal_camera_temperature_filter_max_ = this->get_parameter("thermal_camera_temperature_filter_max").as_int();
+            thermal_camera_pipeline_ = this->get_parameter("thermal_camera_pipeline").as_int();
+            thermal_camera_temperature_data_udp_ = this->get_parameter("thermal_camera_temperature_data_udp").as_bool();
             streaming_protocol_ = this->get_parameter("thermal_streaming_protocol").as_int();
         }
 
@@ -158,6 +169,14 @@ namespace l3cam_ros2
                 if (param_name == "thermal_camera_temperature_filter_max" && param.as_int() != thermal_camera_temperature_filter_max_)
                 {
                     callTemperatureFilterRange(thermal_camera_temperature_filter_min_, param.as_int());
+                }
+                if (param_name == "thermal_camera_pipeline" && param.as_int() != thermal_camera_pipeline_)
+                {
+                    callPipeline(param.as_int());
+                }
+                if (param_name == "thermal_camera_temperature_data_udp" && param.as_bool() != thermal_camera_temperature_data_udp_)
+                {
+                    callTemperatureDataUdp(param.as_bool());
                 }
                 if (param_name == "thermal_streaming_protocol" && param.as_int() != streaming_protocol_)
                 {
@@ -225,6 +244,44 @@ namespace l3cam_ros2
 
             auto resultTemperatureFilterRange = client_temperature_filter_range_->async_send_request(
                 requestTemperatureFilterRange, std::bind(&ThermalConfiguration::temperatureFilterRangeResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callPipeline(int pipeline)
+        {
+            while (!client_pipeline_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+            }
+
+            auto requestPipeline = std::make_shared<l3cam_interfaces::srv::ChangeThermalCameraPipeline::Request>();
+            requestPipeline->pipeline = pipeline;
+
+            auto resultPipeline = client_pipeline_->async_send_request(
+                requestPipeline, std::bind(&ThermalConfiguration::pipelineResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callTemperatureDataUdp(bool enabled)
+        {
+            while (!client_temperature_data_udp_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+            }
+
+            auto requestTemperatureDataUdp = std::make_shared<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Request>();
+            requestTemperatureDataUdp->enabled = enabled;
+
+            auto resultTemperatureDataUdp = client_temperature_data_udp_->async_send_request(
+                requestTemperatureDataUdp, std::bind(&ThermalConfiguration::temperatureDataUdpResponseCallback, this, std::placeholders::_1));
         }
 
         void callStreamingProtocol(int protocol)
@@ -332,6 +389,60 @@ namespace l3cam_ros2
             }
         }
 
+        void pipelineResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraPipeline>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    thermal_camera_pipeline_ = this->get_parameter("thermal_camera_pipeline").as_bool();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("thermal_camera_pipeline", thermal_camera_pipeline_));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_thermal_camera_pipeline");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("thermal_camera_pipeline", thermal_camera_pipeline_));
+            }
+        }
+
+        void temperatureDataUdpResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    thermal_camera_temperature_data_udp_ = this->get_parameter("thermal_camera_temperature_data_udp").as_bool();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_data_udp", thermal_camera_temperature_data_udp_));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service enable_thermal_camera_temperature_data_udp");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("thermal_camera_temperature_data_udp", thermal_camera_temperature_data_udp_));
+            }
+        }
+
         void streamingProtocolResponseCallback(
             rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedFuture future)
         {
@@ -378,6 +489,8 @@ namespace l3cam_ros2
         rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraColormap>::SharedPtr client_colormap_;
         rclcpp::Client<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>::SharedPtr client_temperature_filter_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>::SharedPtr client_temperature_filter_range_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangeThermalCameraPipeline>::SharedPtr client_pipeline_;
+        rclcpp::Client<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp>::SharedPtr client_temperature_data_udp_;
         rclcpp::Client<l3cam_interfaces::srv::ChangeStreamingProtocol>::SharedPtr client_streaming_protocol_;
 
         rclcpp::Service<l3cam_interfaces::srv::SensorDisconnected>::SharedPtr srv_sensor_disconnected_;
@@ -388,6 +501,8 @@ namespace l3cam_ros2
         bool thermal_camera_temperature_filter_;
         int thermal_camera_temperature_filter_min_;
         int thermal_camera_temperature_filter_max_;
+        int thermal_camera_pipeline_;
+        bool thermal_camera_temperature_data_udp_;
         int streaming_protocol_;
 
     }; // class ThermalConfiguration

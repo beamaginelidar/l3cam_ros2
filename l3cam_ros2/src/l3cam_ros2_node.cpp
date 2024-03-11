@@ -265,7 +265,12 @@ namespace l3cam_ros2
         this->declare_parameter("bias_value_left", 1380, descriptor);  // 700 - 3500
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
+        descriptor.description = 
+            "Value must be:\n"
+            "\tprotocol_raw_udp = 0\n"
+            "\tprotocol_gstreamer = 1";
         this->declare_parameter("lidar_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.description = "";
         descriptor.read_only = true;
         this->declare_parameter("lidar_rtsp_pipeline", "", descriptor);
         descriptor.read_only = false;
@@ -306,7 +311,12 @@ namespace l3cam_ros2
         this->declare_parameter("polarimetric_camera_exposure_time", 33.5, descriptor); // 33.5 - 66470.6
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
+        descriptor.description = 
+            "Value must be:\n"
+            "\tprotocol_raw_udp = 0\n"
+            "\tprotocol_gstreamer = 1";
         this->declare_parameter("polarimetric_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.description = "";
         descriptor.read_only = true;
         this->declare_parameter("polarimetric_rtsp_pipeline", "", descriptor);
         descriptor.read_only = false;
@@ -356,7 +366,12 @@ namespace l3cam_ros2
         this->declare_parameter("rgb_camera_framerate", 10, descriptor); // 1 - 16
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
+        descriptor.description = 
+            "Value must be:\n"
+            "\tprotocol_raw_udp = 0\n"
+            "\tprotocol_gstreamer = 1";
         this->declare_parameter("rgb_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.description = "";
         descriptor.read_only = true;
         this->declare_parameter("rgb_rtsp_pipeline", "", descriptor);
         descriptor.read_only = false;
@@ -367,30 +382,21 @@ namespace l3cam_ros2
         rcl_interfaces::msg::ParameterDescriptor descriptor;
         descriptor.read_only = true;
         rcl_interfaces::msg::IntegerRange intRange;
-
-        intRange.set__from_value(1).set__to_value(108); // TBD: dynamic reconfigure enumerate thermalTypes
+        thermalPipelines a;
+        intRange.set__from_value(1).set__to_value(108); // TBD: dynamic reconfigure enumerate newThermalTypes
         descriptor.integer_range = {intRange};
         descriptor.description =
-            "Value must be: (thermalTypes)\n"
-            "\tthermal_WHITE = 1\n"
-            "\tthermal_BLACK = 17\n"
-            "\tthermal_IRON = 20\n"
-            "\tthermal_COOL = 2\n"
-            "\tthermal_AMBER = 9\n"
-            "\tthermal_INDIGO = 10\n"
-            "\tthermal_TYRIAN = 16\n"
-            "\tthermal_GLORY = 8\n"
-            "\tthermal_ENVY = 16\n"
-            "\tthermal_WHITE_NEW = 100\n"
-            "\tthermal_BLACK_NEW = 101\n"
-            "\tthermal_SPECTRA = 102\n"
-            "\tthermal_PRISM = 103\n"
-            "\tthermal_TYRIAN_NEW = 104\n"
-            "\tthermal_AMBER_NEW = 105\n"
-            "\tthermal_IRON_NEW = 106\n"
-            "\tthermal_HI = 107\n"
-            "\tthermal_HILO = 108";
-        this->declare_parameter("thermal_camera_colormap", 1, descriptor); // see thermalTypes
+            "Value must be: (newThermalTypes)\n"
+            "\tnew_thermal_WHITE_HOT = 0\n"
+            "\tnew_thermal_BLACK_HOT = 1\n"
+            "\tnew_thermal_SPECTRA = 2\n"
+            "\tnew_thermal_PRISM = 3\n"
+            "\tnew_thermal_TYRIAN = 4\n"
+            "\tnew_thermal_IRON = 5\n"
+            "\tnew_thermal_AMBER = 6\n"
+            "\tnew_thermal_HI = 7\n"
+            "\tnew_thermal_GREEN = 8";
+        this->declare_parameter("thermal_camera_colormap", 1, descriptor); // see newThermalTypes
         descriptor.description = "";
         this->declare_parameter("thermal_camera_temperature_filter", false);
         intRange.set__from_value(-40).set__to_value(200);
@@ -399,9 +405,24 @@ namespace l3cam_ros2
         intRange.set__from_value(-40).set__to_value(200);
         descriptor.integer_range = {intRange};
         this->declare_parameter("thermal_camera_temperature_filter_max", 50, descriptor); // -40 - 200
+        intRange.set__from_value(0).set__to_value(2); // TBD: dynamic reconfigure enumerate thermalPipelines
+        descriptor.integer_range = {intRange};
+        descriptor.description = 
+            "Value must be: (thermalPipelines)\n"
+            "\tthermal_LITE = 0\n"
+            "\tthermal_LEGACY = 1\n"
+            "\tthermal_SEEK = 2";
+        this->declare_parameter("thermal_camera_pipeline", 1, descriptor); // 0 - 2
+        descriptor.description = "";
+        this->declare_parameter("thermal_camera_temperature_data_udp", false);
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
+        descriptor.description = 
+            "Value must be:\n"
+            "\tprotocol_raw_udp = 0\n"
+            "\tprotocol_gstreamer = 1";
         this->declare_parameter("thermal_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.description = "";
         descriptor.read_only = true;
         this->declare_parameter("thermal_rtsp_pipeline", "", descriptor);
         descriptor.read_only = false;
@@ -494,7 +515,12 @@ namespace l3cam_ros2
         this->declare_parameter("allied_wide_camera_max_driver_buffers_count", 64, descriptor); // 1 - 4096
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
+        descriptor.description = 
+            "Value must be:\n"
+            "\tprotocol_raw_udp = 0\n"
+            "\tprotocol_gstreamer = 1";
         this->declare_parameter("allied_wide_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.description = "";
         descriptor.read_only = true;
         this->declare_parameter("allied_wide_rtsp_pipeline", "", descriptor);
         descriptor.read_only = false;
@@ -588,7 +614,12 @@ namespace l3cam_ros2
         this->declare_parameter("allied_narrow_camera_max_driver_buffers_count", 64, descriptor); // 1 - 4096
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
+        descriptor.description = 
+            "Value must be:\n"
+            "\tprotocol_raw_udp = 0\n"
+            "\tprotocol_gstreamer = 1";
         this->declare_parameter("allied_narrow_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
+        descriptor.description = "";
         descriptor.read_only = true;
         this->declare_parameter("allied_narrow_rtsp_pipeline", "", descriptor);
         descriptor.read_only = false;
@@ -612,6 +643,9 @@ namespace l3cam_ros2
         srv_get_local_server_address_ = this->create_service<l3cam_interfaces::srv::GetLocalServerAddress>(
             "get_local_server_address",
             std::bind(&L3Cam::getLocalServerAddress, this, std::placeholders::_1, std::placeholders::_2));
+        srv_get_device_info_ = this->create_service<l3cam_interfaces::srv::GetDeviceInfo>(
+            "get_device_info",
+            std::bind(&L3Cam::getDeviceInfo, this, std::placeholders::_1, std::placeholders::_2));
         srv_get_device_status_ = this->create_service<l3cam_interfaces::srv::GetDeviceStatus>(
             "get_device_status",
             std::bind(&L3Cam::getDeviceStatus, this, std::placeholders::_1, std::placeholders::_2));
@@ -785,12 +819,18 @@ namespace l3cam_ros2
         srv_change_thermal_camera_colormap_ = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraColormap>(
             "change_thermal_camera_colormap",
             std::bind(&L3Cam::changeThermalCameraColormap, this, std::placeholders::_1, std::placeholders::_2));
-        srv_change_thermal_camera_temperature_filter_ = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>(
-            "change_thermal_camera_temperature_filter",
-            std::bind(&L3Cam::changeThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
         srv_enable_thermal_camera_temperature_filter_ = this->create_service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>(
             "enable_thermal_camera_temperature_filter",
             std::bind(&L3Cam::enableThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
+        srv_change_thermal_camera_temperature_filter_ = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>(
+            "change_thermal_camera_temperature_filter",
+            std::bind(&L3Cam::changeThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
+        srv_change_thermal_camera_pipeline_ = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraPipeline>(
+            "change_thermal_camera_pipeline",
+            std::bind(&L3Cam::changeThermalCameraPipeline, this, std::placeholders::_1, std::placeholders::_2));
+        srv_enable_thermal_camera_temperature_data_udp_ = this->create_service<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp>(
+            "enable_thermal_camera_temperature_data_udp",
+            std::bind(&L3Cam::enableThermalCameraTemperatureDataUdp, this, std::placeholders::_1, std::placeholders::_2));
 
         client_thermal_stream_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_stream_disconnected");
         client_thermal_configuration_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("thermal_configuration_disconnected");
@@ -1173,6 +1213,12 @@ namespace l3cam_ros2
                                                                    this->get_parameter("thermal_camera_temperature_filter_min").as_int(),
                                                                    this->get_parameter("thermal_camera_temperature_filter_max").as_int()),
                           "thermal_camera_temperature_filter_range");
+        printDefaultError(CHANGE_THERMAL_PIPELINE(m_devices[0],
+                                                  this->get_parameter("thermal_camera_pipeline").as_int()),
+                          "thermal_camera_pipeline");
+        printDefaultError(ENABLE_THERMAL_TEMPERATURE_DATA_UDP(m_devices[0],
+                                                              this->get_parameter("thermal_camera_temperature_data_udp").as_bool()),
+                          "thermal_camera_temperature_data_udp");
         if (this->get_parameter("thermal_streaming_protocol").as_int() == 1)
         {
             m_thermal_sensor->protocol = protocol_gstreamer;
@@ -1414,6 +1460,16 @@ namespace l3cam_ros2
     {
         ROS2_BMG_UNUSED(req);
         res->local_ip_address = GET_LOCAL_SERVER_ADDRESS(m_devices[0]);
+    }
+
+    void L3Cam::getDeviceInfo(const std::shared_ptr<l3cam_interfaces::srv::GetDeviceInfo::Request> req,
+                              std::shared_ptr<l3cam_interfaces::srv::GetDeviceInfo::Response> res)
+    {
+        ROS2_BMG_UNUSED(req);
+        res->ip_address = std::string(m_devices[0].ip_address);
+        res->model = m_devices[0].model;
+        res->serial_number = std::string(m_devices[0].serial_number);
+        res->app_version = std::string(m_devices[0].app_version);
     }
 
     void L3Cam::getDeviceStatus(const std::shared_ptr<l3cam_interfaces::srv::GetDeviceStatus::Request> req,
@@ -1812,16 +1868,28 @@ namespace l3cam_ros2
         res->error = CHANGE_THERMAL_CAMERA_COLORMAP(m_devices[0], (thermalTypes)req->colormap);
     }
 
+    void L3Cam::enableThermalCameraTemperatureFilter(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter::Request> req,
+                                                     std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter::Response> res)
+    {
+        res->error = ENABLE_THERMAL_CAMERA_TEMPERATURE_FILTER(m_devices[0], req->enabled);
+    }
+
     void L3Cam::changeThermalCameraTemperatureFilter(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter::Request> req,
                                                      std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter::Response> res)
     {
         res->error = CHANGE_THERMAL_CAMERA_TEMPERATURE_FILTER(m_devices[0], req->min_temperature, req->max_temperature);
     }
 
-    void L3Cam::enableThermalCameraTemperatureFilter(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter::Request> req,
-                                                     std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter::Response> res)
+    void L3Cam::changeThermalCameraPipeline(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraPipeline::Request> req,
+                                                     std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraPipeline::Response> res)
     {
-        res->error = ENABLE_THERMAL_CAMERA_TEMPERATURE_FILTER(m_devices[0], req->enabled);
+        res->error = CHANGE_THERMAL_PIPELINE(m_devices[0], req->pipeline);
+    }
+
+    void L3Cam::enableThermalCameraTemperatureDataUdp(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Request> req,
+                                                     std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Response> res)
+    {
+        res->error = ENABLE_THERMAL_TEMPERATURE_DATA_UDP(m_devices[0], req->enabled);
     }
 
     // Allied

@@ -186,6 +186,10 @@ namespace l3cam_ros2
             this->declare_parameter("allied_narrow_camera_intensity_controller_target", 50.0, descriptor); // 10 - 90
             intRange.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {intRange};
+            descriptor.description = 
+                "Value must be:\n"
+                "\tprotocol_raw_udp = 0\n"
+                "\tprotocol_gstreamer = 1";
             this->declare_parameter("allied_narrow_streaming_protocol", 0, descriptor); // 0(protocol_raw_udp), 1(protocol_gstreamer)
         }
 

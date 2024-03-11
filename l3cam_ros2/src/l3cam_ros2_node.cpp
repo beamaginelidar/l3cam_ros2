@@ -1204,7 +1204,7 @@ namespace l3cam_ros2
     void L3Cam::loadThermalDefaultParams()
     {
         printDefaultError(CHANGE_THERMAL_CAMERA_COLORMAP(m_devices[0],
-                                                         (thermalTypes)this->get_parameter("thermal_camera_colormap").as_int()),
+                                                         this->get_parameter("thermal_camera_colormap").as_int()),
                           "thermal_camera_colormap");
         printDefaultError(ENABLE_THERMAL_CAMERA_TEMPERATURE_FILTER(m_devices[0],
                                                                    this->get_parameter("thermal_camera_temperature_filter").as_bool()),
@@ -1865,7 +1865,7 @@ namespace l3cam_ros2
     void L3Cam::changeThermalCameraColormap(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraColormap::Request> req,
                                             std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraColormap::Response> res)
     {
-        res->error = CHANGE_THERMAL_CAMERA_COLORMAP(m_devices[0], (thermalTypes)req->colormap);
+        res->error = CHANGE_THERMAL_CAMERA_COLORMAP(m_devices[0], req->colormap);
     }
 
     void L3Cam::enableThermalCameraTemperatureFilter(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter::Request> req,

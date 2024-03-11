@@ -1,0 +1,5 @@
+---
+string ip_address
+uint8 model
+string serial_number
+string app_version

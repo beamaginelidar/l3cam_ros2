@@ -267,7 +267,7 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 
 | Parameter                               | Type   | Default | Range                    |
 | --------------------------------------- | ------ | ------- | ------------------------ |
-| `thermal_camera_colormap`               | enum   | 1       | see `thermalTypes`       |
+| `thermal_camera_colormap`               | enum   | 1       | see `newThermalTypes`    |
 | `thermal_camera_temperature_filter`     | bool   | false   |                          |
 | `thermal_camera_temperature_filter_min` | int    | 0       | [-40, 200]               |
 | `thermal_camera_temperature_filter_max` | int    | 50      | [-40, 200]               |

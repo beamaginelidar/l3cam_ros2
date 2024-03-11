@@ -173,6 +173,11 @@ void *ImageThread(void *functionData)
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC1, image_pointer);
             }
+            if (m_image_channels == 2)
+            {
+                img_data = cv::Mat(m_image_height, m_image_width, CV_8UC2, image_pointer);
+                cv::cvtColor(img_data, img_data, cv::COLOR_YUV2BGR_Y422);
+            }
             else if (m_image_channels == 3)
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);

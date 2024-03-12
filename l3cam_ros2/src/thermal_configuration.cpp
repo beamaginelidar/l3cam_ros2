@@ -399,7 +399,7 @@ namespace l3cam_ros2
                 if (!error)
                 {
                     // Parameter changed successfully, save value
-                    thermal_camera_pipeline_ = this->get_parameter("thermal_camera_pipeline").as_bool();
+                    thermal_camera_pipeline_ = this->get_parameter("thermal_camera_pipeline").as_int();
                 }
                 else
                 {

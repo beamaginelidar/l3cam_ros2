@@ -382,7 +382,6 @@ namespace l3cam_ros2
         rcl_interfaces::msg::ParameterDescriptor descriptor;
         descriptor.read_only = true;
         rcl_interfaces::msg::IntegerRange intRange;
-        thermalPipelines a;
         intRange.set__from_value(1).set__to_value(108); // TBD: dynamic reconfigure enumerate newThermalTypes
         descriptor.integer_range = {intRange};
         descriptor.description =

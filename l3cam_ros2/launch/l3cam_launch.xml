@@ -23,10 +23,10 @@
 
         <!-- Lidar configuration -->
         <arg name="pointcloud_color" default="0" /> <!-- see pointCloudColor -->
-        <arg name="pointcloud_color_range_minimum" default="0" /> <!-- 0 - 400000 -->
-        <arg name="pointcloud_color_range_maximum" default="400000" /> <!-- 0 - 400000 -->
-        <arg name="distance_range_minimum" default="0" /> <!-- 0 - 400000 -->
-        <arg name="distance_range_maximum" default="400000" /> <!-- 0 - 400000 -->
+        <arg name="pointcloud_color_range_minimum" default="0" /> <!-- 0 - 300000 -->
+        <arg name="pointcloud_color_range_maximum" default="300000" /> <!-- 0 - 300000 -->
+        <arg name="distance_range_minimum" default="0" /> <!-- 0 - 300000 -->
+        <arg name="distance_range_maximum" default="300000" /> <!-- 0 - 300000 -->
         <arg name="auto_bias" default="true" />
         <arg name="bias_value_right" default="1580" /> <!-- 700 - 3500 -->
         <arg name="bias_value_left" default="1380" /> <!-- 700 - 3500 -->

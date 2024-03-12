@@ -246,18 +246,18 @@ namespace l3cam_ros2
             "\tALLIED_WIDE_FUSION = 13";
         this->declare_parameter("pointcloud_color", 0, descriptor); // see pointCloudColor
         descriptor.description = "";
-        intRange.set__from_value(0).set__to_value(400000);
+        intRange.set__from_value(0).set__to_value(300000);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("pointcloud_color_range_minimum", 0, descriptor); // 0 - 400000
-        intRange.set__from_value(0).set__to_value(400000);
+        this->declare_parameter("pointcloud_color_range_minimum", 0, descriptor); // 0 - 300000
+        intRange.set__from_value(0).set__to_value(300000);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("pointcloud_color_range_maximum", 400000, descriptor); // 0 - 400000
-        intRange.set__from_value(0).set__to_value(400000);
+        this->declare_parameter("pointcloud_color_range_maximum", 300000, descriptor); // 0 - 300000
+        intRange.set__from_value(0).set__to_value(300000);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("distance_range_minimum", 0, descriptor); // 0 - 400000
-        intRange.set__from_value(0).set__to_value(400000);
+        this->declare_parameter("distance_range_minimum", 0, descriptor); // 0 - 300000
+        intRange.set__from_value(0).set__to_value(300000);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("distance_range_maximum", 400000, descriptor); // 0 - 400000
+        this->declare_parameter("distance_range_maximum", 300000, descriptor); // 0 - 300000
         this->declare_parameter("auto_bias", true);
         intRange.set__from_value(700).set__to_value(3500);
         descriptor.integer_range = {intRange};

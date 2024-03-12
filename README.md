@@ -217,10 +217,10 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | Parameter                        | Type   | Default | Range                    |
 | -------------------------------- | ------ | ------- | ------------------------ |
 | `pointcloud_color`               | enum   | 0       | see `pointCloudColor`    |
-| `pointcloud_color_range_minimum` | int    | 0       | [0, 400000]              |
-| `pointcloud_color_range_maximum` | int    | 400000  | [0, 400000]              |
-| `distance_range_minimum`         | int    | 0       | [0, 400000]              |
-| `distance_range_maximum`         | int    | 400000  | [0, 400000]              |
+| `pointcloud_color_range_minimum` | int    | 0       | [0, 300000]              |
+| `pointcloud_color_range_maximum` | int    | 300000  | [0, 300000]              |
+| `distance_range_minimum`         | int    | 0       | [0, 300000]              |
+| `distance_range_maximum`         | int    | 300000  | [0, 300000]              |
 | `auto_bias`                      | bool   | true    |                          |
 | `bias_value_right`               | int    | 1580    | [700, 3500]              |
 | `bias_value_left`                | int    | 1380    | [700, 3500]              |

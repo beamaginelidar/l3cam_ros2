@@ -61,7 +61,7 @@ set(srv_files
   "srv/ChangeThermalCameraColormap.srv"
   "srv/EnableThermalCameraTemperatureFilter.srv"
   "srv/ChangeThermalCameraTemperatureFilter.srv"
-  "srv/ChangeThermalCameraPipeline.srv"
+  "srv/ChangeThermalCameraProcessingPipeline.srv"
   "srv/EnableThermalCameraTemperatureDataUdp.srv"
   "srv/ChangeAlliedCameraExposureTime.srv"
   "srv/EnableAlliedCameraAutoExposureTime.srv"

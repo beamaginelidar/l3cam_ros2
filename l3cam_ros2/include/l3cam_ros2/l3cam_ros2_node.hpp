@@ -82,7 +82,7 @@
 #include "l3cam_interfaces/srv/change_thermal_camera_colormap.hpp"
 #include "l3cam_interfaces/srv/enable_thermal_camera_temperature_filter.hpp"
 #include "l3cam_interfaces/srv/change_thermal_camera_temperature_filter.hpp"
-#include "l3cam_interfaces/srv/change_thermal_camera_pipeline.hpp"
+#include "l3cam_interfaces/srv/change_thermal_camera_processing_pipeline.hpp"
 #include "l3cam_interfaces/srv/enable_thermal_camera_temperature_data_udp.hpp"
 
 #include "l3cam_interfaces/srv/change_allied_camera_exposure_time.hpp"
@@ -218,7 +218,7 @@ namespace l3cam_ros2
         void changeThermalCameraColormap(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraColormap::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraColormap::Response> res);
         void enableThermalCameraTemperatureFilter(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter::Request> req, std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter::Response> res);
         void changeThermalCameraTemperatureFilter(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter::Response> res);
-        void changeThermalCameraPipeline(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraPipeline::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraPipeline::Response> res);
+        void changeThermalCameraProcessingPipeline(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline::Response> res);
         void enableThermalCameraTemperatureDataUdp(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Request> req, std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Response> res);
         void changeAlliedCameraExposureTime(const std::shared_ptr<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime::Response> res);
         void enableAlliedCameraAutoExposureTime(const std::shared_ptr<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime::Request> req, std::shared_ptr<l3cam_interfaces::srv::EnableAlliedCameraAutoExposureTime::Response> res);
@@ -320,7 +320,7 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraColormap>::SharedPtr srv_change_thermal_camera_colormap_;
         rclcpp::Service<l3cam_interfaces::srv::EnableThermalCameraTemperatureFilter>::SharedPtr srv_enable_thermal_camera_temperature_filter_;
         rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>::SharedPtr srv_change_thermal_camera_temperature_filter_;
-        rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraPipeline>::SharedPtr srv_change_thermal_camera_pipeline_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline>::SharedPtr srv_change_thermal_camera_processing_pipeline_;
         rclcpp::Service<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp>::SharedPtr srv_enable_thermal_camera_temperature_data_udp_;
 
         rclcpp::Service<l3cam_interfaces::srv::ChangeAlliedCameraExposureTime>::SharedPtr srv_change_allied_camera_exposure_time_;

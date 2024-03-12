@@ -411,7 +411,7 @@ namespace l3cam_ros2
             "\tthermal_LITE = 0\n"
             "\tthermal_LEGACY = 1\n"
             "\tthermal_SEEK = 2";
-        this->declare_parameter("thermal_camera_pipeline", 1, descriptor); // 0 - 2
+        this->declare_parameter("thermal_camera_processing_pipeline", 1, descriptor); // 0 - 2
         descriptor.description = "";
         this->declare_parameter("thermal_camera_temperature_data_udp", false);
         intRange.set__from_value(0).set__to_value(1);
@@ -824,9 +824,9 @@ namespace l3cam_ros2
         srv_change_thermal_camera_temperature_filter_ = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraTemperatureFilter>(
             "change_thermal_camera_temperature_filter",
             std::bind(&L3Cam::changeThermalCameraTemperatureFilter, this, std::placeholders::_1, std::placeholders::_2));
-        srv_change_thermal_camera_pipeline_ = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraPipeline>(
-            "change_thermal_camera_pipeline",
-            std::bind(&L3Cam::changeThermalCameraPipeline, this, std::placeholders::_1, std::placeholders::_2));
+        srv_change_thermal_camera_processing_pipeline_ = this->create_service<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline>(
+            "change_thermal_camera_processing_pipeline",
+            std::bind(&L3Cam::changeThermalCameraProcessingPipeline, this, std::placeholders::_1, std::placeholders::_2));
         srv_enable_thermal_camera_temperature_data_udp_ = this->create_service<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp>(
             "enable_thermal_camera_temperature_data_udp",
             std::bind(&L3Cam::enableThermalCameraTemperatureDataUdp, this, std::placeholders::_1, std::placeholders::_2));
@@ -1212,10 +1212,10 @@ namespace l3cam_ros2
                                                                    this->get_parameter("thermal_camera_temperature_filter_min").as_int(),
                                                                    this->get_parameter("thermal_camera_temperature_filter_max").as_int()),
                           "thermal_camera_temperature_filter_range");
-        printDefaultError(CHANGE_THERMAL_PIPELINE(m_devices[0],
-                                                  this->get_parameter("thermal_camera_pipeline").as_int()),
-                          "thermal_camera_pipeline");
-        printDefaultError(ENABLE_THERMAL_TEMPERATURE_DATA_UDP(m_devices[0],
+        printDefaultError(CHANGE_THERMAL_CAMERA_PROCESSING_PIPELINE(m_devices[0],
+                                                  this->get_parameter("thermal_camera_processing_pipeline").as_int()),
+                          "thermal_camera_processing_pipeline");
+        printDefaultError(ENABLE_THERMAL_CAMERA_TEMPERATURE_DATA_UDP(m_devices[0],
                                                               this->get_parameter("thermal_camera_temperature_data_udp").as_bool()),
                           "thermal_camera_temperature_data_udp");
         if (this->get_parameter("thermal_streaming_protocol").as_int() == 1)
@@ -1879,16 +1879,16 @@ namespace l3cam_ros2
         res->error = CHANGE_THERMAL_CAMERA_TEMPERATURE_FILTER(m_devices[0], req->min_temperature, req->max_temperature);
     }
 
-    void L3Cam::changeThermalCameraPipeline(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraPipeline::Request> req,
-                                                     std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraPipeline::Response> res)
+    void L3Cam::changeThermalCameraProcessingPipeline(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline::Request> req,
+                                                     std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline::Response> res)
     {
-        res->error = CHANGE_THERMAL_PIPELINE(m_devices[0], req->pipeline);
+        res->error = CHANGE_THERMAL_CAMERA_PROCESSING_PIPELINE(m_devices[0], req->pipeline);
     }
 
     void L3Cam::enableThermalCameraTemperatureDataUdp(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Request> req,
                                                      std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Response> res)
     {
-        res->error = ENABLE_THERMAL_TEMPERATURE_DATA_UDP(m_devices[0], req->enabled);
+        res->error = ENABLE_THERMAL_CAMERA_TEMPERATURE_DATA_UDP(m_devices[0], req->enabled);
     }
 
     // Allied

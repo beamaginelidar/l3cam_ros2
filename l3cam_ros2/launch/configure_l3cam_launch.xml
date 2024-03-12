@@ -44,7 +44,7 @@
     <arg name="thermal_camera_temperature_filter" default="false" />
     <arg name="thermal_camera_temperature_filter_min" default="0" />
     <arg name="thermal_camera_temperature_filter_max" default="50" />
-    <arg name="thermal_camera_pipeline" default="1" />
+    <arg name="thermal_camera_processing_pipeline" default="1" />
     <arg name="thermal_camera_temperature_data_udp" default="false" />
     <arg name="thermal_streaming_protocol" default="0" />
 
@@ -146,7 +146,7 @@
         <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" type="bool" />
         <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" type="int" />
         <param name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" type="int" />
-        <param name="thermal_camera_pipeline" value="$(var thermal_camera_pipeline)" type="int" />
+        <param name="thermal_camera_processing_pipeline" value="$(var thermal_camera_processing_pipeline)" type="int" />
         <param name="thermal_camera_temperature_data_udp" value="$(var thermal_camera_temperature_data_udp)" type="bool" />
         <param name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" type="int" />
     </node>

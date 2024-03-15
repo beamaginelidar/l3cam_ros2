@@ -2,7 +2,7 @@
 
 All notable changes to the l3cam_ros2 package will be documented in this file.
 
-## [1.0.1] - present (unreleased)
+## [1.0.1] - 15-03-2024
 
 ### Changed 
 

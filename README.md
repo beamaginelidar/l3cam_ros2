@@ -1,6 +1,6 @@
 # l3cam_ros2
 
-This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](https://beamagine.com/). The driver relies on the library `libL3Cam 0.1.15` provided by Beamagine as part of the [L3Cam SDK](https://github.com/beamaginelidar/libl3cam.git). For more info on the L3Cam check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf).
+This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](https://beamagine.com/). The driver relies on the library `libL3Cam 0.1.17` provided by Beamagine as part of the [L3Cam SDK](https://github.com/beamaginelidar/libl3cam.git). For more info on the L3Cam check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf).
 
 If you are looking for this package for ROS, go to the [l3cam_ros](https://github.com/beamaginelidar/l3cam_ros) package.
 
@@ -12,7 +12,7 @@ This package is supported only on Linux systems and has only been tested with RO
 
 First, you will need to install the L3Cam SDK.
 
-Download the package from Beamagine's [L3Cam SDK 0.1.15 release](https://github.com/beamaginelidar/libl3cam/releases) repository and install the required package depending on your hardware architecture:
+Download the package from Beamagine's [L3Cam SDK 0.1.17 release](https://github.com/beamaginelidar/libl3cam/releases) repository and install the required package depending on your hardware architecture:
 
 ```
 sudo dpkg -i <PACKAGE>

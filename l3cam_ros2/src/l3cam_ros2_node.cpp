@@ -52,7 +52,7 @@ namespace l3cam_ros2
         declareParameters();
 
         // L3Cam node status
-        m_status = LibL3CamStatus::undefined;
+        m_status = LibL3CamStatus::undefined_status;
         srv_libl3cam_status_ = this->create_service<l3cam_interfaces::srv::LibL3camStatus>(
             "libl3cam_status",
             std::bind(&L3Cam::libL3camStatus, this, std::placeholders::_1, std::placeholders::_2));
@@ -98,7 +98,7 @@ namespace l3cam_ros2
 
         if (error)
             return error;
-        m_status = LibL3CamStatus::connected;
+        m_status = LibL3CamStatus::connected_status;
         RCLCPP_INFO_STREAM(this->get_logger(), "Device found " << std::string(m_devices[0].ip_address)
                                                                << ", model " << (int)m_devices[0].model
                                                                << ", serial number " << std::string(m_devices[0].serial_number)
@@ -137,6 +137,9 @@ namespace l3cam_ros2
             case sensor_allied_narrow:
                 m_allied_narrow_sensor = &m_av_sensors[i];
                 break;
+            case sensor_econ_wide:
+                m_econ_wide_sensor = &m_av_sensors[i];
+                break;
             }
         }
 
@@ -157,7 +160,7 @@ namespace l3cam_ros2
             return error;
         }
 
-        m_status = LibL3CamStatus::started;
+        m_status = LibL3CamStatus::started_status;
         RCLCPP_INFO(this->get_logger(), "Device started");
 
         loadDefaultParams();
@@ -166,7 +169,7 @@ namespace l3cam_ros2
         if (error)
             return error;
 
-        m_status = LibL3CamStatus::streaming;
+        m_status = LibL3CamStatus::streaming_status;
         RCLCPP_INFO(this->get_logger(), "Device streaming ready\n");
 
         return L3CAM_OK;
@@ -254,15 +257,20 @@ namespace l3cam_ros2
         this->declare_parameter("pointcloud_color_range_maximum", 300000, descriptor); // 0 - 300000
         intRange.set__from_value(0).set__to_value(300000);
         descriptor.integer_range = {intRange};
-        this->declare_parameter("distance_range_minimum", 0, descriptor); // 0 - 300000
+        this->declare_parameter("distance_range_minimum", 1500, descriptor); // 0 - 300000
         intRange.set__from_value(0).set__to_value(300000);
         descriptor.integer_range = {intRange};
         this->declare_parameter("distance_range_maximum", 300000, descriptor); // 0 - 300000
+        this->declare_parameter("bias_short_range", true);
         this->declare_parameter("auto_bias", true);
         intRange.set__from_value(700).set__to_value(3500);
         descriptor.integer_range = {intRange};
         this->declare_parameter("bias_value_right", 1580, descriptor); // 700 - 3500
         this->declare_parameter("bias_value_left", 1380, descriptor);  // 700 - 3500
+        intRange.set__from_value(0).set__to_value(100);
+        descriptor.integer_range = {intRange};
+        this->declare_parameter("autobias_value_right", 50, descriptor); // 0 - 100
+        this->declare_parameter("autobias_value_left", 50, descriptor);  // 0 - 100
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
         descriptor.description = 
@@ -382,7 +390,7 @@ namespace l3cam_ros2
         rcl_interfaces::msg::ParameterDescriptor descriptor;
         descriptor.read_only = true;
         rcl_interfaces::msg::IntegerRange intRange;
-        intRange.set__from_value(1).set__to_value(108); // TBD: dynamic reconfigure enumerate newThermalTypes
+        intRange.set__from_value(0).set__to_value(8); // TBD: dynamic reconfigure enumerate newThermalTypes
         descriptor.integer_range = {intRange};
         descriptor.description =
             "Value must be: (newThermalTypes)\n"
@@ -728,12 +736,21 @@ namespace l3cam_ros2
         srv_change_distance_range_ = this->create_service<l3cam_interfaces::srv::ChangeDistanceRange>(
             "change_distance_range",
             std::bind(&L3Cam::changeDistanceRange, this, std::placeholders::_1, std::placeholders::_2));
+        srv_set_bias_short_range_ = this->create_service<l3cam_interfaces::srv::SetBiasShortRange>(
+            "set_bias_short_range",
+            std::bind(&L3Cam::setBiasShortRange, this, std::placeholders::_1, std::placeholders::_2));
         srv_enable_auto_bias_ = this->create_service<l3cam_interfaces::srv::EnableAutoBias>(
             "enable_auto_bias",
             std::bind(&L3Cam::enableAutoBias, this, std::placeholders::_1, std::placeholders::_2));
         srv_change_bias_value_ = this->create_service<l3cam_interfaces::srv::ChangeBiasValue>(
             "change_bias_value",
             std::bind(&L3Cam::changeBiasValue, this, std::placeholders::_1, std::placeholders::_2));
+        srv_change_autobias_value_ = this->create_service<l3cam_interfaces::srv::ChangeAutobiasValue>(
+            "change_autobias_value",
+            std::bind(&L3Cam::changeAutobiasValue, this, std::placeholders::_1, std::placeholders::_2));
+        srv_get_autobias_value_ = this->create_service<l3cam_interfaces::srv::GetAutobiasValue>(
+            "get_autobias_value",
+            std::bind(&L3Cam::getAutobiasValue, this, std::placeholders::_1, std::placeholders::_2));
 
         client_lidar_stream_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("lidar_stream_disconnected");
         client_lidar_configuration_disconnected_ = this->create_client<l3cam_interfaces::srv::SensorDisconnected>("lidar_configuration_disconnected");
@@ -1074,11 +1091,19 @@ namespace l3cam_ros2
                                                 this->get_parameter("distance_range_minimum").as_int(),
                                                 this->get_parameter("distance_range_maximum").as_int()),
                           "distance_range");
-        ENABLE_AUTO_BIAS(m_devices[0], this->get_parameter("auto_bias").as_bool());
+        printDefaultError(SET_BIAS_SHORT_RANGE(m_devices[0], this->get_parameter("bias_short_range").as_bool()),
+                          "distance_range");
+        printDefaultError(ENABLE_AUTO_BIAS(m_devices[0], this->get_parameter("auto_bias").as_bool()), 
+                          "auto_bias");
         if (!this->get_parameter("auto_bias").as_bool())
         { //! Values might not match after disabling auto_bias
-            CHANGE_BIAS_VALUE(m_devices[0], 1, this->get_parameter("bias_value_right").as_int());
-            CHANGE_BIAS_VALUE(m_devices[0], 2, this->get_parameter("bias_value_left").as_int());
+            printDefaultError(CHANGE_BIAS_VALUE(m_devices[0], 1, this->get_parameter("bias_value_right").as_int()), "bias_value_right");
+            printDefaultError(CHANGE_BIAS_VALUE(m_devices[0], 2, this->get_parameter("bias_value_left").as_int()), "bias_value_left");
+        }
+        else
+        {
+            printDefaultError(CHANGE_AUTOBIAS_VALUE(m_devices[0], 1, this->get_parameter("autobias_value_right").as_int()), "autobias_value_right");
+            printDefaultError(CHANGE_AUTOBIAS_VALUE(m_devices[0], 2, this->get_parameter("autobias_value_left").as_int()), "autobias_value_left");
         }
         if (this->get_parameter("lidar_streaming_protocol").as_int() == 1)
         {
@@ -1431,16 +1456,16 @@ namespace l3cam_ros2
         res->error = STOP_STREAM(m_devices[0]);
         if (!res->error)
         {
-            m_status = LibL3CamStatus::started;
+            m_status = LibL3CamStatus::started_status;
             res->error = STOP_DEVICE(m_devices[0]);
         }
         if (!res->error)
         {
-            m_status = LibL3CamStatus::connected;
+            m_status = LibL3CamStatus::connected_status;
             res->error = TERMINATE(m_devices[0]);
             if (!res->error)
             {
-                m_status = LibL3CamStatus::terminated;
+                m_status = LibL3CamStatus::terminated_status;
                 disconnectAll(0);
                 rclcpp::shutdown();
             }
@@ -1499,7 +1524,7 @@ namespace l3cam_ros2
                                         std::shared_ptr<l3cam_interfaces::srv::ChangeStreamingProtocol::Response> res)
     {
         STOP_STREAM(m_devices[0]);
-        m_status = LibL3CamStatus::started;
+        m_status = LibL3CamStatus::started_status;
 
         streamingProtocols protocol;
         switch (req->protocol)
@@ -1517,34 +1542,38 @@ namespace l3cam_ros2
 
         switch (req->sensor_type)
         {
-        case ((int)sensorTypes::sensor_lidar):
+        case (int)sensorTypes::sensor_lidar:
             m_lidar_sensor->protocol = protocol;
             res->error = CHANGE_STREAMING_PROTOCOL(m_devices[0], m_lidar_sensor);
             break;
-        case ((int)sensorTypes::sensor_pol):
+        case (int)sensorTypes::sensor_pol:
             m_polarimetric_sensor->protocol = protocol;
             res->error = CHANGE_STREAMING_PROTOCOL(m_devices[0], m_polarimetric_sensor);
             break;
-        case ((int)sensorTypes::sensor_econ_rgb):
+        case (int)sensorTypes::sensor_econ_rgb:
             m_rgb_sensor->protocol = protocol;
             res->error = CHANGE_STREAMING_PROTOCOL(m_devices[0], m_rgb_sensor);
             break;
-        case ((int)sensorTypes::sensor_thermal):
+        case (int)sensorTypes::sensor_thermal:
             m_thermal_sensor->protocol = protocol;
             res->error = CHANGE_STREAMING_PROTOCOL(m_devices[0], m_thermal_sensor);
             break;
-        case ((int)sensorTypes::sensor_allied_wide):
+        case (int)sensorTypes::sensor_allied_wide:
             m_allied_wide_sensor->protocol = protocol;
             res->error = CHANGE_STREAMING_PROTOCOL(m_devices[0], m_allied_wide_sensor);
             break;
-        case ((int)sensorTypes::sensor_allied_narrow):
+        case (int)sensorTypes::sensor_allied_narrow:
             m_allied_narrow_sensor->protocol = protocol;
             res->error = CHANGE_STREAMING_PROTOCOL(m_devices[0], m_allied_narrow_sensor);
+            break;
+        case (int)sensorTypes::sensor_econ_wide:
+            m_econ_wide_sensor->protocol = protocol;
+            res->error = CHANGE_STREAMING_PROTOCOL(m_devices[0], m_econ_wide_sensor);
             break;
         }
 
         START_STREAM(m_devices[0]);
-        m_status = LibL3CamStatus::streaming;
+        m_status = LibL3CamStatus::streaming_status;
     }
 
     void L3Cam::getRtspPipeline(const std::shared_ptr<l3cam_interfaces::srv::GetRtspPipeline::Request> req,
@@ -1575,6 +1604,10 @@ namespace l3cam_ros2
             break;
         case (int)sensorTypes::sensor_allied_narrow:
             res->error = GET_RTSP_PIPELINE(m_devices[0], *m_allied_narrow_sensor, &pipeline);
+            res->pipeline = std::string(pipeline);
+            break;
+        case (int)sensorTypes::sensor_econ_wide:
+            res->error = GET_RTSP_PIPELINE(m_devices[0], *m_econ_wide_sensor, &pipeline);
             res->pipeline = std::string(pipeline);
             break;
         }
@@ -1622,7 +1655,7 @@ namespace l3cam_ros2
         res->error = START_DEVICE(m_devices[0]);
         if (!res->error)
         {
-            m_status = LibL3CamStatus::started;
+            m_status = LibL3CamStatus::started_status;
         }
     }
 
@@ -1633,11 +1666,11 @@ namespace l3cam_ros2
         res->error = STOP_STREAM(m_devices[0]);
         if (!res->error)
         {
-            m_status = LibL3CamStatus::started;
+            m_status = LibL3CamStatus::started_status;
             res->error = STOP_DEVICE(m_devices[0]);
             if (!res->error)
             {
-                m_status = LibL3CamStatus::connected;
+                m_status = LibL3CamStatus::connected_status;
             }
         }
     }
@@ -1649,7 +1682,7 @@ namespace l3cam_ros2
         res->error = START_STREAM(m_devices[0]);
         if (!res->error)
         {
-            m_status = LibL3CamStatus::streaming;
+            m_status = LibL3CamStatus::streaming_status;
         }
     }
 
@@ -1660,7 +1693,7 @@ namespace l3cam_ros2
         res->error = STOP_STREAM(m_devices[0]);
         if (!res->error)
         {
-            m_status = LibL3CamStatus::started;
+            m_status = LibL3CamStatus::started_status;
         }
     }
 
@@ -1703,7 +1736,7 @@ namespace l3cam_ros2
         free(temperatures);
     }
 
-    // Point Cloud
+    // LiDAR
     void L3Cam::changePointcloudColor(const std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColor::Request> req,
                                       std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColor::Response> res)
     {
@@ -1722,18 +1755,36 @@ namespace l3cam_ros2
         res->error = CHANGE_DISTANCE_RANGE(m_devices[0], req->min_value, req->max_value);
     }
 
+    void L3Cam::setBiasShortRange(const std::shared_ptr<l3cam_interfaces::srv::SetBiasShortRange::Request> req,
+                               std::shared_ptr<l3cam_interfaces::srv::SetBiasShortRange::Response> res)
+    {
+        res->error = SET_BIAS_SHORT_RANGE(m_devices[0], req->enabled);
+    }
+
     void L3Cam::enableAutoBias(const std::shared_ptr<l3cam_interfaces::srv::EnableAutoBias::Request> req,
                                std::shared_ptr<l3cam_interfaces::srv::EnableAutoBias::Response> res)
     {
-        ROS2_BMG_UNUSED(res);
-        ENABLE_AUTO_BIAS(m_devices[0], req->enabled);
+        res->error = ENABLE_AUTO_BIAS(m_devices[0], req->enabled);
     }
 
     void L3Cam::changeBiasValue(const std::shared_ptr<l3cam_interfaces::srv::ChangeBiasValue::Request> req,
                                 std::shared_ptr<l3cam_interfaces::srv::ChangeBiasValue::Response> res)
     {
-        ROS2_BMG_UNUSED(res);
-        CHANGE_BIAS_VALUE(m_devices[0], req->index, req->bias);
+        res->error = CHANGE_BIAS_VALUE(m_devices[0], req->index, req->bias);
+    }
+
+    void L3Cam::changeAutobiasValue(const std::shared_ptr<l3cam_interfaces::srv::ChangeAutobiasValue::Request> req,
+                                std::shared_ptr<l3cam_interfaces::srv::ChangeAutobiasValue::Response> res)
+    {
+        res->error = CHANGE_AUTOBIAS_VALUE(m_devices[0], req->index, req->autobias);
+    }
+
+    void L3Cam::getAutobiasValue(const std::shared_ptr<l3cam_interfaces::srv::GetAutobiasValue::Request> req,
+                                std::shared_ptr<l3cam_interfaces::srv::GetAutobiasValue::Response> res)
+    {
+        uint8_t gain;
+        res->error = GET_AUTOBIAS_VALUE(m_devices[0], req->index, &gain);
+        res->gain = gain;
     }
 
     // Polarimetric
@@ -2750,7 +2801,7 @@ namespace l3cam_ros2
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "L3Cam version " << GET_VERSION() << "\n");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "LibL3Cam version " << GET_VERSION() << "\n");
 
     node = std::make_shared<l3cam_ros2::L3Cam>();
 
@@ -2762,7 +2813,7 @@ int main(int argc, char **argv)
         node->disconnectAll(error);
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminating...");
         TERMINATE(node->m_devices[0]);
-        node->m_status = LibL3CamStatus::terminated;
+        node->m_status = LibL3CamStatus::terminated_status;
         node = NULL; //! Without this, the node becomes zombie
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
         return error;
@@ -2774,7 +2825,7 @@ int main(int argc, char **argv)
         RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while starting device and stream: " << getErrorDescription(error));
         if (error == L3CAM_TIMEOUT_ERROR)
         {
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Device is not " << (node->m_status == connected ? "started." : "streaming."));
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Device is not " << (node->m_status == LibL3CamStatus::connected_status ? "started." : "streaming."));
         }
         else
         {
@@ -2783,7 +2834,7 @@ int main(int argc, char **argv)
             STOP_STREAM(node->m_devices[0]);
             STOP_DEVICE(node->m_devices[0]);
             TERMINATE(node->m_devices[0]);
-            node->m_status = LibL3CamStatus::terminated;
+            node->m_status = LibL3CamStatus::terminated_status;
             node = NULL; //! Without this, the node becomes zombie
             RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
             return error;
@@ -2797,7 +2848,7 @@ int main(int argc, char **argv)
     STOP_STREAM(node->m_devices[0]);
     STOP_DEVICE(node->m_devices[0]);
     TERMINATE(node->m_devices[0]);
-    node->m_status = LibL3CamStatus::terminated;
+    node->m_status = LibL3CamStatus::terminated_status;
     node = NULL; //! Without this, the node becomes zombie
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Terminated.");
 

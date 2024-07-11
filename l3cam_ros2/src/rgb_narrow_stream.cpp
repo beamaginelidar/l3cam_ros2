@@ -60,6 +60,7 @@ pthread_t stream_thread;
 bool g_listening = false;
 
 bool g_rgb; // true if rgb sensor available, false if narrow available
+bool g_wide;
 
 struct threadData
 {
@@ -172,10 +173,17 @@ void *ImageThread(void *functionData)
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC1, image_pointer);
             }
-            if (m_image_channels == 2)
+            else if (m_image_channels == 2)
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC2, image_pointer);
-                cv::cvtColor(img_data, img_data, cv::COLOR_YUV2BGR_Y422);
+                if(g_rgb && !g_wide) // econ
+                {
+                    cv::cvtColor(img_data, img_data, cv::COLOR_YUV2BGR_YUYV);
+                }
+                else // econ wide and narrow
+                {
+                    cv::cvtColor(img_data, img_data, cv::COLOR_YUV2BGR_Y422);
+                }
             }
             else if (m_image_channels == 3)
             {
@@ -289,6 +297,12 @@ int main(int argc, char const *argv[])
                 {
                     sensor_is_available = true;
                     g_rgb = true;
+                }
+                else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_econ_wide && resultGetSensors.get()->sensors[i].sensor_available)
+                {
+                    sensor_is_available = true;
+                    g_rgb = true;
+                    g_wide = true;
                 }
                 else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_narrow && resultGetSensors.get()->sensors[i].sensor_available)
                 {

@@ -25,11 +25,14 @@
         <arg name="pointcloud_color" default="0" /> <!-- see pointCloudColor -->
         <arg name="pointcloud_color_range_minimum" default="0" /> <!-- 0 - 300000 -->
         <arg name="pointcloud_color_range_maximum" default="300000" /> <!-- 0 - 300000 -->
-        <arg name="distance_range_minimum" default="0" /> <!-- 0 - 300000 -->
+        <arg name="distance_range_minimum" default="1500" /> <!-- 0 - 300000 -->
         <arg name="distance_range_maximum" default="300000" /> <!-- 0 - 300000 -->
+        <arg name="bias_short_range" default="false" />
         <arg name="auto_bias" default="true" />
         <arg name="bias_value_right" default="1580" /> <!-- 700 - 3500 -->
         <arg name="bias_value_left" default="1380" /> <!-- 700 - 3500 -->
+        <arg name="autobias_value_right" default="50" /> <!-- 0 - 100 -->
+        <arg name="autobias_value_left" default="50" /> <!-- 0 - 100 -->
         <arg name="lidar_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
         <arg name="lidar_rtsp_pipeline" default="" />
 
@@ -140,9 +143,12 @@
             <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />
             <param name="distance_range_minimum" value="$(var distance_range_minimum)" type="int" />
             <param name="distance_range_maximum" value="$(var distance_range_maximum)" type="int" />
+            <param name="bias_short_range" value="$(var bias_short_range)" type="bool" />
             <param name="auto_bias" value="$(var auto_bias)" type="bool" />
             <param name="bias_value_right" value="$(var bias_value_right)" type="int" />
             <param name="bias_value_left" value="$(var bias_value_left)" type="int" />
+            <param name="autobias_value_right" value="$(var autobias_value_right)" type="int" />
+            <param name="autobias_value_left" value="$(var autobias_value_left)" type="int" />
             <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" type="int" />
             <param name="lidar_rtsp_pipeline" value="$(var lidar_rtsp_pipeline)" type="str" />
 
@@ -247,6 +253,12 @@
             <arg name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" />
             <arg name="distance_range_minimum" value="$(var distance_range_minimum)" />
             <arg name="distance_range_maximum" value="$(var distance_range_maximum)" />
+            <arg name="bias_short_range" value="$(var bias_short_range)" />
+            <arg name="auto_bias" value="$(var auto_bias)" />
+            <arg name="bias_value_right" value="$(var bias_value_right)" />
+            <arg name="bias_value_left" value="$(var bias_value_left)" />
+            <arg name="autobias_value_right" value="$(var autobias_value_right)" />
+            <arg name="autobias_value_left" value="$(var autobias_value_left)" />
             <arg name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" />
 
             <arg name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" />
@@ -338,6 +350,8 @@
 
         <!-- The nodes that don't have their sensor available will automatically shut down -->
     </group>
+
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="tf2_lidar" output="screen" args="0 0 0 0 0 0 map lidar"/> -->
 
     <node pkg="rqt_reconfigure" exec="rqt_reconfigure" name="rqt_reconfigure" if="$(var rqt_reconfigure)" />
     <node pkg="rviz2" exec="rviz2" name="rviz2" if="$(var rviz2)" />

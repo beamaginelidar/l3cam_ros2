@@ -54,8 +54,11 @@
 #include "l3cam_interfaces/srv/change_pointcloud_color.hpp"
 #include "l3cam_interfaces/srv/change_pointcloud_color_range.hpp"
 #include "l3cam_interfaces/srv/change_distance_range.hpp"
+#include "l3cam_interfaces/srv/set_bias_short_range.hpp"
 #include "l3cam_interfaces/srv/enable_auto_bias.hpp"
 #include "l3cam_interfaces/srv/change_bias_value.hpp"
+#include "l3cam_interfaces/srv/change_autobias_value.hpp"
+#include "l3cam_interfaces/srv/get_autobias_value.hpp"
 
 #include "l3cam_interfaces/srv/set_polarimetric_camera_default_settings.hpp"
 #include "l3cam_interfaces/srv/change_polarimetric_camera_brightness.hpp"
@@ -193,8 +196,11 @@ namespace l3cam_ros2
         void changePointcloudColor(const std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColor::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColor::Response> res);
         void changePointcloudColorRange(const std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColorRange::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangePointcloudColorRange::Response> res);
         void changeDistanceRange(const std::shared_ptr<l3cam_interfaces::srv::ChangeDistanceRange::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeDistanceRange::Response> res);
+        void setBiasShortRange(const std::shared_ptr<l3cam_interfaces::srv::SetBiasShortRange::Request> req, std::shared_ptr<l3cam_interfaces::srv::SetBiasShortRange::Response> res);
         void enableAutoBias(const std::shared_ptr<l3cam_interfaces::srv::EnableAutoBias::Request> req, std::shared_ptr<l3cam_interfaces::srv::EnableAutoBias::Response> res);
         void changeBiasValue(const std::shared_ptr<l3cam_interfaces::srv::ChangeBiasValue::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeBiasValue::Response> res);
+        void changeAutobiasValue(const std::shared_ptr<l3cam_interfaces::srv::ChangeAutobiasValue::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangeAutobiasValue::Response> res);
+        void getAutobiasValue(const std::shared_ptr<l3cam_interfaces::srv::GetAutobiasValue::Request> req, std::shared_ptr<l3cam_interfaces::srv::GetAutobiasValue::Response> res);
         void setPolarimetricCameraDefaultSettings(const std::shared_ptr<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings::Request> req, std::shared_ptr<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings::Response> res);
         void changePolarimetricCameraBrightness(const std::shared_ptr<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness::Response> res);
         void changePolarimetricCameraBlackLevel(const std::shared_ptr<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel::Request> req, std::shared_ptr<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel::Response> res);
@@ -292,8 +298,11 @@ namespace l3cam_ros2
         rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColor>::SharedPtr srv_change_pointcloud_color_;
         rclcpp::Service<l3cam_interfaces::srv::ChangePointcloudColorRange>::SharedPtr srv_change_pointcloud_color_range_;
         rclcpp::Service<l3cam_interfaces::srv::ChangeDistanceRange>::SharedPtr srv_change_distance_range_;
+        rclcpp::Service<l3cam_interfaces::srv::SetBiasShortRange>::SharedPtr srv_set_bias_short_range_;
         rclcpp::Service<l3cam_interfaces::srv::EnableAutoBias>::SharedPtr srv_enable_auto_bias_;
         rclcpp::Service<l3cam_interfaces::srv::ChangeBiasValue>::SharedPtr srv_change_bias_value_;
+        rclcpp::Service<l3cam_interfaces::srv::ChangeAutobiasValue>::SharedPtr srv_change_autobias_value_;
+        rclcpp::Service<l3cam_interfaces::srv::GetAutobiasValue>::SharedPtr srv_get_autobias_value_;
 
         rclcpp::Service<l3cam_interfaces::srv::SetPolarimetricCameraDefaultSettings>::SharedPtr srv_set_polarimetric_camera_default_settings_;
         rclcpp::Service<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedPtr srv_change_polarimetric_camera_brightness_;
@@ -378,6 +387,7 @@ namespace l3cam_ros2
 
         sensor *m_lidar_sensor = NULL;
         sensor *m_rgb_sensor = NULL;
+        sensor *m_econ_wide_sensor = NULL;
         sensor *m_thermal_sensor = NULL;
         sensor *m_polarimetric_sensor = NULL;
         sensor *m_allied_wide_sensor = NULL;

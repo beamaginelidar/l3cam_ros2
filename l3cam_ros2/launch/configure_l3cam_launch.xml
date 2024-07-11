@@ -6,11 +6,14 @@
     <arg name="pointcloud_color" default="0" />
     <arg name="pointcloud_color_range_minimum" default="0" />
     <arg name="pointcloud_color_range_maximum" default="300000" />
-    <arg name="distance_range_minimum" default="0" />
+    <arg name="distance_range_minimum" default="1500" />
     <arg name="distance_range_maximum" default="300000" />
+    <arg name="bias_short_range" default="false" />
     <arg name="auto_bias" default="true" />
     <arg name="bias_value_right" default="1580" />
     <arg name="bias_value_left" default="1380" />
+    <arg name="autobias_value_right" default="50" />
+    <arg name="autobias_value_left" default="50" />
     <arg name="lidar_streaming_protocol" default="0" />
 
     <!-- Polarimetric configuration -->
@@ -104,9 +107,12 @@
         <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />
         <param name="distance_range_minimum" value="$(var distance_range_minimum)" type="int" />
         <param name="distance_range_maximum" value="$(var distance_range_maximum)" type="int" />
+        <param name="bias_short_range" value="$(var bias_short_range)" type="bool" />
         <param name="auto_bias" value="$(var auto_bias)" type="bool" />
         <param name="bias_value_right" value="$(var bias_value_right)" type="int" />
         <param name="bias_value_left" value="$(var bias_value_left)" type="int" />
+        <param name="autobias_value_right" value="$(var autobias_value_right)" type="int" />
+        <param name="autobias_value_left" value="$(var autobias_value_left)" type="int" />
         <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" type="int" />
     </node>
     

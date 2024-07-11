@@ -1,6 +1,6 @@
 # l3cam_ros2
 
-This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](https://beamagine.com/). The driver relies on the library `libL3Cam 0.1.17` provided by Beamagine as part of the [L3Cam SDK](https://github.com/beamaginelidar/libl3cam.git). For more info on the L3Cam check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf).
+This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](https://beamagine.com/). The driver relies on the library `libL3Cam 0.1.18` provided by Beamagine as part of the [L3Cam SDK](https://github.com/beamaginelidar/libl3cam.git). For more info on the L3Cam check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf).
 
 If you are looking for this package for ROS, go to the [l3cam_ros](https://github.com/beamaginelidar/l3cam_ros) package.
 
@@ -12,7 +12,7 @@ This package is supported only on Linux systems and has only been tested with RO
 
 First, you will need to install the L3Cam SDK.
 
-Download the package from Beamagine's [L3Cam SDK 0.1.17 release](https://github.com/beamaginelidar/libl3cam/releases) repository and install the required package depending on your hardware architecture:
+Download the package from Beamagine's [L3Cam SDK 0.1.18 release](https://github.com/beamaginelidar/libl3cam/releases) repository and install the required package depending on your hardware architecture:
 
 ```
 sudo dpkg -i <PACKAGE>
@@ -219,11 +219,14 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `pointcloud_color`               | enum   | 0       | see `pointCloudColor`    |
 | `pointcloud_color_range_minimum` | int    | 0       | [0, 300000]              |
 | `pointcloud_color_range_maximum` | int    | 300000  | [0, 300000]              |
-| `distance_range_minimum`         | int    | 0       | [0, 300000]              |
+| `distance_range_minimum`         | int    | 1500    | [0, 300000]              |
 | `distance_range_maximum`         | int    | 300000  | [0, 300000]              |
+| `bias_short_range`               | bool   | false   |                          |
 | `auto_bias`                      | bool   | true    |                          |
 | `bias_value_right`               | int    | 1580    | [700, 3500]              |
 | `bias_value_left`                | int    | 1380    | [700, 3500]              |
+| `autobias_value_right`           | int    | 50      | [0, 100]                 |
+| `autobias_value_left`            | int    | 50      | [0, 100]                 |
 | `lidar_streaming_protocol`       | int    | 0       | see `streamingProtocols` |
 | `lidar_rtsp_pipeline`            | string |         |                          |
 
@@ -271,7 +274,7 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `thermal_camera_temperature_filter`     | bool   | false   |                          |
 | `thermal_camera_temperature_filter_min` | int    | 0       | [-40, 200]               |
 | `thermal_camera_temperature_filter_max` | int    | 50      | [-40, 200]               |
-| `thermal_camera_processing_pipeline`               | int    | 1       | see `thermalPipelines`   |
+| `thermal_camera_processing_pipeline`    | int    | 1       | see `thermalPipelines`   |
 | `thermal_camera_temperature_data_udp`   | bool   | false   |                          |
 | `thermal_streaming_protocol`            | int    | 0       | see `streamingProtocols` |
 | `thermal_rtsp_pipeline`                 | string |         |                          |
@@ -391,8 +394,11 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `/change_pointcloud_color`                             | int visualization_color                                                                 | int error                                                                                                                                                                                      |
 | `/change_pointcloud_color_range`                       | int max_value, int min_value                                                            | int error                                                                                                                                                                                      |
 | `/change_distance_range`                               | int max_value, int min_value                                                            | int error                                                                                                                                                                                      |
+| `/set_bias_short_range`                                | bool enabled                                                                            | int error                                                                                                                                                                                      |
 | `/enable_auto_bias`                                    | bool enabled                                                                            | -                                                                                                                                                                                              |
 | `/change_bias_value`                                   | int index, int bias                                                                     | -                                                                                                                                                                                              |
+| `/change_autobias_value`                               | int index, int autobias                                                                 | int error                                                                                                                                                                                      |
+| `/get_autobias_value`                                  | int index                                                                               | float gain, int error                                                                                                                                                                          |
 | `/set_polarimetric_camera_default_settings`            | -                                                                                       | int error                                                                                                                                                                                      |
 | `/change_polarimetric_camera_brightness`               | int brightness                                                                          | int error                                                                                                                                                                                      |
 | `/change_polarimetric_camera_black_level`              | float black_level                                                                       | int error                                                                                                                                                                                      |
@@ -416,7 +422,7 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `/change_thermal_camera_colormap`                      | int colormap                                                                            | int error                                                                                                                                                                                      |
 | `/change_thermal_camera_temperature_filter`            | float min_temperature, float max_temperature                                            | int error                                                                                                                                                                                      |
 | `/enable_thermal_camera_temperature_filter`            | bool enabled                                                                            | int error                                                                                                                                                                                      |
-| `/change_thermal_camera_processing_pipeline`                      | int pipeline                                                                            | int error                                                                                                                                                                                      |
+| `/change_thermal_camera_processing_pipeline`           | int pipeline                                                                            | int error                                                                                                                                                                                      |
 | `/enable_thermal_camera_temperature_data_udp`          | bool enabled                                                                            | int error                                                                                                                                                                                      |
 | `/change_allied_camera_exposure_time`                  | int allied_type, float exposure_time                                                    | int error                                                                                                                                                                                      |
 | `/enable_allied_camera_auto_exposure_time`             | int allied_type, bool enabled                                                           | int error                                                                                                                                                                                      |
@@ -486,11 +492,12 @@ Being protocol a number contained in the enum `streamingProtocols` and sensor_ty
 
 All sensors stream their data to each topic:
 
-| Sensor        | Topic                     | Data type                  |
-| ------------- | ------------------------- | -------------------------- |
-| Lidar         | `/L3Cam/PC2_lidar`        | `sensor_msgs::PointCloud2` |
-| Polarimetric  | `/L3Cam/img_polarimetric` | `sensor_msgs::Image`       |
-| RGB           | `/L3Cam/img_rgb`          | `sensor_msgs::Image`       |
-| Thermal       | `/L3Cam/img_thermal`      | `sensor_msgs::Image`       |
-| Allied Wide   | `/L3Cam/img_wide`         | `sensor_msgs::Image`       |
-| Allied Narrow | `/L3Cam/img_narrow`       | `sensor_msgs::Image`       |
+| Sensor                         | Topic                     | Data type                  |
+| ------------------------------ | ------------------------- | -------------------------- |
+| Lidar                          | `/L3Cam/PC2_lidar`        | `sensor_msgs::PointCloud2` |
+| Polarimetric                   | `/L3Cam/img_polarimetric` | `sensor_msgs::Image`       |
+| RGB                            | `/L3Cam/img_rgb`          | `sensor_msgs::Image`       |
+| Thermal                        | `/L3Cam/img_thermal`      | `sensor_msgs::Image`       |
+| Thermal (raw temperature data) | `/L3Cam/img_f_thermal`    | `sensor_msgs::Image`       |
+| Allied Wide                    | `/L3Cam/img_wide`         | `sensor_msgs::Image`       |
+| Allied Narrow                  | `/L3Cam/img_narrow`       | `sensor_msgs::Image`       |

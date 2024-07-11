@@ -32,13 +32,13 @@
 
 typedef enum LibL3CamStatus
 {
-    undefined = 0, // default status
-    error,         // error
-    connected,     // after FIND_DEVICE
-    disconnected,  //! (TBD) after notification
-    started,       // after START_DEVICE
-    streaming,     // after START_STREAM
-    terminated     // after TERMINATE
+    undefined_status = 0, // default status
+    error_status,         // error status
+    connected_status,     // after FIND_DEVICE
+    disconnected_status,  //! (TBD) after notification
+    started_status,       // after START_DEVICE
+    streaming_status,     // after START_STREAM
+    terminated_status     // after TERMINATE
 } LibL3CamStatus;
 
 static const char *bmg_ros2_error_find_devices_timeout = "Timeout error while finding devices\0";

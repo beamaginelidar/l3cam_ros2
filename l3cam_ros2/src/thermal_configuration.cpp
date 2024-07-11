@@ -89,7 +89,7 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
             this->declare_parameter("timeout_secs", 60);
-            range.set__from_value(1).set__to_value(108); // TBD: dynamic reconfigure dropdown menu newThermalTypes
+            range.set__from_value(0).set__to_value(8); // TBD: dynamic reconfigure dropdown menu newThermalTypes
             descriptor.integer_range = {range};
             descriptor.description =
                 "Value must be: (newThermalTypes)\n"

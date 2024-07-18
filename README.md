@@ -363,6 +363,10 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
   - `allied_narrow_camera_exposure_time` changes when `allied_narrow_camera_auto_exposure_time` is set to false.
   - `allied_narrow_camera_gain` changes when `allied_narrow_camera_auto_gain` is set to false.
 
+- The following parameters can only be set on start, they cannot be changed live:
+  - Allied cameras: `black_level` and `sharpness`.
+  - RGB camera: `resolution` and `framerate`
+
 ## Services
 
 Once the nodes are launched, the parameters can be changed through services. While streaming, some parameters cannot be changed, and the driver starts streaming when it connects to the L3Cam.

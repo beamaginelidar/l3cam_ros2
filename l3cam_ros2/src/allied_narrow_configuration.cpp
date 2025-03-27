@@ -117,7 +117,8 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
-            this->declare_parameter("timeout_secs", 60);
+            descriptor.dynamic_typing = true;
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
             floatRange.set__from_value(63.0).set__to_value(10000000.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_narrow_camera_exposure_time", 4992.4, descriptor); // 63 - 10000000
@@ -1191,12 +1192,13 @@ namespace l3cam_ros2
             auto status = future.wait_for(1s);
             if (status == std::future_status::ready)
             {
-                int error = future.get()->error;
+                auto response = future.get();
+                int error = response->error;
                 if (!error)
                 {
                     // Got parameter successfully
-                    allied_narrow_camera_exposure_time_ = future.get()->exposure_time;
-                    this->set_parameter(rclcpp::Parameter("allied_narrow_camera_exposure_time", future.get()->exposure_time));
+                    allied_narrow_camera_exposure_time_ = response->exposure_time;
+                    this->set_parameter(rclcpp::Parameter("allied_narrow_camera_exposure_time", response->exposure_time));
                 }
                 else
                 {
@@ -1215,12 +1217,13 @@ namespace l3cam_ros2
             auto status = future.wait_for(1s);
             if (status == std::future_status::ready)
             {
-                int error = future.get()->error;
+                auto response = future.get();
+                int error = response->error;
                 if (!error)
                 {
                     // Got parameter successfully
-                    allied_narrow_camera_gain_ = future.get()->gain;
-                    this->set_parameter(rclcpp::Parameter("allied_narrow_camera_gain", future.get()->gain));
+                    allied_narrow_camera_gain_ = response->gain;
+                    this->set_parameter(rclcpp::Parameter("allied_narrow_camera_gain", response->gain));
                 }
                 else
                 {
@@ -1360,13 +1363,14 @@ int main(int argc, char **argv)
     // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetSensors.get()->error;
+        auto response = resultGetSensors.get();
+        error = response->error;
 
         if (!error)
         {
-            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
+            for (int i = 0; i < response->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_narrow && resultGetSensors.get()->sensors[i].sensor_available)
+                if (response->sensors[i].sensor_type == sensor_allied_narrow && response->sensors[i].sensor_available)
                     sensor_is_available = true;
             }
         }
@@ -1408,13 +1412,14 @@ int main(int argc, char **argv)
 
     if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetRtspPipeline.get()->error;
+        auto response = resultGetRtspPipeline.get();
+        error = response->error;
 
         if (!error)
         {
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             descriptor.read_only = true;
-            node->declare_parameter("allied_narrow_rtsp_pipeline", resultGetRtspPipeline.get()->pipeline, descriptor);
+            node->declare_parameter("allied_narrow_rtsp_pipeline", response->pipeline, descriptor);
         }
         else
         {

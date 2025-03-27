@@ -287,24 +287,25 @@ int main(int argc, char const *argv[])
     // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetSensors.get()->error;
+        auto response = resultGetSensors.get();
+        error = response->error;
 
         if (!error)
         {
-            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
+            for (int i = 0; i < response->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_econ_rgb && resultGetSensors.get()->sensors[i].sensor_available)
+                if (response->sensors[i].sensor_type == sensor_econ_rgb && response->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
                     g_rgb = true;
                 }
-                else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_econ_wide && resultGetSensors.get()->sensors[i].sensor_available)
+                else if (response->sensors[i].sensor_type == sensor_econ_wide && response->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
                     g_rgb = true;
                     g_wide = true;
                 }
-                else if (resultGetSensors.get()->sensors[i].sensor_type == sensor_allied_narrow && resultGetSensors.get()->sensors[i].sensor_available)
+                else if (response->sensors[i].sensor_type == sensor_allied_narrow && response->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
                     g_rgb = false;

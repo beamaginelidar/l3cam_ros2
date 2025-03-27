@@ -296,13 +296,14 @@ int main(int argc, char const *argv[])
     // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetSensors.get()->error;
+        auto response = resultGetSensors.get();
+        error = response->error;
 
         if (!error)
         {
-            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
+            for (int i = 0; i < response->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar && resultGetSensors.get()->sensors[i].sensor_available)
+                if (response->sensors[i].sensor_type == sensor_lidar && response->sensors[i].sensor_available)
                 {
                     sensor_is_available = true;
                 }

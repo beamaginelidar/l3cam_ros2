@@ -44,8 +44,8 @@
         <arg name="polarimetric_camera_auto_gain_range_maximum" default="48.0" /> <!-- 0 - 48 -->
         <arg name="polarimetric_camera_gain" default="24.0" /> <!-- 0 - 48 -->
         <arg name="polarimetric_camera_auto_exposure_time" default="true" />
-        <arg name="polarimetric_camera_auto_exposure_time_range_minimum" default="33.5" /> <!-- 33.5 - 66470.6 -->
-        <arg name="polarimetric_camera_auto_exposure_time_range_maximum" default="66470.6" /> <!-- 33.5 - 66470.6 -->
+        <arg name="polarimetric_camera_auto_exposure_time_range_minimum" default="40" /> <!-- 33.5 - 66470.6 -->
+        <arg name="polarimetric_camera_auto_exposure_time_range_maximum" default="66470" /> <!-- 33.5 - 66470.6 -->
         <arg name="polarimetric_camera_exposure_time" default="33.5" /> <!-- 33.5 - 66470.6 -->
         <arg name="polarimetric_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
         <arg name="polarimetric_rtsp_pipeline" default="" />

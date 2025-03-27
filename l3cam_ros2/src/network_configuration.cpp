@@ -50,7 +50,9 @@ namespace l3cam_ros2
         explicit NetworkConfiguration() : Node("network_configuration")
         {
             // Declare parameters
-            this->declare_parameter("timeout_secs", 60);
+            rcl_interfaces::msg::ParameterDescriptor descriptor;
+            descriptor.dynamic_typing = true;
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
             this->declare_parameter("ip_address", "192.168.1.250");
             this->declare_parameter("netmask", "255.255.255.0");
             this->declare_parameter("gateway", "0.0.0.0");
@@ -233,13 +235,14 @@ int main(int argc, char **argv)
     // Shutdown if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetNetwork) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetNetwork.get()->error;
+        auto response = resultGetNetwork.get();
+        error = response->error;
 
         if (!error)
         {
-            node->set_parameter(rclcpp::Parameter("ip_address", resultGetNetwork.get()->ip_address));
-            node->set_parameter(rclcpp::Parameter("netmask", resultGetNetwork.get()->netmask));
-            node->set_parameter(rclcpp::Parameter("gateway", resultGetNetwork.get()->gateway));
+            node->set_parameter(rclcpp::Parameter("ip_address", response->ip_address));
+            node->set_parameter(rclcpp::Parameter("netmask", response->netmask));
+            node->set_parameter(rclcpp::Parameter("gateway", response->gateway));
             node->handleParamsCallback();
         }
         else

@@ -279,15 +279,6 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                                (uint32_t)((m_timestamp / 1000) % 100);         // ss
             header.stamp.nanosec = (m_timestamp % 1000) * 1e6;                 // zzz
 
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "frame_id: " << header.frame_id);
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "stamp: " << header.stamp.sec << header.stamp.nanosec);
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Image Type: " << img_data.type());
-            if (img_data.empty()) {
-                RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "ERROR: img_data is empty!");
-                //return;
-            }
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Image size: " << img_data.cols << "x" << img_data.rows);
-            
             const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
             std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
             

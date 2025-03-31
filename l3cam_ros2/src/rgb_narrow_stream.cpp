@@ -78,7 +78,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     uint16_t m_image_width;
     uint8_t m_image_channels;
     uint32_t m_timestamp;
-    int m_image_data_size;
+    int m_image_data_size = -1;
     bool m_is_reading_image = false;
     char *m_image_buffer = NULL;
     int bytes_count = 0;

@@ -234,7 +234,7 @@ void FloatImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publ
     uint16_t m_image_height;
     uint16_t m_image_width;
     uint32_t m_timestamp;
-    int m_image_data_size;
+    int m_image_data_size = -1;
     bool m_is_reading_image = false;
     int bytes_count = 0;
 

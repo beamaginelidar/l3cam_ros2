@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include <pthread.h>
+#include <thread>
 
 #include "std_msgs/msg/header.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -60,11 +61,6 @@ pthread_t stream_thread;
 pthread_t stream_f_thread;
 
 bool g_listening = false;
-
-struct threadData
-{
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher;
-};
 
 bool openSocket(int &m_socket_descriptor, sockaddr_in &m_socket, std::string &m_address, int m_udp_port)
 {
@@ -108,10 +104,8 @@ bool openSocket(int &m_socket_descriptor, sockaddr_in &m_socket, std::string &m_
     return true;
 }
 
-void *ImageThread(void *functionData)
+void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher)
 {
-    threadData *data = (struct threadData *)functionData;
-
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
     std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
@@ -132,7 +126,7 @@ void *ImageThread(void *functionData)
 
     if (!openSocket(m_socket_descriptor, m_socket, m_address, m_udp_port))
     {
-        return 0;
+        return;
     }
 
     g_listening = true;
@@ -201,7 +195,7 @@ void *ImageThread(void *functionData)
             const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
             std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
 
-            data->publisher->publish(*img_msg);
+            publisher->publish(*img_msg);
         }
         else if (size_read > 0 && m_is_reading_image) // Data
         {
@@ -215,7 +209,7 @@ void *ImageThread(void *functionData)
         // size_read == -1 --> timeout
     }
 
-    data->publisher = NULL; //! Without this, the node becomes zombie
+    publisher = NULL; //! Without this, the node becomes zombie
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting thermal streaming thread");
     free(buffer);
     free(m_image_buffer);
@@ -226,10 +220,8 @@ void *ImageThread(void *functionData)
     pthread_exit(0);
 }
 
-void *FloatImageThread(void *functionData)
+void FloatImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher)
 {
-    threadData *data = (struct threadData *)functionData;
-
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
     std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
@@ -248,7 +240,7 @@ void *FloatImageThread(void *functionData)
 
     if (!openSocket(m_socket_descriptor, m_socket, m_address, m_udp_port))
     {
-        return 0;
+        return;
     }
 
     g_listening = true;
@@ -305,7 +297,7 @@ void *FloatImageThread(void *functionData)
 
             std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_32FC1, float_image).toImageMsg();
 
-            data->publisher->publish(*img_msg);
+            publisher->publish(*img_msg);
         }
         else if (size_read > 0 && m_is_reading_image) // Data
         {
@@ -316,7 +308,7 @@ void *FloatImageThread(void *functionData)
         // size_read == -1 --> timeout
     }
 
-    data->publisher = NULL;
+    publisher = NULL;
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting float thermal streaming thread");
     free(buffer);
 
@@ -417,15 +409,12 @@ int main(int argc, char const *argv[])
     }
 
     node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_thermal", 10);
+    std::thread thread(ImageThread, node->publisher_);
+    thread.detach();
+    
     node->f_publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_f_thermal", 10);
-
-    threadData *data = (struct threadData *)malloc(sizeof(struct threadData));
-    data->publisher = node->publisher_;
-    pthread_create(&stream_thread, NULL, &ImageThread, (void *)data);
-
-    threadData *f_data = (struct threadData *)malloc(sizeof(struct threadData));
-    f_data->publisher = node->f_publisher_;
-    pthread_create(&stream_f_thread, NULL, &FloatImageThread, (void *)f_data);
+    std::thread thread_f(FloatImageThread, node->f_publisher_);
+    thread_f.detach();
 
     rclcpp::spin(node);
 

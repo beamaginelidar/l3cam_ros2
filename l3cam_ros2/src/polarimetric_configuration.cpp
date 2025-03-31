@@ -36,6 +36,8 @@
 #include "l3cam_interfaces/msg/sensor.hpp"
 #include "l3cam_interfaces/srv/get_sensors_available.hpp"
 
+#include "l3cam_interfaces/srv/enable_polarimetric_camera_stream_processed_image.hpp"
+#include "l3cam_interfaces/srv/change_polarimetric_camera_process_type.hpp"
 #include "l3cam_interfaces/srv/change_polarimetric_camera_brightness.hpp"
 #include "l3cam_interfaces/srv/change_polarimetric_camera_black_level.hpp"
 #include "l3cam_interfaces/srv/enable_polarimetric_camera_auto_gain.hpp"
@@ -62,6 +64,8 @@ namespace l3cam_ros2
         {
             // Create service clients
             client_get_sensors_ = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
+            client_stream_processed_ = this->create_client<l3cam_interfaces::srv::EnablePolarimetricCameraStreamProcessedImage>("enable_polarimetric_camera_stream_processed_image");
+            client_process_type_ = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraProcessType>("change_polarimetric_camera_process_type");
             client_brightness_ = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>("change_polarimetric_camera_brightness");
             client_black_level_ = this->create_client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>("change_polarimetric_camera_black_level");
             client_auto_gain_ = this->create_client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>("enable_polarimetric_camera_auto_gain");
@@ -96,6 +100,10 @@ namespace l3cam_ros2
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
             this->declare_parameter("timeout_secs", 60);
+            this->declare_parameter("polarimetric_camera_stream_processed_image", true);
+            intRange.set__from_value(0).set__to_value(4);
+            descriptor.integer_range = {intRange};
+            this->declare_parameter("polarimetric_camera_process_type", 4, descriptor); // see polAngle
             intRange.set__from_value(0).set__to_value(255);
             descriptor.integer_range = {intRange};
             this->declare_parameter("polarimetric_camera_brightness", 127, descriptor); // 0 - 255
@@ -134,6 +142,8 @@ namespace l3cam_ros2
         void loadDefaultParams()
         {
             // Get and save parameters
+            polarimetric_camera_stream_processed_ = this->get_parameter("polarimetric_camera_stream_processed_image").as_bool();
+            polarimetric_camera_process_type_ = this->get_parameter("polarimetric_camera_process_type").as_int();
             polarimetric_camera_brightness_ = this->get_parameter("polarimetric_camera_brightness").as_int();
             polarimetric_camera_black_level_ = this->get_parameter("polarimetric_camera_black_level").as_double();
             polarimetric_camera_auto_gain_ = this->get_parameter("polarimetric_camera_auto_gain").as_bool();
@@ -159,6 +169,14 @@ namespace l3cam_ros2
             for (const auto &param : parameters)
             {
                 std::string param_name = param.get_name();
+                if (param_name == "polarimetric_camera_stream_processed_image" && param.as_int() != polarimetric_camera_stream_processed_)
+                {
+                    callStreamProcessed(param.as_int());
+                }
+                if (param_name == "polarimetric_camera_process_type" && param.as_int() != polarimetric_camera_process_type_)
+                {
+                    callProcessType(param.as_int());
+                }
                 if (param_name == "polarimetric_camera_brightness" && param.as_int() != polarimetric_camera_brightness_)
                 {
                     callBrightness(param.as_int());
@@ -209,6 +227,44 @@ namespace l3cam_ros2
         }
 
         // Service calls
+        void callStreamProcessed(bool enabled)
+        {
+            while (!client_stream_processed_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+            }
+
+            auto requestStreamProcessed = std::make_shared<l3cam_interfaces::srv::EnablePolarimetricCameraStreamProcessedImage::Request>();
+            requestStreamProcessed->enabled = enabled;
+
+            auto resultStreamProcessed = client_stream_processed_->async_send_request(
+                requestStreamProcessed, std::bind(&PolarimetricConfiguration::streamProcessedResponseCallback, this, std::placeholders::_1));
+        }
+
+        void callProcessType(int type)
+        {
+            while (!client_process_type_->wait_for_service(1s))
+            {
+                if (!rclcpp::ok())
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "Interrupted while waiting for service in " << __func__ << ". Exiting.");
+                    break;
+                }
+                RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+            }
+
+            auto requestProcessType = std::make_shared<l3cam_interfaces::srv::ChangePolarimetricCameraProcessType::Request>();
+            requestProcessType->type = type;
+
+            auto resultProcessType = client_process_type_->async_send_request(
+                requestProcessType, std::bind(&PolarimetricConfiguration::processTypeResponseCallback, this, std::placeholders::_1));
+        }
+
         void callBrightness(int brightness)
         {
             while (!client_brightness_->wait_for_service(1s))
@@ -384,6 +440,60 @@ namespace l3cam_ros2
         }
 
         // Service callbacks
+        void streamProcessedResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraStreamProcessedImage>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_stream_processed_ = this->get_parameter("polarimetric_camera_stream_processed_image").as_int();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("polarimetric_camera_stream_processed_image", polarimetric_camera_stream_processed_));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_stream_processed_image");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("polarimetric_camera_stream_processed_image", polarimetric_camera_stream_processed_));
+            }
+        }
+
+        void processTypeResponseCallback(
+            rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraProcessType>::SharedFuture future)
+        {
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready)
+            {
+                int error = future.get()->error;
+                if (!error)
+                {
+                    // Parameter changed successfully, save value
+                    polarimetric_camera_process_type_ = this->get_parameter("polarimetric_camera_process_type").as_int();
+                }
+                else
+                {
+                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                    // Parameter could not be changed, reset parameter to value before change
+                    this->set_parameter(rclcpp::Parameter("polarimetric_camera_process_type", polarimetric_camera_process_type_));
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_polarimetric_camera_process_type");
+                // Service could not be called, reset parameter to value before change
+                this->set_parameter(rclcpp::Parameter("polarimetric_camera_process_type", polarimetric_camera_process_type_));
+            }
+        }
+
         void brightnessResponseCallback(
             rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedFuture future)
         {
@@ -649,6 +759,8 @@ namespace l3cam_ros2
             rclcpp::shutdown();
         }
 
+        rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraStreamProcessedImage>::SharedPtr client_stream_processed_;
+        rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraProcessType>::SharedPtr client_process_type_;
         rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBrightness>::SharedPtr client_brightness_;
         rclcpp::Client<l3cam_interfaces::srv::ChangePolarimetricCameraBlackLevel>::SharedPtr client_black_level_;
         rclcpp::Client<l3cam_interfaces::srv::EnablePolarimetricCameraAutoGain>::SharedPtr client_auto_gain_;
@@ -663,6 +775,8 @@ namespace l3cam_ros2
 
         OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
+        bool polarimetric_camera_stream_processed_;
+        int polarimetric_camera_process_type_;
         int polarimetric_camera_brightness_;
         double polarimetric_camera_black_level_;
         bool polarimetric_camera_auto_gain_;

@@ -40,6 +40,7 @@
 #include <unistd.h>
 
 #include <pthread.h>
+#include <thread>
 
 #include "std_msgs/msg/header.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -62,15 +63,8 @@ bool g_listening = false;
 bool g_rgb; // true if rgb sensor available, false if narrow available
 bool g_wide;
 
-struct threadData
+void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher)
 {
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher;
-};
-
-void *ImageThread(void *functionData)
-{
-    threadData *data = (struct threadData *)functionData;
-
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
     std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
@@ -92,7 +86,7 @@ void *ImageThread(void *functionData)
     if ((m_socket_descriptor = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
         perror("Opening socket");
-        return 0;
+        return;
     }
     // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket RGB created");
 
@@ -104,21 +98,21 @@ void *ImageThread(void *functionData)
     if (inet_aton((char *)m_address.c_str(), &m_socket.sin_addr) == 0)
     {
         perror("inet_aton() failed");
-        return 0;
+        return;
     }
 
     if (bind(m_socket_descriptor, (struct sockaddr *)&m_socket, sizeof(struct sockaddr_in)) == -1)
     {
         perror("Could not bind name to socket");
         close(m_socket_descriptor);
-        return 0;
+        return;
     }
 
     int rcvbufsize = 134217728;
     if (0 != setsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbufsize, sizeof(rcvbufsize)))
     {
         perror("Error setting size to socket");
-        return 0;
+        return;
     }
 
     // 1 second timeout for socket
@@ -207,7 +201,7 @@ void *ImageThread(void *functionData)
             const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
             std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
 
-            data->publisher->publish(*img_msg);
+            publisher->publish(*img_msg);
         }
         else if (size_read > 0 && m_is_reading_image) // Data
         {
@@ -221,7 +215,7 @@ void *ImageThread(void *functionData)
         // size_read == -1 --> timeout
     }
 
-    data->publisher = NULL; //! Without this, the node becomes zombie
+    publisher = NULL; //! Without this, the node becomes zombie
     RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Exiting " << (g_rgb ? "rgb" : "allied narrow") << " streaming thread");
     free(buffer);
     free(m_image_buffer);
@@ -334,10 +328,8 @@ int main(int argc, char const *argv[])
     }
 
     node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(g_rgb ? "img_rgb" : "img_narrow", 10);
-
-    threadData *data = (struct threadData *)malloc(sizeof(struct threadData));
-    data->publisher = node->publisher_;
-    pthread_create(&stream_thread, NULL, &ImageThread, (void *)data);
+    std::thread thread(ImageThread, node->publisher_);
+    thread.detach();
 
     rclcpp::spin(node);
 

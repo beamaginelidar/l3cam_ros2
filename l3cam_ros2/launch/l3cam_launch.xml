@@ -11,7 +11,7 @@
 
         <arg name="timeout_secs" default="60" />
         <arg name="lidar_topic" default="PC2_lidar" />
-        <arg name="polarimetric_topic" default="img_pol" />
+        <arg name="polarimetric_topic" default="img_polarimetric" />
         <arg name="rgb_topic" default="img_rgb" />
         <arg name="thermal_topic" default="img_thermal" />
         <arg name="allied_wide_topic" default="img_wide" />
@@ -37,6 +37,8 @@
         <arg name="lidar_rtsp_pipeline" default="" />
 
         <!-- Polarimetric configuration -->
+        <arg name="polarimetric_camera_stream_processed_image" default="true" />
+        <arg name="polarimetric_camera_process_type" default="4" /> <!-- see polAngle -->
         <arg name="polarimetric_camera_brightness" default="127" /> <!-- 0 - 255 -->
         <arg name="polarimetric_camera_black_level" default="6.0" /> <!-- 0 - 12.5 -->
         <arg name="polarimetric_camera_auto_gain" default="true" />
@@ -44,8 +46,8 @@
         <arg name="polarimetric_camera_auto_gain_range_maximum" default="48.0" /> <!-- 0 - 48 -->
         <arg name="polarimetric_camera_gain" default="24.0" /> <!-- 0 - 48 -->
         <arg name="polarimetric_camera_auto_exposure_time" default="true" />
-        <arg name="polarimetric_camera_auto_exposure_time_range_minimum" default="33.5" /> <!-- 33.5 - 66470.6 -->
-        <arg name="polarimetric_camera_auto_exposure_time_range_maximum" default="66470.6" /> <!-- 33.5 - 66470.6 -->
+        <arg name="polarimetric_camera_auto_exposure_time_range_minimum" default="40" /> <!-- 33.5 - 66470.6 -->
+        <arg name="polarimetric_camera_auto_exposure_time_range_maximum" default="66470" /> <!-- 33.5 - 66470.6 -->
         <arg name="polarimetric_camera_exposure_time" default="33.5" /> <!-- 33.5 - 66470.6 -->
         <arg name="polarimetric_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
         <arg name="polarimetric_rtsp_pipeline" default="" />
@@ -67,12 +69,12 @@
         <arg name="rgb_rtsp_pipeline" default="" />
 
         <!-- Thermal configuration -->
-        <arg name="thermal_camera_colormap" default="1" /> <!-- see newThermalTypes -->
+        <arg name="thermal_camera_colormap" default="5" /> <!-- see newThermalTypes -->
         <arg name="thermal_camera_temperature_filter" default="false" />
         <arg name="thermal_camera_temperature_filter_min" default="0" /> <!-- -40 - 200 -->
         <arg name="thermal_camera_temperature_filter_max" default="50" /> <!-- -40 - 200 -->
         <arg name="thermal_camera_processing_pipeline" default="0" /> <!-- see thermalPipelines -->
-        <arg name="thermal_camera_temperature_data_udp" default="false" />
+        <arg name="thermal_camera_temperature_data_udp" default="true" />
         <arg name="thermal_streaming_protocol" default="0" /> <!-- 0(protocol_raw_udp), 1(protocol_gstreamer) -->
         <arg name="thermal_rtsp_pipeline" default="" />
 
@@ -261,6 +263,8 @@
             <arg name="autobias_value_left" value="$(var autobias_value_left)" />
             <arg name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" />
 
+            <arg name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" />
+            <arg name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" />
             <arg name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" />
             <arg name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" />
             <arg name="polarimetric_camera_auto_gain" value="$(var polarimetric_camera_auto_gain)" />
@@ -346,6 +350,8 @@
             <arg name="thermal_topic" value="$(var thermal_topic)" />
             <arg name="allied_wide_topic" value="$(var allied_wide_topic)" />
             <arg name="allied_narrow_topic" value="$(var allied_narrow_topic)" />
+            <arg name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" />
+            <arg name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" />
         </include>
 
         <!-- The nodes that don't have their sensor available will automatically shut down -->

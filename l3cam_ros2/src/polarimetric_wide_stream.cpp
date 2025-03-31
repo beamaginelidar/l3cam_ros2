@@ -265,9 +265,6 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);
             }
 
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "writing img.png");
-            cv::imwrite("/home/beamagine/img.png", img_data);
-
             std_msgs::msg::Header header;
             header.frame_id = g_pol ? "polarimetric" : "allied_wide";
             // m_timestamp format: hhmmsszzz

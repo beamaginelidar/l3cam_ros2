@@ -92,7 +92,8 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            this->declare_parameter("timeout_secs", 60);
+            descriptor.dynamic_typing = true;
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
             range.set__from_value(0).set__to_value(15); // TBD: dynamic reconfigure dropdown menu pointCloudColor
             descriptor.integer_range = {range};
             descriptor.description =
@@ -135,7 +136,7 @@ namespace l3cam_ros2
             this->declare_parameter("autobias_value_left", 50, descriptor);  // 0 - 100
             range.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {range};
-            descriptor.description = 
+            descriptor.description =
                 "Value must be:\n"
                 "\tprotocol_raw_udp = 0\n"
                 "\tprotocol_gstreamer = 1";
@@ -389,17 +390,25 @@ namespace l3cam_ros2
             auto status = future.wait_for(1s);
             if (status == std::future_status::ready)
             {
-                int error = future.get()->error;
-                if (!error)
+                auto response = future.get();
+                if (response)
                 {
-                    // Parameter changed successfully, save value
-                    pointcloud_color_ = this->get_parameter("pointcloud_color").as_int();
+                    int error = response->error;
+                    if (!error)
+                    {
+                        // Parameter changed successfully, save value
+                        pointcloud_color_ = this->get_parameter("pointcloud_color").as_int();
+                    }
+                    else
+                    {
+                        RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                        // Parameter could not be changed, reset parameter to value before change
+                        this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color_));
+                    }
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
-                    // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color_));
+                    RCLCPP_ERROR(this->get_logger(), "Received null response.");
                 }
             }
             else
@@ -407,7 +416,7 @@ namespace l3cam_ros2
                 RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_pointcloud_color");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color_));
-            }
+        }
         }
 
         void colorRangeResponseCallback(
@@ -416,19 +425,27 @@ namespace l3cam_ros2
             auto status = future.wait_for(1s);
             if (status == std::future_status::ready)
             {
-                int error = future.get()->error;
-                if (!error)
+                auto response = future.get();
+                if (response)
                 {
-                    // Parameters changed successfully, save value
-                    pointcloud_color_range_minimum_ = this->get_parameter("pointcloud_color_range_minimum").as_int();
-                    pointcloud_color_range_maximum_ = this->get_parameter("pointcloud_color_range_maximum").as_int();
+                    int error = response->error;
+                    if (!error)
+                    {
+                        // Parameters changed successfully, save value
+                        pointcloud_color_range_minimum_ = this->get_parameter("pointcloud_color_range_minimum").as_int();
+                        pointcloud_color_range_maximum_ = this->get_parameter("pointcloud_color_range_maximum").as_int();
+                    }
+                    else
+                    {
+                        RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                        // Parameters could not be changed, reset parameters to value before change
+                        this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum_));
+                        this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum_));
+                    }
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
-                    // Parameters could not be changed, reset parameters to value before change
-                    this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum_));
-                    this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum_));
+                    RCLCPP_ERROR(this->get_logger(), "Received null response.");
                 }
             }
             else
@@ -437,7 +454,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameters to value before change
                 this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum_));
                 this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum_));
-            }
+        }
         }
 
         void distanceRangeResponseCallback(
@@ -446,19 +463,27 @@ namespace l3cam_ros2
             auto status = future.wait_for(1s);
             if (status == std::future_status::ready)
             {
-                int error = future.get()->error;
-                if (!error)
+                auto response = future.get();
+                if (response)
                 {
-                    // Parameters changed successfully, save value
-                    distance_range_minimum_ = this->get_parameter("distance_range_minimum").as_int();
-                    distance_range_maximum_ = this->get_parameter("distance_range_maximum").as_int();
+                    int error = response->error;
+                    if (!error)
+                    {
+                        // Parameters changed successfully, save value
+                        distance_range_minimum_ = this->get_parameter("distance_range_minimum").as_int();
+                        distance_range_maximum_ = this->get_parameter("distance_range_maximum").as_int();
+                    }
+                    else
+                    {
+                        RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                        // Parameters could not be changed, reset parameters to value before change
+                        this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum_));
+                        this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum_));
+                    }
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
-                    // Parameters could not be changed, reset parameters to value before change
-                    this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum_));
-                    this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum_));
+                    RCLCPP_ERROR(this->get_logger(), "Received null response.");
                 }
             }
             else
@@ -467,7 +492,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameters to value before change
                 this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum_));
                 this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum_));
-            }
+        }
         }
 
         void biasShortRangeResponseCallback(
@@ -484,7 +509,7 @@ namespace l3cam_ros2
                 RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service set_bias_short_range");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("bias_short_range", bias_short_range_));
-            }
+        }
         }
 
         void autoBiasResponseCallback(
@@ -501,7 +526,7 @@ namespace l3cam_ros2
                 RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service enable_auto_bias");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("auto_bias", auto_bias_));
-            }
+        }
         }
 
         void biasValueResponseCallback(
@@ -520,7 +545,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("bias_value_right", bias_value_right_));
                 this->set_parameter(rclcpp::Parameter("bias_value_left", bias_value_left_));
-            }
+        }
         }
 
         void autobiasValueResponseCallback(
@@ -539,7 +564,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("autobias_value_right", autobias_value_right_));
                 this->set_parameter(rclcpp::Parameter("autobias_value_left", autobias_value_left_));
-            }
+        }
         }
 
         void streamingProtocolResponseCallback(
@@ -548,17 +573,25 @@ namespace l3cam_ros2
             auto status = future.wait_for(1s);
             if (status == std::future_status::ready)
             {
-                int error = future.get()->error;
-                if (!error)
+                auto response = future.get();
+                if (response)
                 {
-                    // Parameter changed successfully, save value
-                    streaming_protocol_ = this->get_parameter("lidar_streaming_protocol").as_int();
+                    int error = response->error;
+                    if (!error)
+                    {
+                        // Parameter changed successfully, save value
+                        streaming_protocol_ = this->get_parameter("lidar_streaming_protocol").as_int();
+                    }
+                    else
+                    {
+                        RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
+                        // Parameter could not be changed, reset parameter to value before change
+                        this->set_parameter(rclcpp::Parameter("lidar_streaming_protocol", streaming_protocol_));
+                    }
                 }
                 else
                 {
-                    RCLCPP_ERROR_STREAM(this->get_logger(), "ERROR " << error << " while changing parameter in " << __func__ << ": " << getErrorDescription(error));
-                    // Parameter could not be changed, reset parameter to value before change
-                    this->set_parameter(rclcpp::Parameter("lidar_streaming_protocol", streaming_protocol_));
+                    RCLCPP_ERROR(this->get_logger(), "Received null response.");
                 }
             }
             else
@@ -639,30 +672,38 @@ int main(int argc, char **argv)
         ++i;
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
-    node->undeclare_parameter("timeout_secs");
-
+    // node->undeclare_parameter("timeout_secs");
+    
     auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
     auto resultGetSensors = node->client_get_sensors_->async_send_request(requestGetSensors);
-
+    
     int error = L3CAM_OK;
     bool sensor_is_available = false;
     // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetSensors.get()->error;
-
-        if (!error)
+        auto response = resultGetSensors.get();
+        if(response)
         {
-            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
+            error = response->error;
+
+            if (!error)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_lidar && resultGetSensors.get()->sensors[i].sensor_available)
-                    sensor_is_available = true;
+                for (int i = 0; i < response->num_sensors; ++i)
+                {
+                    if (response->sensors[i].sensor_type == sensor_lidar && response->sensors[i].sensor_available)
+                        sensor_is_available = true;
+                }
+            }
+            else
+            {
+                RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getErrorDescription(error));
+                return error;
             }
         }
         else
         {
-            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "ERROR " << error << " while checking sensor availability in " << __func__ << ": " << getErrorDescription(error));
-            return error;
+            RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Received null response.");
         }
     }
     else
@@ -697,13 +738,14 @@ int main(int argc, char **argv)
 
     if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetRtspPipeline.get()->error;
+        auto response = resultGetRtspPipeline.get();
+        error = response->error;
 
         if (!error)
         {
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             descriptor.read_only = true;
-            node->declare_parameter("lidar_rtsp_pipeline", resultGetRtspPipeline.get()->pipeline, descriptor);
+            node->declare_parameter("lidar_rtsp_pipeline", response->pipeline, descriptor);
         }
         else
         {

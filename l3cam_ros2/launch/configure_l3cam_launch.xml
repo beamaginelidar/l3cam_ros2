@@ -98,9 +98,9 @@
     <arg name="allied_narrow_streaming_protocol" default="0" />
 
     <!-- Dynamic reconfigure -->
-    <node pkg="l3cam_ros2" exec="network_configuration" name="network_configuration" if="$(var network_conf)">
+    <!-- <node pkg="l3cam_ros2" exec="network_configuration" name="network_configuration" if="$(var network_conf)">
         <param name="timeout_secs" value="$(var timeout_secs)" />
-    </node>
+    </node> -->
     
     <node pkg="l3cam_ros2" exec="lidar_configuration" name="lidar_configuration">
         <param name="timeout_secs" value="$(var timeout_secs)" />

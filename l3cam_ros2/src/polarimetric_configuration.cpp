@@ -99,7 +99,8 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
-            this->declare_parameter("timeout_secs", 60);
+            descriptor.dynamic_typing = true;
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
             this->declare_parameter("polarimetric_camera_stream_processed_image", true);
             intRange.set__from_value(0).set__to_value(4);
             descriptor.integer_range = {intRange};
@@ -827,12 +828,13 @@ int main(int argc, char **argv)
     // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetSensors.get()->error;
+        auto response = resultGetSensors.get();
+        error = response->error;
 
         if (!error)
-            for (int i = 0; i < resultGetSensors.get()->num_sensors; ++i)
+            for (int i = 0; i < response->num_sensors; ++i)
             {
-                if (resultGetSensors.get()->sensors[i].sensor_type == sensor_pol && resultGetSensors.get()->sensors[i].sensor_available)
+                if (response->sensors[i].sensor_type == sensor_pol && response->sensors[i].sensor_available)
                     sensor_is_available = true;
             }
         else
@@ -873,13 +875,14 @@ int main(int argc, char **argv)
 
     if (rclcpp::spin_until_future_complete(node, resultGetRtspPipeline) == rclcpp::FutureReturnCode::SUCCESS)
     {
-        error = resultGetRtspPipeline.get()->error;
+        auto response = resultGetRtspPipeline.get();
+        error = response->error;
 
         if (!error)
         {
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             descriptor.read_only = true;
-            node->declare_parameter("polarimetric_rtsp_pipeline", resultGetRtspPipeline.get()->pipeline, descriptor);
+            node->declare_parameter("polarimetric_rtsp_pipeline", response->pipeline, descriptor);
         }
         else
         {

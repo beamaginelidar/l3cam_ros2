@@ -207,7 +207,9 @@ namespace l3cam_ros2
     // Declare parameters
     void L3Cam::declareParameters()
     {
-        this->declare_parameter("timeout_secs", 60);
+        rcl_interfaces::msg::ParameterDescriptor descriptor;
+        descriptor.dynamic_typing = true;
+        this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
         declareNetworkParameters();
         declareLidarParameters();
         declarePolarimetricParameters();
@@ -1617,13 +1619,14 @@ namespace l3cam_ros2
                                         std::shared_ptr<l3cam_interfaces::srv::GetNetworkConfiguration::Response> res)
     {
         ROS2_BMG_UNUSED(req);
-        char *ip_address = NULL;
+        ROS2_BMG_UNUSED(res);
+        /*char *ip_address = NULL;
         char *netmask = NULL;
         char *gateway = NULL;
         res->error = GET_NETWORK_CONFIGURATION(m_devices[0], &ip_address, &netmask, &gateway);
         res->ip_address = std::string(ip_address);
         res->netmask = std::string(netmask);
-        res->gateway = std::string(gateway);
+        res->gateway = std::string(gateway);*/
     }
 
     void L3Cam::changeNetworkConfiguration(const std::shared_ptr<l3cam_interfaces::srv::ChangeNetworkConfiguration::Request> req,

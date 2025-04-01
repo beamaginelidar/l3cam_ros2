@@ -99,8 +99,7 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
-            descriptor.dynamic_typing = true;
-            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60));
             this->declare_parameter("polarimetric_camera_stream_processed_image", true);
             intRange.set__from_value(0).set__to_value(4);
             descriptor.integer_range = {intRange};

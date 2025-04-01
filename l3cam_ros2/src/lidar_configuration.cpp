@@ -92,8 +92,7 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            descriptor.dynamic_typing = true;
-            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60));
             range.set__from_value(0).set__to_value(15); // TBD: dynamic reconfigure dropdown menu pointCloudColor
             descriptor.integer_range = {range};
             descriptor.description =

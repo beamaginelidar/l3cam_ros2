@@ -208,8 +208,7 @@ namespace l3cam_ros2
     void L3Cam::declareParameters()
     {
         rcl_interfaces::msg::ParameterDescriptor descriptor;
-        descriptor.dynamic_typing = true;
-        this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
+        this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60));
         declareNetworkParameters();
         declareLidarParameters();
         declarePolarimetricParameters();

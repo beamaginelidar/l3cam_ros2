@@ -117,8 +117,7 @@ namespace l3cam_ros2
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             rcl_interfaces::msg::FloatingPointRange floatRange;
-            descriptor.dynamic_typing = true;
-            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60));
             floatRange.set__from_value(63.0).set__to_value(10000000.0);
             descriptor.floating_point_range = {floatRange};
             this->declare_parameter("allied_wide_camera_exposure_time", 4992.4, descriptor); // 63 - 10000000

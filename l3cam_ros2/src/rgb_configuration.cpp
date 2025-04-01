@@ -98,8 +98,7 @@ namespace l3cam_ros2
             // Declare parameters with range
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange range;
-            descriptor.dynamic_typing = true;
-            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60));
             range.set__from_value(-15).set__to_value(15);
             descriptor.integer_range = {range};
             this->declare_parameter("rgb_camera_brightness", 0, descriptor); // -15 - 15

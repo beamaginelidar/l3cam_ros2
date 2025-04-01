@@ -51,8 +51,7 @@ namespace l3cam_ros2
         {
             // Declare parameters
             rcl_interfaces::msg::ParameterDescriptor descriptor;
-            descriptor.dynamic_typing = true;
-            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60), descriptor);
+            this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60));
             this->declare_parameter("ip_address", "192.168.1.250");
             this->declare_parameter("netmask", "255.255.255.0");
             this->declare_parameter("gateway", "0.0.0.0");

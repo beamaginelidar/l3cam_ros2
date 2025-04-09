@@ -4,7 +4,7 @@ This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](
 
 If you are looking for this package for ROS, go to the [l3cam_ros](https://github.com/beamaginelidar/l3cam_ros) package.
 
-This package is supported only on Linux systems and has only been tested with ROS2 foxy on an Ubuntu 20.04 system.
+This package is supported only on Linux systems and has only been tested with ROS2 foxy and humble on an Ubuntu 20.04 and 22.04 system.
 
 ## Installation
 
@@ -173,7 +173,7 @@ The allied_narrow_configuration is a node that configures the Allied Narrow came
 Default parameters for the L3Cam can be set by loading params files, by editing the `l3cam_launch.xml` file or by specifying them when launching it:
 
 ```
-ros2 launch l3cam_ros l3cam_launch.xml <PARAM>:=<VALUE> <PARAM>:=<VALUE> ...
+ros2 launch l3cam_ros2 l3cam_launch.xml "<PARAM>:=<VALUE>" "<PARAM>:=<VALUE>" ...
 ```
 
 Some parameters are enumerate's declared on the `libL3Cam`, check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf) for more info or check the parameter description with:
@@ -234,6 +234,8 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 
 | Parameter                                              | Type   | Default   | Range                    |
 | ------------------------------------------------------ | ------ | --------- | ------------------------ |
+| `polarimetric_camera_stream_processed_image`           | bool   | true      |                          |
+| `polarimetric_camera_process_type`                     | int    | 4         | see `polAngle`           |
 | `polarimetric_camera_brightness`                       | int    | 127       | [0, 255]                 |
 | `polarimetric_camera_black_level`                      | double | 6.0       | [0, 12.5]                |
 | `polarimetric_camera_auto_gain`                        | bool   | true      |                          |
@@ -275,7 +277,7 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | `thermal_camera_temperature_filter_min` | int    | 0       | [-40, 200]               |
 | `thermal_camera_temperature_filter_max` | int    | 50      | [-40, 200]               |
 | `thermal_camera_processing_pipeline`    | int    | 1       | see `thermalPipelines`   |
-| `thermal_camera_temperature_data_udp`   | bool   | false   |                          |
+| `thermal_camera_temperature_data_udp`   | bool   | true    |                          |
 | `thermal_streaming_protocol`            | int    | 0       | see `streamingProtocols` |
 | `thermal_rtsp_pipeline`                 | string |         |                          |
 
@@ -404,6 +406,8 @@ The ranges shown in the [parameters](#parameters) section also apply to the serv
 | `/change_autobias_value`                               | int index, int autobias                                                                 | int error                                                                                                                                                                                      |
 | `/get_autobias_value`                                  | int index                                                                               | float gain, int error                                                                                                                                                                          |
 | `/set_polarimetric_camera_default_settings`            | -                                                                                       | int error                                                                                                                                                                                      |
+| `/enable_polarimetric_camera_stream_processed_image`   | bool enabled                                                                            | int error                                                                                                                                                                                      |
+| `/change_polarimetric_camera_process_type`             | int type                                                                                | int error                                                                                                                                                                                      |
 | `/change_polarimetric_camera_brightness`               | int brightness                                                                          | int error                                                                                                                                                                                      |
 | `/change_polarimetric_camera_black_level`              | float black_level                                                                       | int error                                                                                                                                                                                      |
 | `/enable_polarimetric_camera_auto_gain`                | bool enabled                                                                            | int error                                                                                                                                                                                      |
@@ -496,12 +500,13 @@ Being protocol a number contained in the enum `streamingProtocols` and sensor_ty
 
 All sensors stream their data to each topic:
 
-| Sensor                         | Topic                     | Data type                  |
-| ------------------------------ | ------------------------- | -------------------------- |
-| Lidar                          | `/L3Cam/PC2_lidar`        | `sensor_msgs::PointCloud2` |
-| Polarimetric                   | `/L3Cam/img_polarimetric` | `sensor_msgs::Image`       |
-| RGB                            | `/L3Cam/img_rgb`          | `sensor_msgs::Image`       |
-| Thermal                        | `/L3Cam/img_thermal`      | `sensor_msgs::Image`       |
-| Thermal (raw temperature data) | `/L3Cam/img_f_thermal`    | `sensor_msgs::Image`       |
-| Allied Wide                    | `/L3Cam/img_wide`         | `sensor_msgs::Image`       |
-| Allied Narrow                  | `/L3Cam/img_narrow`       | `sensor_msgs::Image`       |
+| Sensor                         | Topic                               | Data type                  |
+| ------------------------------ | ----------------------------------- | -------------------------- |
+| Lidar                          | `/L3Cam/PC2_lidar`                  | `sensor_msgs::PointCloud2` |
+| Polarimetric                   | `/L3Cam/img_polarimetric`           | `sensor_msgs::Image`       |
+| Polarimetric (processed)       | `/L3Cam/img_polarimetric_processed` | `sensor_msgs::Image`       |
+| RGB                            | `/L3Cam/img_rgb`                    | `sensor_msgs::Image`       |
+| Thermal                        | `/L3Cam/img_thermal`                | `sensor_msgs::Image`       |
+| Thermal (raw temperature data) | `/L3Cam/img_f_thermal`              | `sensor_msgs::Image`       |
+| Allied Wide                    | `/L3Cam/img_wide`                   | `sensor_msgs::Image`       |
+| Allied Narrow                  | `/L3Cam/img_narrow`                 | `sensor_msgs::Image`       |

@@ -74,6 +74,50 @@ std::mutex g_processing_mutex;
 int g_processing_thread_counter = 0;
 const int g_max_processing_thread = 100;
 
+std::mutex g_mutex;
+int g_thread_counter = 0;
+const int g_max_thread = 100;
+
+void CompressSendImageThread(cv::Mat img_data, rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher, std::vector<int> compression_params, std_msgs::Header header)
+{
+    if (g_thread_counter >= g_max_thread)
+        return;
+
+    g_mutex.lock();
+    ++g_thread_counter;
+    g_mutex.unlock();
+
+    std::vector<uchar> buffer;
+    bool success = false;
+    try
+    {
+        success = cv::imencode(".jpg", img_data, buffer, compression_params);
+    }
+    catch (cv::Exception &e)
+    {
+        ROS_ERROR("OpenCV compression error: %s", e.what());
+        return;
+    }
+
+    if (success)
+    {
+        sensor_msgs::CompressedImage compressed_msg;
+        compressed_msg.header = header;
+        compressed_msg.format = "jpeg";
+        compressed_msg.data = buffer;
+
+        publisher->publish(compressed_msg);
+    }
+    else
+    {
+        ROS_WARN("Failed to compress image.");
+    }
+
+    g_mutex.lock();
+    --g_thread_counter;
+    g_mutex.unlock();
+}
+
 cv::Mat rgbpol2rgb(cv::Mat img, polAngle angle = no_angle)
 {
     /*
@@ -162,7 +206,7 @@ cv::Mat rgbpol2rgb(cv::Mat img, polAngle angle = no_angle)
     return rgb;
 }
 
-void ProcessSendImageThread(cv::Mat img_data, std_msgs::msg::Header header, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher)
+void ProcessSendImageThread(cv::Mat img_data, std_msgs::msg::Header header, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher, std::vector<int> compression_params)
 {
     if (g_processing_thread_counter >= g_max_processing_thread)
         return;
@@ -176,15 +220,15 @@ void ProcessSendImageThread(cv::Mat img_data, std_msgs::msg::Header header, rclc
     std_msgs::msg::Header header_processed = header;
     header.frame_id = "polarimetric_processed";
 
-    std::shared_ptr<sensor_msgs::msg::Image> img_processed_msg = cv_bridge::CvImage(header_processed, sensor_msgs::image_encodings::BGR8, img_processed).toImageMsg();
-    publisher->publish(*img_processed_msg);
+    std::thread comp_thread(CompressSendImageThread, img_processed.clone(), publisher, compression_params, header_processed);
+    comp_thread.detach();
 
     g_processing_mutex.lock();
     --g_processing_thread_counter;
     g_processing_mutex.unlock();
 }
 
-void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr extra_publisher, rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
+void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr extra_publisher, int quality, bool optimize, int rst_interval, rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
 {
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
@@ -209,6 +253,14 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     
     std_msgs::msg::Header header;
     header.frame_id = g_pol ? "polarimetric" : "allied_wide";
+
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(quality);
+    compression_params.push_back(cv::IMWRITE_JPEG_OPTIMIZE);
+    compression_params.push_back(optimize ? 1 : 0);
+    compression_params.push_back(cv::IMWRITE_JPEG_RST_INTERVAL);
+    compression_params.push_back(rst_interval);
 
     if ((m_socket_descriptor = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
@@ -260,9 +312,9 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
 
     g_listening = true;
     if (g_pol)
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Polarimetric streaming.");
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Polarimetric streaming compressed.");
     else
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Allied Wide streaming.");
+        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Allied Wide streaming compressed.");
 
     uint8_t *image_pointer = NULL;
 
@@ -338,15 +390,23 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);
             }
 
-            const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
-            std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
-
-            publisher->publish(*img_msg);
-
-            if (extra_publisher && g_stream_processed)
+            if (g_pol)
             {
-                std::thread process_thread(ProcessSendImageThread, img_data.clone(), header, extra_publisher);
-                process_thread.detach();
+                const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
+                std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
+
+                publisher->publish(*img_msg);
+                
+                if (g_stream_processed)
+                {
+                    std::thread process_thread(ProcessSendImageThread, img_data.clone(), header, extra_publisher, compression_params);
+                    process_thread.detach();
+                }
+            }
+            else
+            {
+                std::thread comp_thread(ProcessSendImageThread, img_data.clone(), header, compression_params, publisher);
+                comp_thread.detach();
             }
 
             detections_publisher->publish(m_2d_detections)
@@ -551,13 +611,17 @@ int main(int argc, char const *argv[])
     }
     node->undeclare_parameter("simulator");
 
-    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(g_pol ? "img_polarimetric" : "img_wide", 10);
     node->detections_publisher_ = node->create_publisher<vision_msgs::msg::Detection2DArray>(g_pol ? "polarimetric_detections" : "wide_detections", 10);
     if (g_pol)
     {
-        node->extra_publisher_ = node->create_publisher<sensor_msgs::msg::Image>("/img_polarimetric_processed", 10);
+        node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_polarimetric", 10);
+        node->extra_publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("/img_polarimetric_processed", 10);
     }
-    std::thread thread(ImageThread, node->publisher_, node->extra_publisher_, node->detections_publisher);
+    else
+    {
+        node->publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("img_wide", 10);
+    }
+    std::thread thread(ImageThread, node->publisher_, node->extra_publisher_, node->get_parameter("jpeg_quality").as_int(), node->get_parameter("jpeg_optimize").as_bool(), node->get_parameter("jpeg_rst_interval").as_int(), node->detections_publisher);
     thread.detach();
 
     rclcpp::spin(node);

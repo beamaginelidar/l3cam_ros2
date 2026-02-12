@@ -34,6 +34,7 @@ namespace l3cam_ros2
         client_get_sensors_ = this->create_client<l3cam_interfaces::srv::GetSensorsAvailable>("get_sensors_available");
 
         this->declare_parameter("timeout_secs", rclcpp::ParameterValue(60));
+        this->declare_parameter("simulator", rclcpp::ParameterValue(false));
     }
 
     void SensorStream::declareServiceServers(const std::string &sensor)

@@ -274,7 +274,7 @@ namespace l3cam_ros2
         this->declare_parameter("autobias_value_left", 50, descriptor);  // 0 - 100
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
-        descriptor.description = 
+        descriptor.description =
             "Value must be:\n"
             "\tprotocol_raw_udp = 0\n"
             "\tprotocol_gstreamer = 1";
@@ -320,7 +320,7 @@ namespace l3cam_ros2
         this->declare_parameter("polarimetric_camera_exposure_time", 33.5, descriptor); // 33.5 - 66470.6
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
-        descriptor.description = 
+        descriptor.description =
             "Value must be:\n"
             "\tprotocol_raw_udp = 0\n"
             "\tprotocol_gstreamer = 1";
@@ -375,7 +375,7 @@ namespace l3cam_ros2
         this->declare_parameter("rgb_camera_framerate", 10, descriptor); // 1 - 16
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
-        descriptor.description = 
+        descriptor.description =
             "Value must be:\n"
             "\tprotocol_raw_udp = 0\n"
             "\tprotocol_gstreamer = 1";
@@ -413,9 +413,9 @@ namespace l3cam_ros2
         intRange.set__from_value(-40).set__to_value(200);
         descriptor.integer_range = {intRange};
         this->declare_parameter("thermal_camera_temperature_filter_max", 50, descriptor); // -40 - 200
-        intRange.set__from_value(0).set__to_value(2); // TBD: dynamic reconfigure enumerate thermalPipelines
+        intRange.set__from_value(0).set__to_value(2);                                     // TBD: dynamic reconfigure enumerate thermalPipelines
         descriptor.integer_range = {intRange};
-        descriptor.description = 
+        descriptor.description =
             "Value must be: (thermalPipelines)\n"
             "\tthermal_LITE = 0\n"
             "\tthermal_LEGACY = 1\n"
@@ -425,7 +425,7 @@ namespace l3cam_ros2
         this->declare_parameter("thermal_camera_temperature_data_udp", false);
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
-        descriptor.description = 
+        descriptor.description =
             "Value must be:\n"
             "\tprotocol_raw_udp = 0\n"
             "\tprotocol_gstreamer = 1";
@@ -523,7 +523,7 @@ namespace l3cam_ros2
         this->declare_parameter("allied_wide_camera_max_driver_buffers_count", 64, descriptor); // 1 - 4096
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
-        descriptor.description = 
+        descriptor.description =
             "Value must be:\n"
             "\tprotocol_raw_udp = 0\n"
             "\tprotocol_gstreamer = 1";
@@ -622,7 +622,7 @@ namespace l3cam_ros2
         this->declare_parameter("allied_narrow_camera_max_driver_buffers_count", 64, descriptor); // 1 - 4096
         intRange.set__from_value(0).set__to_value(1);
         descriptor.integer_range = {intRange};
-        descriptor.description = 
+        descriptor.description =
             "Value must be:\n"
             "\tprotocol_raw_udp = 0\n"
             "\tprotocol_gstreamer = 1";
@@ -986,8 +986,8 @@ namespace l3cam_ros2
         if (error != L3CAM_OK)
         {
             RCLCPP_WARN_STREAM(this->get_logger(),
-                                "ERROR " << error << " while setting default parameter " << param << ": "
-                                         << getErrorDescription(error));
+                               "ERROR " << error << " while setting default parameter " << param << ": "
+                                        << getErrorDescription(error));
         }
     }
 
@@ -1094,7 +1094,7 @@ namespace l3cam_ros2
                           "distance_range");
         printDefaultError(SET_BIAS_SHORT_RANGE(m_devices[0], this->get_parameter("bias_short_range").as_bool()),
                           "distance_range");
-        printDefaultError(ENABLE_AUTO_BIAS(m_devices[0], this->get_parameter("auto_bias").as_bool()), 
+        printDefaultError(ENABLE_AUTO_BIAS(m_devices[0], this->get_parameter("auto_bias").as_bool()),
                           "auto_bias");
         if (!this->get_parameter("auto_bias").as_bool())
         { //! Values might not match after disabling auto_bias
@@ -1239,10 +1239,10 @@ namespace l3cam_ros2
                                                                    this->get_parameter("thermal_camera_temperature_filter_max").as_int()),
                           "thermal_camera_temperature_filter_range");
         printDefaultError(CHANGE_THERMAL_CAMERA_PROCESSING_PIPELINE(m_devices[0],
-                                                  this->get_parameter("thermal_camera_processing_pipeline").as_int()),
+                                                                    this->get_parameter("thermal_camera_processing_pipeline").as_int()),
                           "thermal_camera_processing_pipeline");
         printDefaultError(ENABLE_THERMAL_CAMERA_TEMPERATURE_DATA_UDP(m_devices[0],
-                                                              this->get_parameter("thermal_camera_temperature_data_udp").as_bool()),
+                                                                     this->get_parameter("thermal_camera_temperature_data_udp").as_bool()),
                           "thermal_camera_temperature_data_udp");
         if (this->get_parameter("thermal_streaming_protocol").as_int() == 1)
         {
@@ -1758,7 +1758,7 @@ namespace l3cam_ros2
     }
 
     void L3Cam::setBiasShortRange(const std::shared_ptr<l3cam_interfaces::srv::SetBiasShortRange::Request> req,
-                               std::shared_ptr<l3cam_interfaces::srv::SetBiasShortRange::Response> res)
+                                  std::shared_ptr<l3cam_interfaces::srv::SetBiasShortRange::Response> res)
     {
         res->error = SET_BIAS_SHORT_RANGE(m_devices[0], req->enabled);
     }
@@ -1776,13 +1776,13 @@ namespace l3cam_ros2
     }
 
     void L3Cam::changeAutobiasValue(const std::shared_ptr<l3cam_interfaces::srv::ChangeAutobiasValue::Request> req,
-                                std::shared_ptr<l3cam_interfaces::srv::ChangeAutobiasValue::Response> res)
+                                    std::shared_ptr<l3cam_interfaces::srv::ChangeAutobiasValue::Response> res)
     {
         res->error = CHANGE_AUTOBIAS_VALUE(m_devices[0], req->index, req->autobias);
     }
 
     void L3Cam::getAutobiasValue(const std::shared_ptr<l3cam_interfaces::srv::GetAutobiasValue::Request> req,
-                                std::shared_ptr<l3cam_interfaces::srv::GetAutobiasValue::Response> res)
+                                 std::shared_ptr<l3cam_interfaces::srv::GetAutobiasValue::Response> res)
     {
         uint8_t gain;
         res->error = GET_AUTOBIAS_VALUE(m_devices[0], req->index, &gain);
@@ -1933,13 +1933,13 @@ namespace l3cam_ros2
     }
 
     void L3Cam::changeThermalCameraProcessingPipeline(const std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline::Request> req,
-                                                     std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline::Response> res)
+                                                      std::shared_ptr<l3cam_interfaces::srv::ChangeThermalCameraProcessingPipeline::Response> res)
     {
         res->error = CHANGE_THERMAL_CAMERA_PROCESSING_PIPELINE(m_devices[0], req->pipeline);
     }
 
     void L3Cam::enableThermalCameraTemperatureDataUdp(const std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Request> req,
-                                                     std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Response> res)
+                                                      std::shared_ptr<l3cam_interfaces::srv::EnableThermalCameraTemperatureDataUdp::Response> res)
     {
         res->error = ENABLE_THERMAL_CAMERA_TEMPERATURE_DATA_UDP(m_devices[0], req->enabled);
     }

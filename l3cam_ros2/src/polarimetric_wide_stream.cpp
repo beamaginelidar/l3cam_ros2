@@ -91,14 +91,20 @@ cv::Mat rgbpol2rgb(cv::Mat img, polAngle angle = no_angle)
     cv::Mat bayer(img.rows / 2, img.cols / 2, CV_8UC1, cv::Scalar(0));
     cv::Mat rgb;
 
-    auto is_valid_pixel = [](int px_y, int px_x, polAngle angle) -> bool {
+    auto is_valid_pixel = [](int px_y, int px_x, polAngle angle) -> bool
+    {
         switch (angle)
         {
-        case angle_0:   return (px_y == 1 || px_y == 3) && (px_x == 1 || px_x == 3);
-        case angle_45:  return (px_y == 0 || px_y == 2) && (px_x == 1 || px_x == 3);
-        case angle_90:  return (px_y == 0 || px_y == 2) && (px_x == 0 || px_x == 2);
-        case angle_135: return (px_y == 1 || px_y == 3) && (px_x == 0 || px_x == 2);
-        default: return false;
+        case angle_0:
+            return (px_y == 1 || px_y == 3) && (px_x == 1 || px_x == 3);
+        case angle_45:
+            return (px_y == 0 || px_y == 2) && (px_x == 1 || px_x == 3);
+        case angle_90:
+            return (px_y == 0 || px_y == 2) && (px_x == 0 || px_x == 2);
+        case angle_135:
+            return (px_y == 1 || px_y == 3) && (px_x == 0 || px_x == 2);
+        default:
+            return false;
         }
     };
 
@@ -281,10 +287,10 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
 
             const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
             std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
-            
+
             publisher->publish(*img_msg);
 
-            if(extra_publisher && g_stream_processed)
+            if (extra_publisher && g_stream_processed)
             {
                 cv::Mat img_processed = rgbpol2rgb(img_data, (polAngle)g_angle);
 
@@ -307,7 +313,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
         // size_read == -1 --> timeout
     }
 
-    publisher = NULL; //! Without this, the node becomes zombie
+    publisher = NULL;       //! Without this, the node becomes zombie
     extra_publisher = NULL; //! Without this, the node becomes zombie
     RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Exiting " << (g_pol ? "polarimetric" : "allied wide") << " streaming thread");
     free(buffer);
@@ -366,12 +372,12 @@ namespace l3cam_ros2
         void changeProcessType(const std::shared_ptr<l3cam_interfaces::srv::ChangePolarimetricCameraProcessType::Request> req,
                                std::shared_ptr<l3cam_interfaces::srv::ChangePolarimetricCameraProcessType::Response> res)
         {
-            if(req->type < 0 || req->type > no_angle)
+            if (req->type < 0 || req->type > no_angle)
             {
                 res->error = L3CAM_ROS2_INVALID_POLARIMETRIC_PROCESS_TYPE;
                 return;
             }
-            
+
             g_angle = req->type;
             res->error = 0;
         }
@@ -452,7 +458,8 @@ int main(int argc, char const *argv[])
     {
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), (g_pol ? "Polarimetric" : "Allied Wide") << " camera available for streaming");
         node->declareServiceServers((g_pol ? "polarimetric" : "allied_wide"));
-        if(g_pol) node->declareExtraService();
+        if (g_pol)
+            node->declareExtraService();
     }
     else
     {
@@ -460,7 +467,7 @@ int main(int argc, char const *argv[])
     }
 
     node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(g_pol ? "img_pol" : "img_wide", 10);
-    if(g_pol)
+    if (g_pol)
     {
         node->extra_publisher_ = node->create_publisher<sensor_msgs::msg::Image>("/img_polarimetric_processed", 10);
     }

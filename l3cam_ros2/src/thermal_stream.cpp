@@ -412,7 +412,7 @@ int main(int argc, char const *argv[])
     node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_thermal", 10);
     std::thread thread(ImageThread, node->publisher_);
     thread.detach();
-    
+
     node->f_publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_f_thermal", 10);
     std::thread thread_f(FloatImageThread, node->f_publisher_);
     thread_f.detach();

@@ -111,9 +111,9 @@ namespace l3cam_ros2
             range.set__from_value(-40).set__to_value(200);
             descriptor.integer_range = {range};
             this->declare_parameter("thermal_camera_temperature_filter_max", 50, descriptor); // -40 - 200
-            range.set__from_value(0).set__to_value(2); // TBD: dynamic reconfigure enumerate thermalPipelines
+            range.set__from_value(0).set__to_value(2);                                        // TBD: dynamic reconfigure enumerate thermalPipelines
             descriptor.integer_range = {range};
-            descriptor.description = 
+            descriptor.description =
                 "Value must be: (thermalPipelines)\n"
                 "\tthermal_LITE = 0\n"
                 "\tthermal_LEGACY = 1\n"
@@ -123,7 +123,7 @@ namespace l3cam_ros2
             this->declare_parameter("thermal_camera_temperature_data_udp", false);
             range.set__from_value(0).set__to_value(1);
             descriptor.integer_range = {range};
-            descriptor.description = 
+            descriptor.description =
                 "Value must be:\n"
                 "\tprotocol_raw_udp = 0\n"
                 "\tprotocol_gstreamer = 1";

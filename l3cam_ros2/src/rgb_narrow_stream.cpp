@@ -170,7 +170,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
             else if (m_image_channels == 2)
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC2, image_pointer);
-                if(g_rgb && !g_wide) // econ
+                if (g_rgb && !g_wide) // econ
                 {
                     cv::cvtColor(img_data, img_data, cv::COLOR_YUV2BGR_YUYV);
                 }

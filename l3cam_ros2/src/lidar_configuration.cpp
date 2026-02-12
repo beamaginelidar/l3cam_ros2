@@ -415,7 +415,7 @@ namespace l3cam_ros2
                 RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service change_pointcloud_color");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("pointcloud_color", pointcloud_color_));
-        }
+            }
         }
 
         void colorRangeResponseCallback(
@@ -453,7 +453,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameters to value before change
                 this->set_parameter(rclcpp::Parameter("pointcloud_color_range_minimum", pointcloud_color_range_minimum_));
                 this->set_parameter(rclcpp::Parameter("pointcloud_color_range_maximum", pointcloud_color_range_maximum_));
-        }
+            }
         }
 
         void distanceRangeResponseCallback(
@@ -491,7 +491,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameters to value before change
                 this->set_parameter(rclcpp::Parameter("distance_range_minimum", distance_range_minimum_));
                 this->set_parameter(rclcpp::Parameter("distance_range_maximum", distance_range_maximum_));
-        }
+            }
         }
 
         void biasShortRangeResponseCallback(
@@ -508,7 +508,7 @@ namespace l3cam_ros2
                 RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service set_bias_short_range");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("bias_short_range", bias_short_range_));
-        }
+            }
         }
 
         void autoBiasResponseCallback(
@@ -525,7 +525,7 @@ namespace l3cam_ros2
                 RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service enable_auto_bias");
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("auto_bias", auto_bias_));
-        }
+            }
         }
 
         void biasValueResponseCallback(
@@ -544,7 +544,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("bias_value_right", bias_value_right_));
                 this->set_parameter(rclcpp::Parameter("bias_value_left", bias_value_left_));
-        }
+            }
         }
 
         void autobiasValueResponseCallback(
@@ -563,7 +563,7 @@ namespace l3cam_ros2
                 // Service could not be called, reset parameter to value before change
                 this->set_parameter(rclcpp::Parameter("autobias_value_right", autobias_value_right_));
                 this->set_parameter(rclcpp::Parameter("autobias_value_left", autobias_value_left_));
-        }
+            }
         }
 
         void streamingProtocolResponseCallback(
@@ -672,17 +672,17 @@ int main(int argc, char **argv)
         // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, waiting again...");
     }
     // node->undeclare_parameter("timeout_secs");
-    
+
     auto requestGetSensors = std::make_shared<l3cam_interfaces::srv::GetSensorsAvailable::Request>();
     auto resultGetSensors = node->client_get_sensors_->async_send_request(requestGetSensors);
-    
+
     int error = L3CAM_OK;
     bool sensor_is_available = false;
     // Shutdown if sensor is not available or if error returned
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
         auto response = resultGetSensors.get();
-        if(response)
+        if (response)
         {
             error = response->error;
 

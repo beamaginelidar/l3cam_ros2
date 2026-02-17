@@ -39,13 +39,12 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <pthread.h>
 #include <thread>
 
 #include "std_msgs/msg/header.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/image_encodings.hpp"
-#include "vision_msgs/msg/detection_2d_array.hpp"
+#include "vision_msgs/msg/detection2_d_array.hpp"
 
 #include "cv_bridge/cv_bridge.h"
 #include <opencv2/imgproc/imgproc.hpp>
@@ -57,14 +56,13 @@
 
 using namespace std::chrono_literals;
 
-pthread_t stream_thread;
-
 bool g_listening = false;
 
-bool g_rgb; // true if rgb sensor available, false if narrow available
-bool g_wide;
+bool g_rgb = true; // true if rgb sensor available, false if narrow available
+bool g_wide = false;
 
-void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher, rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
+void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher,
+                 rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
 {
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
@@ -86,7 +84,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     bool m_is_reading_image = false;
     char *m_image_buffer = NULL;
     int bytes_count = 0;
-    
+
     std_msgs::msg::Header header;
     header.frame_id = g_rgb ? "rgb" : "allied_narrow";
 
@@ -125,11 +123,12 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     // VERIFY what the kernel actually gave you
     int actual_buf_size = 0;
     socklen_t optlen = sizeof(actual_buf_size);
-    if (getsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVBUF, &actual_buf_size, &optlen) == 0) {
+    if (getsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVBUF, &actual_buf_size, &optlen) == 0)
+    {
         // Note: Kernel doubles the requested value for internal bookkeeping, so actual might be 2x rcvbufsize
         if (actual_buf_size < rcvbufsize)
         {
-            ROS_WARN_STREAM("Socket receive buffer is set to " << actual_buf_size << " bytes instead of " << rcvbufsize);
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "Socket receive buffer is set to " << actual_buf_size << " bytes instead of " << rcvbufsize);
         }
     }
 
@@ -175,7 +174,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
             m_is_reading_image = true;
             m_2d_detections.detections.clear();
             bytes_count = 0;
-        
+
             // m_timestamp format: hhmmsszzz
             time_t t = time(NULL);
             std::tm *time_info = std::localtime(&t);
@@ -187,14 +186,14 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                                (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
                                (uint32_t)((m_timestamp / 1000) % 100);         // ss
             header.stamp.nanosec = (m_timestamp % 1000) * 1e6;                 // zzz
-            
+
             m_2d_detections.header = header;
         }
         else if (size_read == 1) // End, send image
         {
             if (bytes_count != m_image_data_size)
             {
-                ROS_WARN_STREAM("rgb_narrow NET PROBLEM: bytes_count != m_image_data_size: " << bytes_count << " != " << m_image_data_size);
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "rgb_narrow NET PROBLEM: bytes_count != m_image_data_size: " << bytes_count << " != " << m_image_data_size);
                 continue;
             }
 
@@ -230,7 +229,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
 
             publisher->publish(*img_msg);
 
-            detections_publisher->publish(m_2d_detections)
+            detections_publisher->publish(m_2d_detections);
         }
         else if (size_read > 0 && m_is_reading_image) // Data
         {
@@ -251,15 +250,15 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                 memcpy(&green, &buffer[13], 1);
                 memcpy(&blue, &buffer[14], 1);
 
-                vision_msgs::Detection2D det;
+                vision_msgs::msg::Detection2D det;
                 det.header = header;
                 det.bbox.center.x = x + width / 2;
                 det.bbox.center.y = y + height / 2;
                 det.bbox.size_x = width;
                 det.bbox.size_y = height;
-                vision_msgs::ObjectHypothesisWithPose hyp_2d;
-                hyp_2d.id = label;
-                hyp_2d.score = confidence;
+                vision_msgs::msg::ObjectHypothesisWithPose hyp_2d;
+                hyp_2d.id = std::to_string(label);
+                hyp_2d.score = (double)confidence;
                 det.results.push_back(hyp_2d);
                 m_2d_detections.detections.push_back(det);
 
@@ -393,9 +392,8 @@ int main(int argc, char const *argv[])
     }
     node->undeclare_parameter("simulator");
 
-
     node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(g_rgb ? "img_rgb" : "img_narrow", 10);
-    node->detections_publisher_ = node->create_publisher<vision_msgs::msg::Detection2DArray>(g_pol ? "polarimetric_detections" : "wide_detections", 10);
+    node->detections_publisher_ = node->create_publisher<vision_msgs::msg::Detection2DArray>(g_rgb ? "rgb_detections" : "narrow_detections", 10);
     std::thread thread(ImageThread, node->publisher_, node->detections_publisher_);
     thread.detach();
 

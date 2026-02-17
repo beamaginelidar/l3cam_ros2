@@ -1,6 +1,6 @@
 # l3cam_ros2
 
-This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](https://beamagine.com/). The driver relies on the library `libL3Cam 0.1.18` provided by Beamagine as part of the [L3Cam SDK](https://github.com/beamaginelidar/libl3cam.git). For more info on the L3Cam check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf).
+This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](https://beamagine.com/). The driver relies on the library `libL3Cam` provided by Beamagine as part of the [L3Cam SDK](https://github.com/beamaginelidar/libl3cam.git). For more info on the L3Cam check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf).
 
 If you are looking for this package for ROS, go to the [l3cam_ros](https://github.com/beamaginelidar/l3cam_ros) package.
 
@@ -12,9 +12,9 @@ This package is supported only on Linux systems and has only been tested with RO
 
 First, you will need to install the L3Cam SDK.
 
-Download the package from Beamagine's [L3Cam SDK 0.1.18 release](https://github.com/beamaginelidar/libl3cam/releases) repository and install the required package depending on your hardware architecture:
+Download the last version of the package from Beamagine's [L3Cam SDK repository releases](https://github.com/beamaginelidar/libl3cam/releases) repository and install the required package depending on your hardware architecture:
 
-```
+```bash
 sudo dpkg -i <PACKAGE>
 ```
 
@@ -22,7 +22,7 @@ sudo dpkg -i <PACKAGE>
 
 Clone this repository in your ROS2 workspace (e.g. ros2_ws) and build:
 
-```
+```bash
 cd ~/ros2_ws/src && git clone https://github.com/beamaginelidar/l3cam_ros2
 colcon build --packages-select l3cam_interfaces l3cam_ros2
 ```
@@ -37,7 +37,7 @@ A jumbo frame is an Ethernet frame that is larger than 1500 bytes. Most Ethernet
 
 You can check what your current MTU setting is by running the following command:
 
-```
+```bash
 ifconfig | grep mtu
 ```
 
@@ -51,16 +51,18 @@ It is also recommended to increase your network default and maximum receive buff
 
 You can check what your current buffer size is:
 
-```
-sudo sysctl 'net.core.rmem_max'
-sudo sysctl 'net.core.rmem_default'
+```bash
+sudo sysctl 'net.core.rmem_max' # should be 268435456
+sudo sysctl 'net.core.rmem_default' # should be 268435456
+sudo sysctl 'net.core.netdev_max_backlog' # should be 5000
 ```
 
 Update the buffer size with the following commands:
 
-```
+```bash
 sudo sh -c "echo 'net.core.rmem_default=268435456' >> /etc/sysctl.conf"
 sudo sh -c "echo 'net.core.rmem_max=268435456' >> /etc/sysctl.conf"
+sudo sh -c "echo 'net.core.netdev_max_backlog=5000' >> /etc/sysctl.conf"
 sudo sysctl -p
 ```
 
@@ -88,23 +90,27 @@ TCP is used internally by `libL3Cam` and is transparent to the user. However, th
 
 To run the l3cam_ros2 driver, launch the `l3cam_launch.xml` file specifying (if wanted) if the [stream launch file](#stream_l3cam), the [configure launch file](#configure_l3cam), `rviz2` (for visualization GUI) and `rqt_reconfigure` (for dynamic reconfigure GUI) have to be launched too. By default, the values are as follows:
 
-```
-ros2 launch l3cam_ros2 l3cam_launch.xml "stream:=true" "configure:=true" "rviz2:=false" "rqt_reconfigure:=false"
+```bash
+ros2 launch l3cam_ros2 l3cam_launch.xml simulator:=false comp:=false stream:=true configure:=true rviz2:=false rqt_reconfigure:=false 
 ```
 
 This will launch the [l3cam_ros2_node](#l3cam_ros2_node), which is the main node that connects to and controls the L3Cam, and the `stream_l3cam_launch.xml` and `configure_l3cam_launch.xml` files.
+
+If you are using the L3Cam Simulator, turn the `simulator` parameter to true to simulate the streaming of the L3Cam.
+
+Turn the `comp` parameter to true to stream using `image_transport` and `point_cloud_transport` to compress the messages sent.
 
 More parameters can be set if wanted for the default network and sensors parameters, this is seen in the [parameters section](#parameters). The default parameters specified will be passed to the main node ([l3cam_ros2_node](#l3cam_ros2_node)) and the [configure launch file](#configure_l3cam).
 
 ### stream_l3cam
 
-This launch file launches all the [stream nodes](#lidar_stream) for all the sensors and `rviz2` if specified. Once the main node connects to the L3Cam it will only keep open the stream nodes of the sensors the L3Cam has available, the other ones will shut down automatically.
+This launch file launches all the [stream nodes](#lidar_stream) for all the sensors. Once the main node connects to the L3Cam it will only keep open the stream nodes of the sensors the L3Cam has available, the other ones will shut down automatically.
 
 The stream nodes stream automatically their sensor data to each sensor topic when data is available.
 
 ### configure_l3cam
 
-This launch file launches all the [configure nodes](#network_configuration) for all the sensors and `rqt_reconfigure` if specified. Once the main node connects to the L3Cam it will only keep open the configure nodes of the sensors the L3Cam has available, the other ones will shut down automatically.
+This launch file launches all the [configure nodes](#network_configuration) for all the sensors. Once the main node connects to the L3Cam it will only keep open the configure nodes of the sensors the L3Cam has available, the other ones will shut down automatically.
 
 The configure nodes function like a dynamic reconfigure interface to change parameters, which is more user friendly. In reality, the parameters are changed with the main node through services, the configure nodes call services when a dynamic reconfigure parameter is changed.
 
@@ -126,15 +132,31 @@ The lidar_stream is the node that publishes pointcloud frames if the LiDAR senso
 
 ### polarimetric_wide_stream
 
-The polarimetric_wide_stream is the node that publishes polarimetric or Allied Wide image frames if the polarimetric or the Allied Wide sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
+The polarimetric_wide_stream is the node that publishes polarimetric or Allied Wide image frames and its detections if the polarimetric or the Allied Wide sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
 
 ### rgb_narrow_stream
 
-The rgb_narrow_stream is the node that publishes RGB or Allied Narrow image frames if the RGB or the Allied Narrow sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
+The rgb_narrow_stream is the node that publishes RGB or Allied Narrow image frames and its detections if the RGB or the Allied Narrow sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
 
 ### thermal_stream
 
-The thermal_stream is the node that publishes thermal image frames if the thermal sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
+The thermal_stream is the node that publishes thermal image frames and its detections if the thermal sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
+
+### polarimetric_wide_stream_comp
+
+The polarimetric_wide_stream_comp is the same as [polarimetric_wide_stream](#polarimetric_wide_stream) but using compressed images when possible.
+
+### rgb_narrow_stream_comp
+
+The rgb_narrow_stream_comp is the same as [rgb_narrow_stream](#rgb_narrow_stream) but using using compressed images.
+
+### thermal_stream_comp
+
+The thermal_stream_comp is the same as [thermal_stream](#thermal_stream) but using using compressed images when possible.
+
+### lidar_detections_stream
+
+The lidar_detections_stream is the node that publishes pointcloud detections if the LiDAR sensor is available. See the [topics](#topics) section for documentation regarding the topics each sensor topic.
 
 ### network_configuration
 
@@ -172,13 +194,13 @@ The allied_narrow_configuration is a node that configures the Allied Narrow came
 
 Default parameters for the L3Cam can be set by loading params files, by editing the `l3cam_launch.xml` file or by specifying them when launching it:
 
-```
-ros2 launch l3cam_ros2 l3cam_launch.xml "<PARAM>:=<VALUE>" "<PARAM>:=<VALUE>" ...
+```bash
+ros2 launch l3cam_ros2 l3cam_launch.xml <PARAM>:=<VALUE> <PARAM>:=<VALUE> ...
 ```
 
 Some parameters are enumerate's declared on the `libL3Cam`, check the [L3Cam User Manual](https://github.com/beamaginelidar/libl3cam/blob/main/L3CAM%20User%20Manual.pdf) for more info or check the parameter description with:
 
-```
+```bash
 ros2 param describe <NODE> <PARAM>
 ```
 
@@ -186,20 +208,30 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 
 ### Initialization parameters
 
-| Parameter           | Type   | Default     |
-| ------------------- | ------ | ----------- |
-| stream              | bool   | true        |
-| configure           | bool   | true        |
-| rviz2               | bool   | true        |
-| rqt_reconfigure     | bool   | true        |
-| namespace           | string | /l3cam      |
-| timeout_secs        | int    | 60          |
-| lidar_topic         | string | PC2_lidar   |
-| polarimetric_topic  | string | img_pol     |
-| rgb_topic           | string | img_rgb     |
-| thermal_topic       | string | img_thermal |
-| allied_wide_topic   | string | img_wide    |
-| allied_narrow_topic | string | img_narrow  |
+| Parameter                     | Type   | Default                        |
+| ----------------------------- | ------ | ------------------------------ |
+| simulator                     | bool   | false                          |
+| comp                          | bool   | false                          |
+| stream                        | bool   | true                           |
+| configure                     | bool   | true                           |
+| rviz2                         | bool   | true                           |
+| rqt_reconfigure               | bool   | true                           |
+| namespace                     | string | /L3Cam                         |
+| timeout_secs                  | int    | 60                             |
+| lidar_topic                   | string | PC2_lidar                      |
+| polarimetric_topic            | string | img_pol                        |
+| polarimetric_processed_topic  | string | img_polarimetric_processed     |
+| rgb_topic                     | string | img_rgb                        |
+| thermal_topic                 | string | img_thermal                    |
+| f_thermal_topic               | string | /L3Cam/img_f_thermal           |
+| allied_wide_topic             | string | img_wide                       |
+| allied_narrow_topic           | string | img_narrow                     |
+| lidar_detections_topic        | string | /L3Cam/lidar_detections        |
+| polarimetric_detections_topic | string | /L3Cam/polarimetric_detections |
+| rgb_detections_topic          | string | /L3Cam/rgb_detections          |
+| thermal_detections_topic      | string | /L3Cam/thermal_detections      |
+| wide_detections_topic         | string | /L3Cam/wide_detections         |
+| narrow_detections_topic       | string | /L3Cam/narrow_detections       |
 
 ### Network parameters
 
@@ -235,7 +267,7 @@ When using `rqt_reconfigure`, if the parameter has a description and you hover o
 | Parameter                                              | Type   | Default   | Range                    |
 | ------------------------------------------------------ | ------ | --------- | ------------------------ |
 | `polarimetric_camera_stream_processed_image`           | bool   | true      |                          |
-| `polarimetric_camera_process_type`                     | int    | 4         | see `polAngle`           |
+| `polarimetric_camera_process_type`                     | int    | 4         | see `polModes`           |
 | `polarimetric_camera_brightness`                       | int    | 127       | [0, 255]                 |
 | `polarimetric_camera_black_level`                      | double | 6.0       | [0, 12.5]                |
 | `polarimetric_camera_auto_gain`                        | bool   | true      |                          |
@@ -500,13 +532,24 @@ Being protocol a number contained in the enum `streamingProtocols` and sensor_ty
 
 All sensors stream their data to each topic:
 
-| Sensor                         | Topic                               | Data type                  |
-| ------------------------------ | ----------------------------------- | -------------------------- |
-| Lidar                          | `/L3Cam/PC2_lidar`                  | `sensor_msgs::PointCloud2` |
-| Polarimetric                   | `/L3Cam/img_polarimetric`           | `sensor_msgs::Image`       |
-| Polarimetric (processed)       | `/L3Cam/img_polarimetric_processed` | `sensor_msgs::Image`       |
-| RGB                            | `/L3Cam/img_rgb`                    | `sensor_msgs::Image`       |
-| Thermal                        | `/L3Cam/img_thermal`                | `sensor_msgs::Image`       |
-| Thermal (raw temperature data) | `/L3Cam/img_f_thermal`              | `sensor_msgs::Image`       |
-| Allied Wide                    | `/L3Cam/img_wide`                   | `sensor_msgs::Image`       |
-| Allied Narrow                  | `/L3Cam/img_narrow`                 | `sensor_msgs::Image`       |
+| Sensor                            | Topic                                          | Data type                            |
+| --------------------------------- | ---------------------------------------------- | ------------------------------------ |
+| Lidar                             | `/L3Cam/PC2_lidar`                             | `sensor_msgs::msg::PointCloud2`      |
+| Polarimetric                      | `/L3Cam/img_polarimetric`                      | `sensor_msgs::msg::Image`            |
+| Polarimetric Processed            | `/L3Cam/img_polarimetric_processed`            | `sensor_msgs::msg::Image`            |
+| Polarimetric Processed Compressed | `/L3Cam/img_polarimetric_processed/compressed` | `sensor_msgs::msg::CompressedImage`  |
+| RGB                               | `/L3Cam/img_rgb`                               | `sensor_msgs::msg::Image`            |
+| RGB Compressed                    | `/L3Cam/img_rgb/compressed`                    | `sensor_msgs::msg::CompressedImage`  |
+| Thermal                           | `/L3Cam/img_thermal`                           | `sensor_msgs::msg::Image`            |
+| Thermal Compressed                | `/L3Cam/img_thermal/compressed`                | `sensor_msgs::msg::CompressedImage`  |
+| Thermal (raw temperature data)    | `/L3Cam/img_f_thermal`                         | `sensor_msgs::msg::Image`            |
+| Allied Wide                       | `/L3Cam/img_wide`                              | `sensor_msgs::msg::Image`            |
+| Allied Wide Compressed            | `/L3Cam/img_wide/compressed`                   | `sensor_msgs::msg::CompressedImage`  |
+| Allied Narrow                     | `/L3Cam/img_narrow`                            | `sensor_msgs::msg::Image`            |
+| Allied Narrow Compressed          | `/L3Cam/img_narrow/compressed`                 | `sensor_msgs::msg::Image`            |
+| Lidar Detections                  | `/L3Cam/lidar_detections`                      | `vision_msgs::msg::Detection3DArray` |
+| Polarimetric Detections           | `/L3Cam/polarimetric_detections`               | `vision_msgs::msg::Detection2DArray` |
+| RGB Detections                    | `/L3Cam/rgb_detections`                        | `vision_msgs::msg::Detection2DArray` |
+| Thermal Detections                | `/L3Cam/thermal_detections`                    | `vision_msgs::msg::Detection2DArray` |
+| Allied Wide Detections            | `/L3Cam/wide_detections`                       | `vision_msgs::msg::Detection2DArray` |
+| Allied Narrow Detections          | `/L3Cam/narrow_detections`                     | `vision_msgs::msg::Detection2DArray` |

@@ -41,7 +41,6 @@
 #include <unordered_map>
 #include <mutex>
 
-#include <pthread.h>
 #include <thread>
 
 #include "sensor_msgs/msg/point_cloud2.hpp"
@@ -79,7 +78,13 @@ uint8_t clamp_to_uint8(float value)
     return (uint8_t)value;
 }
 
-void CompressSendPointCloudThread(std::vector<int32_t> point_cloud_data, rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::SharedPtr publisher, uint8_t precision, int divisor, bool deduplicate, int intensity_th, std_msgs::Header header)
+void CompressSendPointCloudThread(std::vector<int32_t> point_cloud_data,
+                                  rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::SharedPtr publisher,
+                                  uint8_t precision,
+                                  int divisor,
+                                  bool deduplicate,
+                                  int intensity_th,
+                                  std_msgs::msg::Header header)
 {
     if (g_thread_counter >= g_max_thread)
         return;
@@ -88,7 +93,7 @@ void CompressSendPointCloudThread(std::vector<int32_t> point_cloud_data, rclcpp:
     ++g_thread_counter;
     g_mutex.unlock();
 
-    l3cam_interfaces::TinyPointCloud tpc_msg;
+    l3cam_interfaces::msg::TinyPointCloud tpc_msg;
     tpc_msg.header = header;
     tpc_msg.precision = precision;
 
@@ -103,26 +108,26 @@ void CompressSendPointCloudThread(std::vector<int32_t> point_cloud_data, rclcpp:
     float intensity;
     int16_t x_16, y_16, z_16;
     uint8_t i_8;
-    for (int i = 0; i < point_cloud_data.size() / 5; ++i)
+    for (uint i = 0; i < point_cloud_data.size() / 5; ++i)
     {
         y = -point_cloud_data[5 * i + 1];
         z = -point_cloud_data[5 * i + 2];
         x = point_cloud_data[5 * i + 3];
         intensity = (float)point_cloud_data[5 * i + 4];
-        
+
         // Scale, Clamp
         x_16 = clamp_to_int16(x / divisor);
         y_16 = clamp_to_int16(y / divisor);
         z_16 = clamp_to_int16(z / divisor);
         i_8 = clamp_to_uint8((intensity - 500) / 4500 * 256);
-        
+
         if (deduplicate)
         {
             // Pack 3x int16 into one uint64 for O(1) lookup
             // Casting to uint16_t first ensures bits are preserved correctly for negative numbers
             uint64_t key = ((uint64_t)(uint16_t)x_16 << 32) |
-                        ((uint64_t)(uint16_t)y_16 << 16) |
-                        (uint64_t)(uint16_t)z_16;
+                           ((uint64_t)(uint16_t)y_16 << 16) |
+                           (uint64_t)(uint16_t)z_16;
 
             // Check if this coordinate exists
             auto &existing_intensities = spatial_grid[key];
@@ -156,7 +161,7 @@ void CompressSendPointCloudThread(std::vector<int32_t> point_cloud_data, rclcpp:
 
     if (count_removed > 0)
     {
-        //ROS_INFO_STREAM("Removed " << count_removed << " duplicated points");
+        //RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Removed " << count_removed << " duplicated points");
     }
 
     publisher->publish(tpc_msg);
@@ -166,7 +171,10 @@ void CompressSendPointCloudThread(std::vector<int32_t> point_cloud_data, rclcpp:
     g_mutex.unlock();
 }
 
-void PointCloudThread(rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::SharedPtr publisher, uint8_t precision, bool deduplicate, int intensity_th)
+void PointCloudThread(rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::SharedPtr publisher,
+                      uint8_t precision,
+                      bool deduplicate,
+                      int intensity_th)
 {
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
@@ -184,8 +192,8 @@ void PointCloudThread(rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::
     int points_received = 1;
     int pointcloud_index = 1;
 
-    pcl_msg.header = std_msgs::msg::Header();
-    pcl_msg.header.frame_id = "lidar";
+    std_msgs::msg::Header header;
+    header.frame_id = "lidar";
 
     int32_t divisor = 0; // mm
     switch (precision)
@@ -241,7 +249,7 @@ void PointCloudThread(rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::
         // Note: Kernel doubles the requested value for internal bookkeeping, so actual might be 2x rcvbufsize
         if (actual_buf_size < rcvbufsize)
         {
-            ROS_WARN_STREAM("Socket receive buffer is set to " << actual_buf_size << " bytes instead of " << rcvbufsize);
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "Socket receive buffer is set to " << actual_buf_size << " bytes instead of " << rcvbufsize);
         }
     }
 
@@ -274,13 +282,13 @@ void PointCloudThread(rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::
         {
             if (points_received != m_pointcloud_size)
             {
-                ROS_WARN_STREAM("lidar NET PROBLEM: points_received != m_pointcloud_size: " << points_received << " != " << m_pointcloud_size);
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "lidar NET PROBLEM: points_received != m_pointcloud_size: " << points_received << " != " << m_pointcloud_size);
                 continue;
             }
 
             m_is_reading_pointcloud = false;
 
-            int size_pc = m_point_cloud_data[0];
+            int size_pc = m_pointcloud_data[0];
 
             // m_timestamp format: hhmmsszzz
             time_t t = time(NULL);
@@ -302,7 +310,7 @@ void PointCloudThread(rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::
 
             std::thread comp_thread(CompressSendPointCloudThread, point_cloud_data, publisher, precision, divisor, deduplicate, intensity_th, header);
             comp_thread.detach();
-            
+
             free(m_pointcloud_data);
             m_pointcloud_data = nullptr;
             points_received = 0;
@@ -350,7 +358,7 @@ namespace l3cam_ros2
             this->declare_parameter("lidar_deduplicate_intensity_threshold", rclcpp::ParameterValue(12));
         }
 
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
+        rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::SharedPtr publisher_;
 
     private:
         void stopListening()
@@ -435,7 +443,7 @@ int main(int argc, char const *argv[])
     node->undeclare_parameter("simulator");
 
     node->publisher_ = node->create_publisher<l3cam_interfaces::msg::TinyPointCloud>("PC2_lidar/tiny", 10);
-    std::thread thread(PointCloudThread, node->publisher_, (unit8_t)node->get_parameter("lidar_precision").as_int(), node->get_parameter("lidar_deduplicate").as_bool(), node->get_parameter("lidar_deduplicate_intensity_threshold").as_int());
+    std::thread thread(PointCloudThread, node->publisher_, (uint8_t)node->get_parameter("lidar_precision").as_int(), node->get_parameter("lidar_deduplicate").as_bool(), node->get_parameter("lidar_deduplicate_intensity_threshold").as_int());
     thread.detach();
 
     rclcpp::spin(node);

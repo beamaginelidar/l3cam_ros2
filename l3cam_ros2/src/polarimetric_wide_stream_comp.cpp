@@ -40,13 +40,12 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <pthread.h>
 #include <thread>
 
 #include "std_msgs/msg/header.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/image_encodings.hpp"
-#include "vision_msgs/msg/detection_2d_array.hpp"
+#include "vision_msgs/msg/detection2_d_array.hpp"
 
 #include "cv_bridge/cv_bridge.h"
 #include <opencv2/imgproc/imgproc.hpp>
@@ -61,13 +60,11 @@
 
 using namespace std::chrono_literals;
 
-pthread_t stream_thread;
-
 int g_angle = no_angle;
 
 bool g_listening = false;
 
-bool g_pol = false; // true if polarimetric available, false if wide available
+bool g_pol = true; // true if polarimetric available, false if wide available
 bool g_stream_processed = true;
 
 std::mutex g_processing_mutex;
@@ -78,7 +75,10 @@ std::mutex g_mutex;
 int g_thread_counter = 0;
 const int g_max_thread = 100;
 
-void CompressSendImageThread(cv::Mat img_data, rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher, std::vector<int> compression_params, std_msgs::Header header)
+void CompressSendImageThread(cv::Mat img_data,
+                             rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher,
+                             std::vector<int> compression_params,
+                             std_msgs::msg::Header header)
 {
     if (g_thread_counter >= g_max_thread)
         return;
@@ -95,13 +95,13 @@ void CompressSendImageThread(cv::Mat img_data, rclcpp::Publisher<sensor_msgs::ms
     }
     catch (cv::Exception &e)
     {
-        ROS_ERROR("OpenCV compression error: %s", e.what());
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "OpenCV compression error: %s", e.what());
         return;
     }
 
     if (success)
     {
-        sensor_msgs::CompressedImage compressed_msg;
+        sensor_msgs::msg::CompressedImage compressed_msg;
         compressed_msg.header = header;
         compressed_msg.format = "jpeg";
         compressed_msg.data = buffer;
@@ -110,7 +110,7 @@ void CompressSendImageThread(cv::Mat img_data, rclcpp::Publisher<sensor_msgs::ms
     }
     else
     {
-        ROS_WARN("Failed to compress image.");
+        RCLCPP_WARN(rclcpp::get_logger("rclcpp"), "Failed to compress image.");
     }
 
     g_mutex.lock();
@@ -118,7 +118,7 @@ void CompressSendImageThread(cv::Mat img_data, rclcpp::Publisher<sensor_msgs::ms
     g_mutex.unlock();
 }
 
-cv::Mat rgbpol2rgb(cv::Mat img, polAngle angle = no_angle)
+cv::Mat rgbpol2rgb(const cv::Mat &img, const polMode &mode = no_angle)
 {
     /*
     0       1       2       3
@@ -137,76 +137,107 @@ cv::Mat rgbpol2rgb(cv::Mat img, polAngle angle = no_angle)
     +-------+-------+-------+-------+
     */
 
-    cv::Mat bayer(img.rows / 2, img.cols / 2, CV_8UC1, cv::Scalar(0));
-    cv::Mat rgb;
+    if (mode == polMode::raw)
+        return img;
 
-    auto is_valid_pixel = [](int px_y, int px_x, polAngle angle) -> bool
+    auto extract_bayer = [&](polMode ang)
     {
-        switch (angle)
+        cv::Mat bayer(img.rows / 2, img.cols / 2, CV_8UC1, cv::Scalar(0));
+        for (int y = 0; y < img.rows; ++y)
         {
-        case angle_0:
-            return (px_y == 1 || px_y == 3) && (px_x == 1 || px_x == 3);
-        case angle_45:
-            return (px_y == 0 || px_y == 2) && (px_x == 1 || px_x == 3);
-        case angle_90:
-            return (px_y == 0 || px_y == 2) && (px_x == 0 || px_x == 2);
-        case angle_135:
-            return (px_y == 1 || px_y == 3) && (px_x == 0 || px_x == 2);
-        default:
-            return false;
+            for (int x = 0; x < img.cols; ++x)
+            {
+                int py = y % 4;
+                int px = x % 4;
+                bool match = false;
+                switch (ang)
+                {
+                case angle_0:
+                    match = (py == 1 || py == 3) && (px == 1 || px == 3);
+                    break;
+                case angle_45:
+                    match = (py == 0 || py == 2) && (px == 1 || px == 3);
+                    break;
+                case angle_90:
+                    match = (py == 0 || py == 2) && (px == 0 || px == 2);
+                    break;
+                case angle_135:
+                    match = (py == 1 || py == 3) && (px == 0 || px == 2);
+                    break;
+                default:
+                    break;
+                }
+                if (match)
+                    bayer.at<uint8_t>(y / 2, x / 2) = img.at<uint8_t>(y, x);
+            }
         }
+        return bayer;
     };
 
-    if (angle != no_angle)
+    if (mode == angle_0 || mode == angle_45 || mode == angle_90 || mode == angle_135)
     {
-        for (int y = 0; y < img.rows; ++y)
-        {
-            for (int x = 0; x < img.cols; ++x)
-            {
-                const int px_y = y % 4;
-                const int px_x = x % 4;
-
-                if (is_valid_pixel(px_y, px_x, angle))
-                {
-                    bayer.at<uint8_t>(y / 2, x / 2) = img.at<uint8_t>(y, x);
-                }
-            }
-        }
+        cv::Mat bayer = extract_bayer(mode);
+        cv::Mat rgb;
         cv::cvtColor(bayer, rgb, cv::COLOR_BayerRG2BGR);
+        return rgb;
     }
-    else
+
+    // Compute DOLP or AOLP
+    if (mode == dolp || mode == aolp)
     {
-        cv::Mat bayer0 = cv::Mat::zeros(img.rows / 2, img.cols / 2, CV_8UC1);
-        cv::Mat bayer90 = cv::Mat::zeros(img.rows / 2, img.cols / 2, CV_8UC1);
+        cv::Mat bayer0 = extract_bayer(angle_0);
+        cv::Mat bayer45 = extract_bayer(angle_45);
+        cv::Mat bayer90 = extract_bayer(angle_90);
+        cv::Mat bayer135 = extract_bayer(angle_135);
 
-        for (int y = 0; y < img.rows; ++y)
+        cv::Mat I0, I45, I90, I135;
+        cv::cvtColor(bayer0, I0, cv::COLOR_BayerRG2BGR);
+        cv::cvtColor(bayer45, I45, cv::COLOR_BayerRG2BGR);
+        cv::cvtColor(bayer90, I90, cv::COLOR_BayerRG2BGR);
+        cv::cvtColor(bayer135, I135, cv::COLOR_BayerRG2BGR);
+
+        I0.convertTo(I0, CV_32F, 1.0 / 255.0);
+        I45.convertTo(I45, CV_32F, 1.0 / 255.0);
+        I90.convertTo(I90, CV_32F, 1.0 / 255.0);
+        I135.convertTo(I135, CV_32F, 1.0 / 255.0);
+
+        cv::Mat S0 = I0 + I90;
+        cv::Mat S1 = I0 - I90;
+        cv::Mat S2 = I45 - I135;
+
+        if (mode == dolp)
         {
-            for (int x = 0; x < img.cols; ++x)
-            {
-                const int px_y = y % 4;
-                const int px_x = x % 4;
-
-                if ((px_y == 1 || px_y == 3) && (px_x == 1 || px_x == 3))
-                {
-                    bayer0.at<uint8_t>(y / 2, x / 2) = img.at<uint8_t>(y, x);
-                }
-                if ((px_y == 0 || px_y == 2) && (px_x == 0 || px_x == 2))
-                {
-                    bayer90.at<uint8_t>(y / 2, x / 2) = img.at<uint8_t>(y, x);
-                }
-            }
+            cv::Mat dolp;
+            cv::sqrt(S1.mul(S1) + S2.mul(S2), dolp);
+            dolp = dolp / (S0 + 1e-6f);
+            dolp.convertTo(dolp, CV_8UC3, 255);
+            return dolp;
         }
-
-        cv::Mat rgb0, rgb90;
-        cv::cvtColor(bayer0, rgb0, cv::COLOR_BayerRG2BGR);
-        cv::cvtColor(bayer90, rgb90, cv::COLOR_BayerRG2BGR);
-        rgb = rgb0 / 2 + rgb90 / 2;
+        else // aolp
+        {
+            cv::Mat aolp;
+            cv::phase(S1, S2, aolp, true);                       // true -> output in degrees
+            aolp.convertTo(aolp, CV_32F, CV_PI / 180.0f * 0.5f); // convert to radians and apply 0.5 factor
+            aolp.convertTo(aolp, CV_32F, 1 / CV_PI);             // Normalize radians
+            aolp.convertTo(aolp, CV_8UC3, 255);
+            return aolp;
+        }
     }
 
+    // Default: average I0 + I90 (unpolarized RGB)
+    cv::Mat bayer0 = extract_bayer(angle_0);
+    cv::Mat bayer90 = extract_bayer(angle_90);
+    cv::Mat rgb0, rgb90;
+    cv::cvtColor(bayer0, rgb0, cv::COLOR_BayerRG2BGR);
+    cv::cvtColor(bayer90, rgb90, cv::COLOR_BayerRG2BGR);
+    cv::Mat rgb = (rgb0 / 2 + rgb90 / 2);
     return rgb;
 }
 
-void ProcessSendImageThread(cv::Mat img_data, std_msgs::msg::Header header, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher, std::vector<int> compression_params)
+void ProcessSendImageThread(cv::Mat img_data,
+                            std_msgs::msg::Header header,
+                            rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher,
+                            std::vector<int> compression_params)
 {
     if (g_processing_thread_counter >= g_max_processing_thread)
         return;
@@ -215,7 +246,7 @@ void ProcessSendImageThread(cv::Mat img_data, std_msgs::msg::Header header, rclc
     ++g_processing_thread_counter;
     g_processing_mutex.unlock();
 
-    cv::Mat img_processed = rgbpol2rgb(img_data, (polAngle)g_angle);
+    cv::Mat img_processed = rgbpol2rgb(img_data, (polMode)g_angle);
 
     std_msgs::msg::Header header_processed = header;
     header.frame_id = "polarimetric_processed";
@@ -228,7 +259,12 @@ void ProcessSendImageThread(cv::Mat img_data, std_msgs::msg::Header header, rclc
     g_processing_mutex.unlock();
 }
 
-void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr extra_publisher, int quality, bool optimize, int rst_interval, rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
+void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher,
+                 rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr compressed_publisher,
+                 int quality,
+                 bool optimize,
+                 int rst_interval,
+                 rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
 {
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
@@ -250,7 +286,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     bool m_is_reading_image = false;
     char *m_image_buffer = NULL;
     int bytes_count = 0;
-    
+
     std_msgs::msg::Header header;
     header.frame_id = g_pol ? "polarimetric" : "allied_wide";
 
@@ -297,11 +333,12 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     // VERIFY what the kernel actually gave you
     int actual_buf_size = 0;
     socklen_t optlen = sizeof(actual_buf_size);
-    if (getsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVBUF, &actual_buf_size, &optlen) == 0) {
+    if (getsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVBUF, &actual_buf_size, &optlen) == 0)
+    {
         // Note: Kernel doubles the requested value for internal bookkeeping, so actual might be 2x rcvbufsize
         if (actual_buf_size < rcvbufsize)
         {
-            ROS_WARN_STREAM("Socket receive buffer is set to " << actual_buf_size << " bytes instead of " << rcvbufsize);
+            RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "Socket receive buffer is set to " << actual_buf_size << " bytes instead of " << rcvbufsize);
         }
     }
 
@@ -347,7 +384,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
             m_is_reading_image = true;
             m_2d_detections.detections.clear();
             bytes_count = 0;
-            
+
             // m_timestamp format: hhmmsszzz
             time_t t = time(NULL);
             std::tm *time_info = std::localtime(&t);
@@ -366,7 +403,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
         {
             if (bytes_count != m_image_data_size)
             {
-                ROS_WARN_STREAM("pol_wide NET PROBLEM: bytes_count != m_image_data_size: " << bytes_count  << " != " << m_image_data_size);
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "pol_wide NET PROBLEM: bytes_count != m_image_data_size: " << bytes_count << " != " << m_image_data_size);
                 continue;
             }
 
@@ -396,20 +433,20 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                 std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
 
                 publisher->publish(*img_msg);
-                
+
                 if (g_stream_processed)
                 {
-                    std::thread process_thread(ProcessSendImageThread, img_data.clone(), header, extra_publisher, compression_params);
+                    std::thread process_thread(ProcessSendImageThread, img_data.clone(), header, compressed_publisher, compression_params);
                     process_thread.detach();
                 }
             }
             else
             {
-                std::thread comp_thread(ProcessSendImageThread, img_data.clone(), header, compression_params, publisher);
+                std::thread comp_thread(CompressSendImageThread, img_data.clone(), compressed_publisher, compression_params, header);
                 comp_thread.detach();
             }
 
-            detections_publisher->publish(m_2d_detections)
+            detections_publisher->publish(m_2d_detections);
         }
         else if (size_read > 0 && m_is_reading_image) // Data
         {
@@ -430,15 +467,15 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                 memcpy(&green, &buffer[13], 1);
                 memcpy(&blue, &buffer[14], 1);
 
-                vision_msgs::Detection2D det;
+                vision_msgs::msg::Detection2D det;
                 det.header = header;
                 det.bbox.center.x = x + width / 2;
                 det.bbox.center.y = y + height / 2;
                 det.bbox.size_x = width;
                 det.bbox.size_y = height;
-                vision_msgs::ObjectHypothesisWithPose hyp_2d;
-                hyp_2d.id = label;
-                hyp_2d.score = confidence;
+                vision_msgs::msg::ObjectHypothesisWithPose hyp_2d;
+                hyp_2d.id = std::to_string(label);
+                hyp_2d.score = (double)confidence;
                 det.results.push_back(hyp_2d);
                 m_2d_detections.detections.push_back(det);
 
@@ -455,8 +492,8 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
         // size_read == -1 --> timeout
     }
 
-    publisher = NULL;       //! Without this, the node becomes zombie
-    extra_publisher = NULL; //! Without this, the node becomes zombie
+    publisher = NULL;            //! Without this, the node becomes zombie
+    compressed_publisher = NULL; //! Without this, the node becomes zombie
     detections_publisher = NULL;
     RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Exiting " << (g_pol ? "polarimetric" : "allied wide") << " streaming thread");
     free(buffer);
@@ -473,12 +510,16 @@ namespace l3cam_ros2
     public:
         explicit PolarimetricWideStream() : SensorStream("polarimetric_wide_stream")
         {
+            this->declare_parameter("jpeg_quality", rclcpp::ParameterValue(90));
+            this->declare_parameter("jpeg_optimize", rclcpp::ParameterValue(true));
+            this->declare_parameter("jpeg_rst_interval", rclcpp::ParameterValue(10));
+
             rcl_interfaces::msg::ParameterDescriptor descriptor;
             rcl_interfaces::msg::IntegerRange intRange;
             this->declare_parameter("polarimetric_camera_stream_processed_image", true);
             intRange.set__from_value(0).set__to_value(4);
             descriptor.integer_range = {intRange};
-            this->declare_parameter("polarimetric_camera_process_type", 4, descriptor); // see polAngle
+            this->declare_parameter("polarimetric_camera_process_type", 4, descriptor); // see polModes
 
             g_stream_processed = this->get_parameter("polarimetric_camera_stream_processed_image").as_bool();
             g_angle = this->get_parameter("polarimetric_camera_process_type").as_int();
@@ -494,7 +535,8 @@ namespace l3cam_ros2
                 std::bind(&PolarimetricWideStream::changeProcessType, this, std::placeholders::_1, std::placeholders::_2));
         }
 
-        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_, extra_publisher_;
+        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
+        rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr compressed_publisher_;
         rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher_;
 
     private:
@@ -615,13 +657,13 @@ int main(int argc, char const *argv[])
     if (g_pol)
     {
         node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_polarimetric", 10);
-        node->extra_publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("/img_polarimetric_processed", 10);
+        node->compressed_publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("img_polarimetric_processed/compressed", 10);
     }
     else
     {
-        node->publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("img_wide", 10);
+        node->compressed_publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("img_wide/compressed", 10);
     }
-    std::thread thread(ImageThread, node->publisher_, node->extra_publisher_, node->get_parameter("jpeg_quality").as_int(), node->get_parameter("jpeg_optimize").as_bool(), node->get_parameter("jpeg_rst_interval").as_int(), node->detections_publisher);
+    std::thread thread(ImageThread, node->publisher_, node->compressed_publisher_, node->get_parameter("jpeg_quality").as_int(), node->get_parameter("jpeg_optimize").as_bool(), node->get_parameter("jpeg_rst_interval").as_int(), node->detections_publisher_);
     thread.detach();
 
     rclcpp::spin(node);

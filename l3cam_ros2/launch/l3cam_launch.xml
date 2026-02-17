@@ -1,21 +1,40 @@
 <launch>
     <!-- ros2 launch l3cam_ros2 l3cam_launch.xml "rviz2:=true" "rqt_reconfigure:=true" -->
+    <arg name="simulator" default="false" />
+    <arg name="comp" default="false" />
     <arg name="stream" default="true" />
-    <arg name="rviz2" default="false" />
     <arg name="configure" default="true" />
+    <arg name="rviz2" default="false" />
     <arg name="rqt_reconfigure" default="false" />
-    <arg name="namespace" default="/L3Cam" />
 
-    <group>
-        <push-ros-namespace namespace="$(var namespace)" />
+    <arg name="lidar_precision" default="1" /> <!-- 0(mm), 1(cm), 2(dm), 3(m) -->
+    <arg name="lidar_deduplicate" default="true" />
+    <arg name="lidar_deduplicate_intensity_threshold" default="12" /> <!-- 0 - 255 -->
+    <arg name="jpeg_quality" default="90" /> <!-- 0 - 100 -->
+    <arg name="jpeg_optimize" default="true" />
+    <arg name="jpeg_rst_interval" default="10" /> <!-- 0 - 65535 -->
+
+    <arg name="namespace" default="L3Cam" />
+
+    <group scoped="true">
+        <push-ros-namespace namespace="L3Cam" />
 
         <arg name="timeout_secs" default="60" />
+
         <arg name="lidar_topic" default="PC2_lidar" />
         <arg name="polarimetric_topic" default="img_polarimetric" />
+        <arg name="polarimetric_processed_topic" default="img_polarimetric_processed" />
         <arg name="rgb_topic" default="img_rgb" />
         <arg name="thermal_topic" default="img_thermal" />
+        <arg name="f_thermal_topic" default="img_f_thermal" />
         <arg name="allied_wide_topic" default="img_wide" />
         <arg name="allied_narrow_topic" default="img_narrow" />
+        <arg name="lidar_detections_topic" default="lidar_detections" />
+        <arg name="polarimetric_detections_topic" default="polarimetric_detections" />
+        <arg name="rgb_detections_topic" default="rgb_detections" />
+        <arg name="thermal_detections_topic" default="thermal_detections" />
+        <arg name="wide_detections_topic" default="wide_detections" />
+        <arg name="narrow_detections_topic" default="narrow_detections" />
 
         <!-- Network configuration -->
         <arg name="local_address" default="" />
@@ -24,9 +43,9 @@
         <!-- Lidar configuration -->
         <arg name="pointcloud_color" default="0" /> <!-- see pointCloudColor -->
         <arg name="pointcloud_color_range_minimum" default="0" /> <!-- 0 - 300000 -->
-        <arg name="pointcloud_color_range_maximum" default="300000" /> <!-- 0 - 300000 -->
+        <arg name="pointcloud_color_range_maximum" default="30000" /> <!-- 0 - 300000 -->
         <arg name="distance_range_minimum" default="1500" /> <!-- 0 - 300000 -->
-        <arg name="distance_range_maximum" default="300000" /> <!-- 0 - 300000 -->
+        <arg name="distance_range_maximum" default="150000" /> <!-- 0 - 300000 -->
         <arg name="bias_short_range" default="false" />
         <arg name="auto_bias" default="true" />
         <arg name="bias_value_right" default="1580" /> <!-- 700 - 3500 -->
@@ -38,7 +57,7 @@
 
         <!-- Polarimetric configuration -->
         <arg name="polarimetric_camera_stream_processed_image" default="true" />
-        <arg name="polarimetric_camera_process_type" default="4" /> <!-- see polAngle -->
+        <arg name="polarimetric_camera_process_type" default="4" /> <!-- see polModes -->
         <arg name="polarimetric_camera_brightness" default="127" /> <!-- 0 - 255 -->
         <arg name="polarimetric_camera_black_level" default="6.0" /> <!-- 0 - 12.5 -->
         <arg name="polarimetric_camera_auto_gain" default="true" />
@@ -135,119 +154,119 @@
         <arg name="allied_narrow_rtsp_pipeline" default="" />
 
         <!-- Start the driver -->
-        <node pkg="l3cam_ros2" exec="l3cam_ros2_node" name="l3cam_ros2_node" output="screen">
-            <param name="local_address" value="$(var local_address)" type="str" />
-            <param name="device_address" value="$(var device_address)" type="str" />
+        <node pkg="l3cam_ros2" exec="l3cam_ros2_node" name="l3cam_ros2_node" output="screen" unless="$(var simulator)">
+            <param name="local_address" value="$(var local_address)" />
+            <param name="device_address" value="$(var device_address)" />
             <param name="timeout_secs" value="$(var timeout_secs)" />
 
-            <param name="pointcloud_color" value="$(var pointcloud_color)" type="int" />
-            <param name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" type="int" />
-            <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />
-            <param name="distance_range_minimum" value="$(var distance_range_minimum)" type="int" />
-            <param name="distance_range_maximum" value="$(var distance_range_maximum)" type="int" />
-            <param name="bias_short_range" value="$(var bias_short_range)" type="bool" />
-            <param name="auto_bias" value="$(var auto_bias)" type="bool" />
-            <param name="bias_value_right" value="$(var bias_value_right)" type="int" />
-            <param name="bias_value_left" value="$(var bias_value_left)" type="int" />
-            <param name="autobias_value_right" value="$(var autobias_value_right)" type="int" />
-            <param name="autobias_value_left" value="$(var autobias_value_left)" type="int" />
-            <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" type="int" />
-            <param name="lidar_rtsp_pipeline" value="$(var lidar_rtsp_pipeline)" type="str" />
+            <param name="pointcloud_color" value="$(var pointcloud_color)" />
+            <param name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" />
+            <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" />
+            <param name="distance_range_minimum" value="$(var distance_range_minimum)" />
+            <param name="distance_range_maximum" value="$(var distance_range_maximum)" />
+            <param name="bias_short_range" value="$(var bias_short_range)" />
+            <param name="auto_bias" value="$(var auto_bias)" />
+            <param name="bias_value_right" value="$(var bias_value_right)" />
+            <param name="bias_value_left" value="$(var bias_value_left)" />
+            <param name="autobias_value_right" value="$(var autobias_value_right)" />
+            <param name="autobias_value_left" value="$(var autobias_value_left)" />
+            <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" />
+            <param name="lidar_rtsp_pipeline" value="$(var lidar_rtsp_pipeline)" />
 
-            <param name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" type="int" />
-            <param name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" type="float" />
-            <param name="polarimetric_camera_auto_gain" value="$(var polarimetric_camera_auto_gain)" type="bool" />
-            <param name="polarimetric_camera_auto_gain_range_minimum" value="$(var polarimetric_camera_auto_gain_range_minimum)" type="float" />
-            <param name="polarimetric_camera_auto_gain_range_maximum" value="$(var polarimetric_camera_auto_gain_range_maximum)" type="float" />
-            <param name="polarimetric_camera_gain" value="$(var polarimetric_camera_gain)" type="float" />
-            <param name="polarimetric_camera_auto_exposure_time" value="$(var polarimetric_camera_auto_exposure_time)" type="bool" />
-            <param name="polarimetric_camera_auto_exposure_time_range_minimum" value="$(var polarimetric_camera_auto_exposure_time_range_minimum)" type="float" />
-            <param name="polarimetric_camera_auto_exposure_time_range_maximum" value="$(var polarimetric_camera_auto_exposure_time_range_maximum)" type="float" />
-            <param name="polarimetric_camera_exposure_time" value="$(var polarimetric_camera_exposure_time)" type="float" />
-            <param name="polarimetric_streaming_protocol" value="$(var polarimetric_streaming_protocol)" type="int" />
-            <param name="polarimetric_rtsp_pipeline" value="$(var polarimetric_rtsp_pipeline)" type="str" />
+            <param name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" />
+            <param name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" />
+            <param name="polarimetric_camera_auto_gain" value="$(var polarimetric_camera_auto_gain)" />
+            <param name="polarimetric_camera_auto_gain_range_minimum" value="$(var polarimetric_camera_auto_gain_range_minimum)" />
+            <param name="polarimetric_camera_auto_gain_range_maximum" value="$(var polarimetric_camera_auto_gain_range_maximum)" />
+            <param name="polarimetric_camera_gain" value="$(var polarimetric_camera_gain)" />
+            <param name="polarimetric_camera_auto_exposure_time" value="$(var polarimetric_camera_auto_exposure_time)" />
+            <param name="polarimetric_camera_auto_exposure_time_range_minimum" value="$(var polarimetric_camera_auto_exposure_time_range_minimum)" />
+            <param name="polarimetric_camera_auto_exposure_time_range_maximum" value="$(var polarimetric_camera_auto_exposure_time_range_maximum)" />
+            <param name="polarimetric_camera_exposure_time" value="$(var polarimetric_camera_exposure_time)" />
+            <param name="polarimetric_streaming_protocol" value="$(var polarimetric_streaming_protocol)" />
+            <param name="polarimetric_rtsp_pipeline" value="$(var polarimetric_rtsp_pipeline)" />
 
-            <param name="rgb_camera_brightness" value="$(var rgb_camera_brightness)" type="int" />
-            <param name="rgb_camera_contrast" value="$(var rgb_camera_contrast)" type="int" />
-            <param name="rgb_camera_saturation" value="$(var rgb_camera_saturation)" type="int" />
-            <param name="rgb_camera_sharpness" value="$(var rgb_camera_sharpness)" type="int" />
-            <param name="rgb_camera_gamma" value="$(var rgb_camera_gamma)" type="int" />
-            <param name="rgb_camera_gain" value="$(var rgb_camera_gain)" type="int" />
-            <param name="rgb_camera_auto_white_balance" value="$(var rgb_camera_auto_white_balance)" type="bool" />
-            <param name="rgb_camera_white_balance" value="$(var rgb_camera_white_balance)" type="int" />
-            <param name="rgb_camera_auto_exposure_time" value="$(var rgb_camera_auto_exposure_time)" type="bool" />
-            <param name="rgb_camera_exposure_time" value="$(var rgb_camera_exposure_time)" type="int" />
-            <param name="rgb_camera_resolution" value="$(var rgb_camera_resolution)" type="int" />
-            <param name="rgb_camera_framerate" value="$(var rgb_camera_framerate)" type="int" />
-            <param name="rgb_streaming_protocol" value="$(var rgb_streaming_protocol)" type="int" />
-            <param name="rgb_rtsp_pipeline" value="$(var rgb_rtsp_pipeline)" type="str" />
+            <param name="rgb_camera_brightness" value="$(var rgb_camera_brightness)" />
+            <param name="rgb_camera_contrast" value="$(var rgb_camera_contrast)" />
+            <param name="rgb_camera_saturation" value="$(var rgb_camera_saturation)" />
+            <param name="rgb_camera_sharpness" value="$(var rgb_camera_sharpness)" />
+            <param name="rgb_camera_gamma" value="$(var rgb_camera_gamma)" />
+            <param name="rgb_camera_gain" value="$(var rgb_camera_gain)" />
+            <param name="rgb_camera_auto_white_balance" value="$(var rgb_camera_auto_white_balance)" />
+            <param name="rgb_camera_white_balance" value="$(var rgb_camera_white_balance)" />
+            <param name="rgb_camera_auto_exposure_time" value="$(var rgb_camera_auto_exposure_time)" />
+            <param name="rgb_camera_exposure_time" value="$(var rgb_camera_exposure_time)" />
+            <param name="rgb_camera_resolution" value="$(var rgb_camera_resolution)" />
+            <param name="rgb_camera_framerate" value="$(var rgb_camera_framerate)" />
+            <param name="rgb_streaming_protocol" value="$(var rgb_streaming_protocol)" />
+            <param name="rgb_rtsp_pipeline" value="$(var rgb_rtsp_pipeline)" />
 
-            <param name="thermal_camera_colormap" value="$(var thermal_camera_colormap)" type="int" />
-            <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" type="bool" />
-            <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" type="int" />
-            <param name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" type="int" />
-            <param name="thermal_camera_processing_pipeline" value="$(var thermal_camera_processing_pipeline)" type="int" />
-            <param name="thermal_camera_temperature_data_udp" value="$(var thermal_camera_temperature_data_udp)" type="bool" />
-            <param name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" type="int" />
-            <param name="thermal_rtsp_pipeline" value="$(var thermal_rtsp_pipeline)" type="str" />
+            <param name="thermal_camera_colormap" value="$(var thermal_camera_colormap)" />
+            <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" />
+            <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" />
+            <param name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" />
+            <param name="thermal_camera_processing_pipeline" value="$(var thermal_camera_processing_pipeline)" />
+            <param name="thermal_camera_temperature_data_udp" value="$(var thermal_camera_temperature_data_udp)" />
+            <param name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" />
+            <param name="thermal_rtsp_pipeline" value="$(var thermal_rtsp_pipeline)" />
             
-            <param name="allied_wide_camera_black_level" value="$(var allied_wide_camera_black_level)" type="float" />
-            <param name="allied_wide_camera_exposure_time" value="$(var allied_wide_camera_exposure_time)" type="float" />
-            <param name="allied_wide_camera_auto_exposure_time" value="$(var allied_wide_camera_auto_exposure_time)" type="bool" />
-            <param name="allied_wide_camera_auto_exposure_time_range_min" value="$(var allied_wide_camera_auto_exposure_time_range_min)" type="float" />
-            <param name="allied_wide_camera_auto_exposure_time_range_max" value="$(var allied_wide_camera_auto_exposure_time_range_max)" type="float" />
-            <param name="allied_wide_camera_gain" value="$(var allied_wide_camera_gain)" type="float" />
-            <param name="allied_wide_camera_auto_gain" value="$(var allied_wide_camera_auto_gain)" type="bool" />
-            <param name="allied_wide_camera_auto_gain_range_min" value="$(var allied_wide_camera_auto_gain_range_min)" type="float" />
-            <param name="allied_wide_camera_auto_gain_range_max" value="$(var allied_wide_camera_auto_gain_range_max)" type="float" />
-            <param name="allied_wide_camera_gamma" value="$(var allied_wide_camera_gamma)" type="float" />
-            <param name="allied_wide_camera_saturation" value="$(var allied_wide_camera_saturation)" type="float" />
-            <param name="allied_wide_camera_sharpness" value="$(var allied_wide_camera_sharpness)" type="float" />
-            <param name="allied_wide_camera_hue" value="$(var allied_wide_camera_hue)" type="float" />
-            <param name="allied_wide_camera_intensity_auto_precedence" value="$(var allied_wide_camera_intensity_auto_precedence)" type="int" />
-            <param name="allied_wide_camera_auto_white_balance" value="$(var allied_wide_camera_auto_white_balance)" type="bool" />
-            <param name="allied_wide_camera_balance_ratio_selector" value="$(var allied_wide_camera_balance_ratio_selector)" type="int" />
-            <param name="allied_wide_camera_balance_ratio" value="$(var allied_wide_camera_balance_ratio)" type="float" />
-            <param name="allied_wide_camera_balance_white_auto_rate" value="$(var allied_wide_camera_balance_white_auto_rate)" type="float" />
-            <param name="allied_wide_camera_balance_white_auto_tolerance" value="$(var allied_wide_camera_balance_white_auto_tolerance)" type="float" />
-            <param name="allied_wide_camera_auto_mode_region_height" value="$(var allied_wide_camera_auto_mode_region_height)" type="int" />
-            <param name="allied_wide_camera_auto_mode_region_width" value="$(var allied_wide_camera_auto_mode_region_width)" type="int" />
-            <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" type="int" />
-            <param name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" type="float" />
-            <param name="allied_wide_camera_max_driver_buffers_count" value="$(var allied_wide_camera_max_driver_buffers_count)" type="int" />
-            <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" type="int" />
-            <param name="allied_wide_rtsp_pipeline" value="$(var allied_wide_rtsp_pipeline)" type="str" />
+            <param name="allied_wide_camera_black_level" value="$(var allied_wide_camera_black_level)" />
+            <param name="allied_wide_camera_exposure_time" value="$(var allied_wide_camera_exposure_time)" />
+            <param name="allied_wide_camera_auto_exposure_time" value="$(var allied_wide_camera_auto_exposure_time)" />
+            <param name="allied_wide_camera_auto_exposure_time_range_min" value="$(var allied_wide_camera_auto_exposure_time_range_min)" />
+            <param name="allied_wide_camera_auto_exposure_time_range_max" value="$(var allied_wide_camera_auto_exposure_time_range_max)" />
+            <param name="allied_wide_camera_gain" value="$(var allied_wide_camera_gain)" />
+            <param name="allied_wide_camera_auto_gain" value="$(var allied_wide_camera_auto_gain)" />
+            <param name="allied_wide_camera_auto_gain_range_min" value="$(var allied_wide_camera_auto_gain_range_min)" />
+            <param name="allied_wide_camera_auto_gain_range_max" value="$(var allied_wide_camera_auto_gain_range_max)" />
+            <param name="allied_wide_camera_gamma" value="$(var allied_wide_camera_gamma)" />
+            <param name="allied_wide_camera_saturation" value="$(var allied_wide_camera_saturation)" />
+            <param name="allied_wide_camera_sharpness" value="$(var allied_wide_camera_sharpness)" />
+            <param name="allied_wide_camera_hue" value="$(var allied_wide_camera_hue)" />
+            <param name="allied_wide_camera_intensity_auto_precedence" value="$(var allied_wide_camera_intensity_auto_precedence)" />
+            <param name="allied_wide_camera_auto_white_balance" value="$(var allied_wide_camera_auto_white_balance)" />
+            <param name="allied_wide_camera_balance_ratio_selector" value="$(var allied_wide_camera_balance_ratio_selector)" />
+            <param name="allied_wide_camera_balance_ratio" value="$(var allied_wide_camera_balance_ratio)" />
+            <param name="allied_wide_camera_balance_white_auto_rate" value="$(var allied_wide_camera_balance_white_auto_rate)" />
+            <param name="allied_wide_camera_balance_white_auto_tolerance" value="$(var allied_wide_camera_balance_white_auto_tolerance)" />
+            <param name="allied_wide_camera_auto_mode_region_height" value="$(var allied_wide_camera_auto_mode_region_height)" />
+            <param name="allied_wide_camera_auto_mode_region_width" value="$(var allied_wide_camera_auto_mode_region_width)" />
+            <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" />
+            <param name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" />
+            <param name="allied_wide_camera_max_driver_buffers_count" value="$(var allied_wide_camera_max_driver_buffers_count)" />
+            <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" />
+            <param name="allied_wide_rtsp_pipeline" value="$(var allied_wide_rtsp_pipeline)" />
 
-            <param name="allied_narrow_camera_black_level" value="$(var allied_narrow_camera_black_level)" type="float" />
-            <param name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" type="float" />
-            <param name="allied_narrow_camera_auto_exposure_time" value="$(var allied_narrow_camera_auto_exposure_time)" type="bool" />
-            <param name="allied_narrow_camera_auto_exposure_time_range_min" value="$(var allied_narrow_camera_auto_exposure_time_range_min)" type="float" />
-            <param name="allied_narrow_camera_auto_exposure_time_range_max" value="$(var allied_narrow_camera_auto_exposure_time_range_max)" type="float" />
-            <param name="allied_narrow_camera_gain" value="$(var allied_narrow_camera_gain)" type="float" />
-            <param name="allied_narrow_camera_auto_gain" value="$(var allied_narrow_camera_auto_gain)" type="bool" />
-            <param name="allied_narrow_camera_auto_gain_range_min" value="$(var allied_narrow_camera_auto_gain_range_min)" type="float" />
-            <param name="allied_narrow_camera_auto_gain_range_max" value="$(var allied_narrow_camera_auto_gain_range_max)" type="float" />
-            <param name="allied_narrow_camera_gamma" value="$(var allied_narrow_camera_gamma)" type="float" />
-            <param name="allied_narrow_camera_saturation" value="$(var allied_narrow_camera_saturation)" type="float" />
-            <param name="allied_narrow_camera_sharpness" value="$(var allied_narrow_camera_sharpness)" type="float" />
-            <param name="allied_narrow_camera_hue" value="$(var allied_narrow_camera_hue)" type="float" />
-            <param name="allied_narrow_camera_intensity_auto_precedence" value="$(var allied_narrow_camera_intensity_auto_precedence)" type="int" />
-            <param name="allied_narrow_camera_auto_white_balance" value="$(var allied_narrow_camera_auto_white_balance)"  type="bool" />
-            <param name="allied_narrow_camera_balance_ratio_selector" value="$(var allied_narrow_camera_balance_ratio_selector)" type="int" />
-            <param name="allied_narrow_camera_balance_ratio" value="$(var allied_narrow_camera_balance_ratio)" type="float" />
-            <param name="allied_narrow_camera_balance_white_auto_rate" value="$(var allied_narrow_camera_balance_white_auto_rate)" type="float" />
-            <param name="allied_narrow_camera_balance_white_auto_tolerance" value="$(var allied_narrow_camera_balance_white_auto_tolerance)" type="float" />
-            <param name="allied_narrow_camera_auto_mode_region_height" value="$(var allied_narrow_camera_auto_mode_region_height)" type="int" />
-            <param name="allied_narrow_camera_auto_mode_region_width" value="$(var allied_narrow_camera_auto_mode_region_width)" type="int" />
-            <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" type="int" />
-            <param name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" type="float" />
-            <param name="allied_narrow_camera_max_driver_buffers_count" value="$(var allied_narrow_camera_max_driver_buffers_count)" type="int" />
-            <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" type="int" />
-            <param name="allied_narrow_rtsp_pipeline" value="$(var allied_narrow_rtsp_pipeline)" type="str" />
+            <param name="allied_narrow_camera_black_level" value="$(var allied_narrow_camera_black_level)" />
+            <param name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" />
+            <param name="allied_narrow_camera_auto_exposure_time" value="$(var allied_narrow_camera_auto_exposure_time)" />
+            <param name="allied_narrow_camera_auto_exposure_time_range_min" value="$(var allied_narrow_camera_auto_exposure_time_range_min)" />
+            <param name="allied_narrow_camera_auto_exposure_time_range_max" value="$(var allied_narrow_camera_auto_exposure_time_range_max)" />
+            <param name="allied_narrow_camera_gain" value="$(var allied_narrow_camera_gain)" />
+            <param name="allied_narrow_camera_auto_gain" value="$(var allied_narrow_camera_auto_gain)" />
+            <param name="allied_narrow_camera_auto_gain_range_min" value="$(var allied_narrow_camera_auto_gain_range_min)" />
+            <param name="allied_narrow_camera_auto_gain_range_max" value="$(var allied_narrow_camera_auto_gain_range_max)" />
+            <param name="allied_narrow_camera_gamma" value="$(var allied_narrow_camera_gamma)" />
+            <param name="allied_narrow_camera_saturation" value="$(var allied_narrow_camera_saturation)" />
+            <param name="allied_narrow_camera_sharpness" value="$(var allied_narrow_camera_sharpness)" />
+            <param name="allied_narrow_camera_hue" value="$(var allied_narrow_camera_hue)" />
+            <param name="allied_narrow_camera_intensity_auto_precedence" value="$(var allied_narrow_camera_intensity_auto_precedence)" />
+            <param name="allied_narrow_camera_auto_white_balance" value="$(var allied_narrow_camera_auto_white_balance)"  />
+            <param name="allied_narrow_camera_balance_ratio_selector" value="$(var allied_narrow_camera_balance_ratio_selector)" />
+            <param name="allied_narrow_camera_balance_ratio" value="$(var allied_narrow_camera_balance_ratio)" />
+            <param name="allied_narrow_camera_balance_white_auto_rate" value="$(var allied_narrow_camera_balance_white_auto_rate)" />
+            <param name="allied_narrow_camera_balance_white_auto_tolerance" value="$(var allied_narrow_camera_balance_white_auto_tolerance)" />
+            <param name="allied_narrow_camera_auto_mode_region_height" value="$(var allied_narrow_camera_auto_mode_region_height)" />
+            <param name="allied_narrow_camera_auto_mode_region_width" value="$(var allied_narrow_camera_auto_mode_region_width)" />
+            <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" />
+            <param name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" />
+            <param name="allied_narrow_camera_max_driver_buffers_count" value="$(var allied_narrow_camera_max_driver_buffers_count)" />
+            <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" />
+            <param name="allied_narrow_rtsp_pipeline" value="$(var allied_narrow_rtsp_pipeline)" />
         </node>
 
         <!-- Start dyanmic reconfigure -->
-        <include file="$(dirname)/configure_l3cam_launch.xml" if="$(var configure)">
+        <include file="$(dirname)/configure_l3cam_launch.xml" if="$(eval '\'$(var configure)\' == \'true\' and \'$(var simulator)\' == \'false\'')">
             <arg name="timeout_secs" value="$(var timeout_secs)" />
 
             <arg name="pointcloud_color" value="$(var pointcloud_color)" />
@@ -343,13 +362,32 @@
 
         <!-- Start streaming the available sensors. -->
         <include file="$(dirname)/stream_l3cam_launch.xml" if="$(var stream)">
+            <arg name="simulator" value="$(var simulator)" />
+            <arg name="comp" value="$(var comp)" />
             <arg name="timeout_secs" value="$(var timeout_secs)" />
+            
             <arg name="lidar_topic" value="$(var lidar_topic)" />
             <arg name="polarimetric_topic" value="$(var polarimetric_topic)" />
+            <arg name="polarimetric_processed_topic" value="$(var polarimetric_processed_topic)" />
             <arg name="rgb_topic" value="$(var rgb_topic)" />
             <arg name="thermal_topic" value="$(var thermal_topic)" />
+            <arg name="f_thermal_topic" value="$(var f_thermal_topic)" />
             <arg name="allied_wide_topic" value="$(var allied_wide_topic)" />
             <arg name="allied_narrow_topic" value="$(var allied_narrow_topic)" />
+            <arg name="lidar_detections_topic" value="$(var lidar_detections_topic)" />
+            <arg name="polarimetric_detections_topic" value="$(var polarimetric_detections_topic)" />
+            <arg name="rgb_detections_topic" value="$(var rgb_detections_topic)" />
+            <arg name="thermal_detections_topic" value="$(var thermal_detections_topic)" />
+            <arg name="wide_detections_topic" value="$(var wide_detections_topic)" />
+            <arg name="narrow_detections_topic" value="$(var narrow_detections_topic)" />
+
+            <arg name="lidar_precision" value="$(var lidar_precision)" />
+            <arg name="lidar_deduplicate" value="$(var lidar_deduplicate)" />
+            <arg name="lidar_deduplicate_intensity_threshold" value="$(var lidar_deduplicate_intensity_threshold)" />
+            <arg name="jpeg_quality" value="$(var jpeg_quality)" />
+            <arg name="jpeg_optimize" value="$(var jpeg_optimize)" />
+            <arg name="jpeg_rst_interval" value="$(var jpeg_rst_interval)" />
+
             <arg name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" />
             <arg name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" />
         </include>
@@ -357,7 +395,7 @@
         <!-- The nodes that don't have their sensor available will automatically shut down -->
     </group>
 
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="tf2_lidar" output="screen" args="0 0 0 0 0 0 map lidar"/> -->
+    <!-- <node pkg="tf2_ros" exec="static_transform_publisher" name="tf2_lidar" output="screen" args="0 0 0 0 0 0 map lidar" /> -->
 
     <node pkg="rqt_reconfigure" exec="rqt_reconfigure" name="rqt_reconfigure" if="$(var rqt_reconfigure)" />
     <node pkg="rviz2" exec="rviz2" name="rviz2" if="$(var rviz2)" />

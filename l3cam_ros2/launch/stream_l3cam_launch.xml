@@ -1,36 +1,120 @@
 <launch>
+    <arg name="simulator" default="false" />
+    <arg name="comp" default="false" />
     <arg name="timeout_secs" default="60" />
+
     <arg name="lidar_topic" default="PC2_lidar" />
     <arg name="polarimetric_topic" default="img_polarimetric" />
+    <arg name="polarimetric_processed_topic" default="img_polarimetric_processed" />
     <arg name="rgb_topic" default="img_rgb" />
     <arg name="thermal_topic" default="img_thermal" />
+    <arg name="f_thermal_topic" default="img_f_thermal" />
     <arg name="allied_wide_topic" default="img_wide" />
     <arg name="allied_narrow_topic" default="img_narrow" />
+    <arg name="lidar_detections_topic" default="lidar_detections" />
+    <arg name="polarimetric_detections_topic" default="polarimetric_detections" />
+    <arg name="rgb_detections_topic" default="rgb_detections" />
+    <arg name="thermal_detections_topic" default="thermal_detections" />
+    <arg name="wide_detections_topic" default="wide_detections" />
+    <arg name="narrow_detections_topic" default="narrow_detections" />
+
+    <arg name="lidar_precision" default="1" />
+    <arg name="lidar_deduplicate" default="true" />
+    <arg name="lidar_deduplicate_intensity_threshold" default="12" />
+    <arg name="jpeg_quality" default="90" />
+    <arg name="jpeg_optimize" default="true" />
+    <arg name="jpeg_rst_interval" default="10" />
 
     <arg name="polarimetric_camera_stream_processed_image" default="true" />
-    <arg name="polarimetric_camera_process_type" default="4" /> <!-- see polAngle -->
+    <arg name="polarimetric_camera_process_type" default="4" /> <!-- see polModes -->
 
     <!-- Stream -->
-    <node pkg="l3cam_ros2" exec="lidar_stream" name="lidar_stream">
+    <node pkg="l3cam_ros2" exec="lidar_stream" name="lidar_stream" unless="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
         <param name="timeout_secs" value="$(var timeout_secs)" />
         <remap from="PC2_lidar" to="$(var lidar_topic)" />
     </node>
-    <node pkg="l3cam_ros2" exec="polarimetric_wide_stream" name="polarimetric_wide_stream">
+    <node pkg="l3cam_ros2" exec="polarimetric_wide_stream" name="polarimetric_wide_stream" unless="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
         <param name="timeout_secs" value="$(var timeout_secs)" />
         <remap from="img_polarimetric" to="$(var polarimetric_topic)" />
+        <remap from="img_polarimetric_processed" to="$(var polarimetric_processed_topic)" />
+        <remap from="polarimetric_detections" to="$(var polarimetric_detections_topic)" />
         <remap from="img_wide" to="$(var allied_wide_topic)" />
+        <remap from="wide_detections" to="$(var wide_detections_topic)" />
 
         <param name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" />
         <param name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" />
     </node>
-    <node pkg="l3cam_ros2" exec="rgb_narrow_stream" name="rgb_narrow_stream">
+    <node pkg="l3cam_ros2" exec="rgb_narrow_stream" name="rgb_narrow_stream" unless="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
         <param name="timeout_secs" value="$(var timeout_secs)" />
         <remap from="img_rgb" to="$(var rgb_topic)" />
+        <remap from="rgb_detections" to="$(var rgb_detections_topic)" />
         <remap from="img_narrow" to="$(var allied_narrow_topic)" />
+        <remap from="narrow_detections" to="$(var narrow_detections_topic)" />
     </node>
-    <node pkg="l3cam_ros2" exec="thermal_stream" name="thermal_stream">
+    <node pkg="l3cam_ros2" exec="thermal_stream" name="thermal_stream" unless="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
         <param name="timeout_secs" value="$(var timeout_secs)" />
         <remap from="img_thermal" to="$(var thermal_topic)" />
+        <remap from="img_f_thermal" to="$(var f_thermal_topic)" />
+        <remap from="thermal_detections" to="$(var thermal_detections_topic)" />
+    </node>
+
+    <!-- Stream compressed -->
+    <node pkg="l3cam_ros2" exec="lidar_stream_tiny" name="lidar_stream_tiny" if="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="lidar_precision" value="$(var lidar_precision)" />
+        <param name="lidar_deduplicate" value="$(var lidar_deduplicate)" />
+        <param name="lidar_deduplicate_intensity_threshold" value="$(var lidar_deduplicate_intensity_threshold)" />
+        <remap from="PC2_lidar/tiny" to="$(var lidar_topic)/tiny" />
+    </node>
+    <node pkg="l3cam_ros2" exec="polarimetric_wide_stream_comp" name="polarimetric_wide_stream_comp" if="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="img_polarimetric" to="$(var polarimetric_topic)" />
+        <remap from="img_polarimetric_processed/compressed" to="$(var polarimetric_processed_topic)/compressed" />
+        <remap from="polarimetric_detections" to="$(var polarimetric_detections_topic)" />
+        <remap from="img_wide/compressed" to="$(var allied_wide_topic)/compressed" />
+        <remap from="wide_detections" to="$(var wide_detections_topic)" />
+
+        <param name="jpeg_quality" value="$(var jpeg_quality)" />
+        <param name="jpeg_optimize" value="$(var jpeg_optimize)" />
+        <param name="jpeg_rst_interval" value="$(var jpeg_rst_interval)" />
+
+        <param name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" />
+        <param name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" />
+    </node>
+    <node pkg="l3cam_ros2" exec="rgb_narrow_stream_comp" name="rgb_narrow_stream_comp" if="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="img_rgb/compressed" to="$(var rgb_topic)/compressed" />
+        <remap from="rgb_detections" to="$(var rgb_detections_topic)" />
+        <remap from="img_narrow/compressed" to="$(var allied_narrow_topic)/compressed" />
+        <remap from="narrow_detections" to="$(var narrow_detections_topic)" />
+
+        <param name="jpeg_quality" value="$(var jpeg_quality)" />
+        <param name="jpeg_optimize" value="$(var jpeg_optimize)" />
+        <param name="jpeg_rst_interval" value="$(var jpeg_rst_interval)" />
+    </node>
+    <node pkg="l3cam_ros2" exec="thermal_stream_comp" name="thermal_stream_comp" if="$(var comp)">
+        <param name="simulator" value="$(var simulator)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="img_thermal/compressed" to="$(var thermal_topic)/compressed" />
+        <remap from="img_f_thermal" to="$(var f_thermal_topic)" />
+        <remap from="thermal_detections" to="$(var thermal_detections_topic)" />
+
+        <param name="jpeg_quality" value="$(var jpeg_quality)" />
+        <param name="jpeg_optimize" value="$(var jpeg_optimize)" />
+        <param name="jpeg_rst_interval" value="$(var jpeg_rst_interval)" />
+    </node>
+
+    <node pkg="l3cam_ros2" exec="lidar_detections_stream" name="lidar_detections_stream">
+        <param name="simulator" value="$(var simulator)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <remap from="lidar_detections" to="$(var lidar_detections_topic)" />
     </node>
 
 </launch>

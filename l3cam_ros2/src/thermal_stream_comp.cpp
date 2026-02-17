@@ -59,6 +59,53 @@ using namespace std::chrono_literals;
 
 bool g_listening = false;
 
+std::mutex g_mutex;
+int g_thread_counter = 0;
+const int g_max_thread = 100;
+
+void CompressSendImageThread(cv::Mat img_data,
+                             rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher,
+                             std::vector<int> compression_params,
+                             std_msgs::msg::Header header)
+{
+    if (g_thread_counter >= g_max_thread)
+        return;
+
+    g_mutex.lock();
+    ++g_thread_counter;
+    g_mutex.unlock();
+
+    std::vector<uchar> buffer;
+    bool success = false;
+    try
+    {
+        success = cv::imencode(".jpg", img_data, buffer, compression_params);
+    }
+    catch (cv::Exception &e)
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "OpenCV compression error: %s", e.what());
+        return;
+    }
+
+    if (success)
+    {
+        sensor_msgs::msg::CompressedImage compressed_msg;
+        compressed_msg.header = header;
+        compressed_msg.format = "jpeg";
+        compressed_msg.data = buffer;
+
+        publisher->publish(compressed_msg);
+    }
+    else
+    {
+        RCLCPP_WARN(rclcpp::get_logger("rclcpp"), "Failed to compress image.");
+    }
+
+    g_mutex.lock();
+    --g_thread_counter;
+    g_mutex.unlock();
+}
+
 bool openSocket(int &m_socket_descriptor, sockaddr_in &m_socket, std::string &m_address, int m_udp_port)
 {
     if ((m_socket_descriptor = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
@@ -113,7 +160,10 @@ bool openSocket(int &m_socket_descriptor, sockaddr_in &m_socket, std::string &m_
     return true;
 }
 
-void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher,
+void ImageThread(rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher,
+                 int quality,
+                 bool optimize,
+                 int rst_interval,
                  rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
 {
     struct sockaddr_in m_socket;
@@ -140,13 +190,21 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     std_msgs::msg::Header header;
     header.frame_id = "thermal";
 
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(quality);
+    compression_params.push_back(cv::IMWRITE_JPEG_OPTIMIZE);
+    compression_params.push_back(optimize ? 1 : 0);
+    compression_params.push_back(cv::IMWRITE_JPEG_RST_INTERVAL);
+    compression_params.push_back(rst_interval);
+
     if (!openSocket(m_socket_descriptor, m_socket, m_address, m_udp_port))
     {
         return;
     }
 
     g_listening = true;
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Thermal streaming.");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Thermal streaming compressed.");
 
     uint8_t *image_pointer = NULL;
 
@@ -217,10 +275,8 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);
             }
 
-            const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
-            std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
-
-            publisher->publish(*img_msg);
+            std::thread comp_thread(CompressSendImageThread, img_data.clone(), publisher, compression_params, header);
+            comp_thread.detach();
 
             detections_publisher->publish(m_2d_detections);
         }
@@ -387,10 +443,15 @@ namespace l3cam_ros2
     public:
         explicit ThermalStream() : SensorStream("thermal_stream")
         {
+            this->declare_parameter("jpeg_quality", rclcpp::ParameterValue(90));
+            this->declare_parameter("jpeg_optimize", rclcpp::ParameterValue(true));
+            this->declare_parameter("jpeg_rst_interval", rclcpp::ParameterValue(10));
+
             declareServiceServers("thermal");
         }
 
-        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_, f_publisher_;
+        rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher_;
+        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr f_publisher_;
         rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher_;
 
     private:
@@ -475,9 +536,9 @@ int main(int argc, char const *argv[])
     }
     node->undeclare_parameter("simulator");
 
-    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_thermal", 10);
+    node->publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("img_thermal/compressed", 10);
     node->detections_publisher_ = node->create_publisher<vision_msgs::msg::Detection2DArray>("thermal_detections", 10);
-    std::thread thread(ImageThread, node->publisher_, node->detections_publisher_);
+    std::thread thread(ImageThread, node->publisher_, node->get_parameter("jpeg_quality").as_int(), node->get_parameter("jpeg_optimize").as_bool(), node->get_parameter("jpeg_rst_interval").as_int(), node->detections_publisher_);
     thread.detach();
 
     node->f_publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_f_thermal", 10);

@@ -23,7 +23,7 @@ sudo dpkg -i <PACKAGE>
 Clone this repository in your ROS2 workspace (e.g. ros2_ws) and build:
 
 ```bash
-cd ~/ros2_ws/src && git clone https://github.com/beamaginelidar/l3cam_ros2
+cd ~/ros2_ws/src && git clone -b foxy https://github.com/beamaginelidar/l3cam_ros2
 colcon build --packages-select l3cam_interfaces l3cam_ros2
 ```
 

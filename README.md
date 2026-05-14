@@ -4,7 +4,7 @@ This package is an ROS2 driver for the L3Cam device manufactured by [Beamagine](
 
 If you are looking for this package for ROS, go to the [l3cam_ros](https://github.com/beamaginelidar/l3cam_ros) package.
 
-This package is supported only on Linux systems and has only been tested with ROS2 foxy and humble on an Ubuntu 20.04 and 22.04 system.
+This package is supported only on Linux systems and has only been tested with ROS2 foxy, humble and jazzy on Ubuntu 20, 22 and 24 systems.
 
 ## Installation
 
@@ -23,7 +23,7 @@ sudo dpkg -i <PACKAGE>
 Clone this repository in your ROS2 workspace (e.g. ros2_ws) and build:
 
 ```bash
-cd ~/ros2_ws/src && git clone -b humble https://github.com/beamaginelidar/l3cam_ros2
+cd ~/ros2_ws/src && git clone -b $ROS_DISTRO https://github.com/beamaginelidar/l3cam_ros2
 colcon build --packages-select l3cam_interfaces l3cam_ros2
 ```
 

@@ -99,114 +99,114 @@
 
     <!-- Dynamic reconfigure -->
     <!-- <node pkg="l3cam_ros2" exec="network_configuration" name="network_configuration" if="$(var network_conf)">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
     </node> -->
     
     <node pkg="l3cam_ros2" exec="lidar_configuration" name="lidar_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
-        <param name="pointcloud_color" value="$(var pointcloud_color)" />
-        <param name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" />
-        <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" />
-        <param name="distance_range_minimum" value="$(var distance_range_minimum)" />
-        <param name="distance_range_maximum" value="$(var distance_range_maximum)" />
-        <param name="bias_short_range" value="$(var bias_short_range)" />
-        <param name="auto_bias" value="$(var auto_bias)" />
-        <param name="bias_value_right" value="$(var bias_value_right)" />
-        <param name="bias_value_left" value="$(var bias_value_left)" />
-        <param name="autobias_value_right" value="$(var autobias_value_right)" />
-        <param name="autobias_value_left" value="$(var autobias_value_left)" />
-        <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
+        <param name="pointcloud_color" value="$(var pointcloud_color)" type="int" />
+        <param name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" type="int" />
+        <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />
+        <param name="distance_range_minimum" value="$(var distance_range_minimum)" type="int" />
+        <param name="distance_range_maximum" value="$(var distance_range_maximum)" type="int" />
+        <param name="bias_short_range" value="$(var bias_short_range)" type="bool" />
+        <param name="auto_bias" value="$(var auto_bias)" type="bool" />
+        <param name="bias_value_right" value="$(var bias_value_right)" type="int" />
+        <param name="bias_value_left" value="$(var bias_value_left)" type="int" />
+        <param name="autobias_value_right" value="$(var autobias_value_right)" type="int" />
+        <param name="autobias_value_left" value="$(var autobias_value_left)" type="int" />
+        <param name="lidar_streaming_protocol" value="$(var lidar_streaming_protocol)" type="int" />
     </node>
     
     <node pkg="l3cam_ros2" exec="polarimetric_configuration" name="polarimetric_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
-        <param name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" />
-        <param name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" />
-        <param name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" />
-        <param name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" />
-        <param name="polarimetric_camera_auto_gain" value="$(var polarimetric_camera_auto_gain)" />
-        <param name="polarimetric_camera_auto_gain_range_minimum" value="$(var polarimetric_camera_auto_gain_range_minimum)" />
-        <param name="polarimetric_camera_auto_gain_range_maximum" value="$(var polarimetric_camera_auto_gain_range_maximum)" />
-        <param name="polarimetric_camera_gain" value="$(var polarimetric_camera_gain)" />
-        <param name="polarimetric_camera_auto_exposure_time" value="$(var polarimetric_camera_auto_exposure_time)" />
-        <param name="polarimetric_camera_auto_exposure_time_range_minimum" value="$(var polarimetric_camera_auto_exposure_time_range_minimum)" />
-        <param name="polarimetric_camera_auto_exposure_time_range_maximum" value="$(var polarimetric_camera_auto_exposure_time_range_maximum)" />
-        <param name="polarimetric_camera_exposure_time" value="$(var polarimetric_camera_exposure_time)" />
-        <param name="polarimetric_streaming_protocol" value="$(var polarimetric_streaming_protocol)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
+        <param name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" type="bool" />
+        <param name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" type="int" />
+        <param name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" type="int" />
+        <param name="polarimetric_camera_black_level" value="$(var polarimetric_camera_black_level)" type="float" />
+        <param name="polarimetric_camera_auto_gain" value="$(var polarimetric_camera_auto_gain)" type="bool" />
+        <param name="polarimetric_camera_auto_gain_range_minimum" value="$(var polarimetric_camera_auto_gain_range_minimum)" type="float" />
+        <param name="polarimetric_camera_auto_gain_range_maximum" value="$(var polarimetric_camera_auto_gain_range_maximum)" type="float" />
+        <param name="polarimetric_camera_gain" value="$(var polarimetric_camera_gain)" type="float" />
+        <param name="polarimetric_camera_auto_exposure_time" value="$(var polarimetric_camera_auto_exposure_time)" type="bool" />
+        <param name="polarimetric_camera_auto_exposure_time_range_minimum" value="$(var polarimetric_camera_auto_exposure_time_range_minimum)" type="float" />
+        <param name="polarimetric_camera_auto_exposure_time_range_maximum" value="$(var polarimetric_camera_auto_exposure_time_range_maximum)" type="float" />
+        <param name="polarimetric_camera_exposure_time" value="$(var polarimetric_camera_exposure_time)" type="float" />
+        <param name="polarimetric_streaming_protocol" value="$(var polarimetric_streaming_protocol)" type="int" />
     </node>
     
     <node pkg="l3cam_ros2" exec="rgb_configuration" name="rgb_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
-        <param name="rgb_camera_brightness" value="$(var rgb_camera_brightness)" />
-        <param name="rgb_camera_contrast" value="$(var rgb_camera_contrast)" />
-        <param name="rgb_camera_saturation" value="$(var rgb_camera_saturation)" />
-        <param name="rgb_camera_sharpness" value="$(var rgb_camera_sharpness)" />
-        <param name="rgb_camera_gamma" value="$(var rgb_camera_gamma)" />
-        <param name="rgb_camera_gain" value="$(var rgb_camera_gain)" />
-        <param name="rgb_camera_auto_white_balance" value="$(var rgb_camera_auto_white_balance)" />
-        <param name="rgb_camera_white_balance" value="$(var rgb_camera_white_balance)" />
-        <param name="rgb_camera_auto_exposure_time" value="$(var rgb_camera_auto_exposure_time)" />
-        <param name="rgb_camera_exposure_time" value="$(var rgb_camera_exposure_time)" />
-        <param name="rgb_streaming_protocol" value="$(var rgb_streaming_protocol)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
+        <param name="rgb_camera_brightness" value="$(var rgb_camera_brightness)" type="int" />
+        <param name="rgb_camera_contrast" value="$(var rgb_camera_contrast)" type="int" />
+        <param name="rgb_camera_saturation" value="$(var rgb_camera_saturation)" type="int" />
+        <param name="rgb_camera_sharpness" value="$(var rgb_camera_sharpness)" type="int" />
+        <param name="rgb_camera_gamma" value="$(var rgb_camera_gamma)" type="int" />
+        <param name="rgb_camera_gain" value="$(var rgb_camera_gain)" type="int" />
+        <param name="rgb_camera_auto_white_balance" value="$(var rgb_camera_auto_white_balance)" type="bool" />
+        <param name="rgb_camera_white_balance" value="$(var rgb_camera_white_balance)" type="int" />
+        <param name="rgb_camera_auto_exposure_time" value="$(var rgb_camera_auto_exposure_time)" type="bool" />
+        <param name="rgb_camera_exposure_time" value="$(var rgb_camera_exposure_time)" type="int" />
+        <param name="rgb_streaming_protocol" value="$(var rgb_streaming_protocol)" type="int" />
     </node>
 
     <node pkg="l3cam_ros2" exec="thermal_configuration" name="thermal_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
-        <param name="thermal_camera_colormap" value="$(var thermal_camera_colormap)" />
-        <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" />
-        <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" />
-        <param name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" />
-        <param name="thermal_camera_processing_pipeline" value="$(var thermal_camera_processing_pipeline)" />
-        <param name="thermal_camera_temperature_data_udp" value="$(var thermal_camera_temperature_data_udp)" />
-        <param name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
+        <param name="thermal_camera_colormap" value="$(var thermal_camera_colormap)" type="int" />
+        <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" type="bool" />
+        <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" type="int" />
+        <param name="thermal_camera_temperature_filter_max" value="$(var thermal_camera_temperature_filter_max)" type="int" />
+        <param name="thermal_camera_processing_pipeline" value="$(var thermal_camera_processing_pipeline)" type="int" />
+        <param name="thermal_camera_temperature_data_udp" value="$(var thermal_camera_temperature_data_udp)" type="bool" />
+        <param name="thermal_streaming_protocol" value="$(var thermal_streaming_protocol)" type="int" />
     </node>
     
     <node pkg="l3cam_ros2" exec="allied_wide_configuration" name="allied_wide_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
-        <param name="allied_wide_camera_exposure_time" value="$(var allied_wide_camera_exposure_time)" />
-        <param name="allied_wide_camera_auto_exposure_time" value="$(var allied_wide_camera_auto_exposure_time)" />
-        <param name="allied_wide_camera_auto_exposure_time_range_min" value="$(var allied_wide_camera_auto_exposure_time_range_min)" />
-        <param name="allied_wide_camera_auto_exposure_time_range_max" value="$(var allied_wide_camera_auto_exposure_time_range_max)" />
-        <param name="allied_wide_camera_gain" value="$(var allied_wide_camera_gain)" />
-        <param name="allied_wide_camera_auto_gain" value="$(var allied_wide_camera_auto_gain)" />
-        <param name="allied_wide_camera_auto_gain_range_min" value="$(var allied_wide_camera_auto_gain_range_min)" />
-        <param name="allied_wide_camera_auto_gain_range_max" value="$(var allied_wide_camera_auto_gain_range_max)" />
-        <param name="allied_wide_camera_gamma" value="$(var allied_wide_camera_gamma)" />
-        <param name="allied_wide_camera_saturation" value="$(var allied_wide_camera_saturation)" />
-        <param name="allied_wide_camera_hue" value="$(var allied_wide_camera_hue)" />
-        <param name="allied_wide_camera_intensity_auto_precedence" value="$(var allied_wide_camera_intensity_auto_precedence)" />
-        <param name="allied_wide_camera_auto_white_balance" value="$(var allied_wide_camera_auto_white_balance)" />
-        <param name="allied_wide_camera_balance_ratio_selector" value="$(var allied_wide_camera_balance_ratio_selector)" />
-        <param name="allied_wide_camera_balance_ratio" value="$(var allied_wide_camera_balance_ratio)" />
-        <param name="allied_wide_camera_balance_white_auto_rate" value="$(var allied_wide_camera_balance_white_auto_rate)" />
-        <param name="allied_wide_camera_balance_white_auto_tolerance" value="$(var allied_wide_camera_balance_white_auto_tolerance)" />
-        <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" />
-        <param name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" />
-        <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
+        <param name="allied_wide_camera_exposure_time" value="$(var allied_wide_camera_exposure_time)" type="float" />
+        <param name="allied_wide_camera_auto_exposure_time" value="$(var allied_wide_camera_auto_exposure_time)" type="bool" />
+        <param name="allied_wide_camera_auto_exposure_time_range_min" value="$(var allied_wide_camera_auto_exposure_time_range_min)" type="float" />
+        <param name="allied_wide_camera_auto_exposure_time_range_max" value="$(var allied_wide_camera_auto_exposure_time_range_max)" type="float" />
+        <param name="allied_wide_camera_gain" value="$(var allied_wide_camera_gain)" type="float" />
+        <param name="allied_wide_camera_auto_gain" value="$(var allied_wide_camera_auto_gain)" type="bool" />
+        <param name="allied_wide_camera_auto_gain_range_min" value="$(var allied_wide_camera_auto_gain_range_min)" type="float" />
+        <param name="allied_wide_camera_auto_gain_range_max" value="$(var allied_wide_camera_auto_gain_range_max)" type="float" />
+        <param name="allied_wide_camera_gamma" value="$(var allied_wide_camera_gamma)" type="float" />
+        <param name="allied_wide_camera_saturation" value="$(var allied_wide_camera_saturation)" type="float" />
+        <param name="allied_wide_camera_hue" value="$(var allied_wide_camera_hue)" type="float" />
+        <param name="allied_wide_camera_intensity_auto_precedence" value="$(var allied_wide_camera_intensity_auto_precedence)" type="int" />
+        <param name="allied_wide_camera_auto_white_balance" value="$(var allied_wide_camera_auto_white_balance)" type="bool" />
+        <param name="allied_wide_camera_balance_ratio_selector" value="$(var allied_wide_camera_balance_ratio_selector)" type="int" />
+        <param name="allied_wide_camera_balance_ratio" value="$(var allied_wide_camera_balance_ratio)" type="float" />
+        <param name="allied_wide_camera_balance_white_auto_rate" value="$(var allied_wide_camera_balance_white_auto_rate)" type="float" />
+        <param name="allied_wide_camera_balance_white_auto_tolerance" value="$(var allied_wide_camera_balance_white_auto_tolerance)" type="float" />
+        <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" type="int" />
+        <param name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" type="float" />
+        <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" type="int" />
     </node>
     
     <node pkg="l3cam_ros2" exec="allied_narrow_configuration" name="allied_narrow_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
-        <param name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" />
-        <param name="allied_narrow_camera_auto_exposure_time" value="$(var allied_narrow_camera_auto_exposure_time)" />
-        <param name="allied_narrow_camera_auto_exposure_time_range_min" value="$(var allied_narrow_camera_auto_exposure_time_range_min)" />
-        <param name="allied_narrow_camera_auto_exposure_time_range_max" value="$(var allied_narrow_camera_auto_exposure_time_range_max)" />
-        <param name="allied_narrow_camera_gain" value="$(var allied_narrow_camera_gain)" />
-        <param name="allied_narrow_camera_auto_gain" value="$(var allied_narrow_camera_auto_gain)" />
-        <param name="allied_narrow_camera_auto_gain_range_min" value="$(var allied_narrow_camera_auto_gain_range_min)" />
-        <param name="allied_narrow_camera_auto_gain_range_max" value="$(var allied_narrow_camera_auto_gain_range_max)" />
-        <param name="allied_narrow_camera_gamma" value="$(var allied_narrow_camera_gamma)" />
-        <param name="allied_narrow_camera_saturation" value="$(var allied_narrow_camera_saturation)" />
-        <param name="allied_narrow_camera_hue" value="$(var allied_narrow_camera_hue)" />
-        <param name="allied_narrow_camera_intensity_auto_precedence" value="$(var allied_narrow_camera_intensity_auto_precedence)" />
-        <param name="allied_narrow_camera_auto_white_balance" value="$(var allied_narrow_camera_auto_white_balance)" />
-        <param name="allied_narrow_camera_balance_ratio_selector" value="$(var allied_narrow_camera_balance_ratio_selector)" />
-        <param name="allied_narrow_camera_balance_ratio" value="$(var allied_narrow_camera_balance_ratio)" />
-        <param name="allied_narrow_camera_balance_white_auto_rate" value="$(var allied_narrow_camera_balance_white_auto_rate)" />
-        <param name="allied_narrow_camera_balance_white_auto_tolerance" value="$(var allied_narrow_camera_balance_white_auto_tolerance)" />
-        <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" />
-        <param name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" />
-        <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
+        <param name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" type="float" />
+        <param name="allied_narrow_camera_auto_exposure_time" value="$(var allied_narrow_camera_auto_exposure_time)" type="bool" />
+        <param name="allied_narrow_camera_auto_exposure_time_range_min" value="$(var allied_narrow_camera_auto_exposure_time_range_min)" type="float" />
+        <param name="allied_narrow_camera_auto_exposure_time_range_max" value="$(var allied_narrow_camera_auto_exposure_time_range_max)" type="float" />
+        <param name="allied_narrow_camera_gain" value="$(var allied_narrow_camera_gain)" type="float" />
+        <param name="allied_narrow_camera_auto_gain" value="$(var allied_narrow_camera_auto_gain)" type="bool" />
+        <param name="allied_narrow_camera_auto_gain_range_min" value="$(var allied_narrow_camera_auto_gain_range_min)" type="float" />
+        <param name="allied_narrow_camera_auto_gain_range_max" value="$(var allied_narrow_camera_auto_gain_range_max)" type="float" />
+        <param name="allied_narrow_camera_gamma" value="$(var allied_narrow_camera_gamma)" type="float" />
+        <param name="allied_narrow_camera_saturation" value="$(var allied_narrow_camera_saturation)" type="float" />
+        <param name="allied_narrow_camera_hue" value="$(var allied_narrow_camera_hue)" type="float" />
+        <param name="allied_narrow_camera_intensity_auto_precedence" value="$(var allied_narrow_camera_intensity_auto_precedence)" type="int" />
+        <param name="allied_narrow_camera_auto_white_balance" value="$(var allied_narrow_camera_auto_white_balance)" type="bool" />
+        <param name="allied_narrow_camera_balance_ratio_selector" value="$(var allied_narrow_camera_balance_ratio_selector)" type="int" />
+        <param name="allied_narrow_camera_balance_ratio" value="$(var allied_narrow_camera_balance_ratio)" type="float" />
+        <param name="allied_narrow_camera_balance_white_auto_rate" value="$(var allied_narrow_camera_balance_white_auto_rate)" type="float" />
+        <param name="allied_narrow_camera_balance_white_auto_tolerance" value="$(var allied_narrow_camera_balance_white_auto_tolerance)" type="float" />
+        <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" type="int" />
+        <param name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" type="float" />
+        <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" type="int" />
     </node>
     
 </launch>

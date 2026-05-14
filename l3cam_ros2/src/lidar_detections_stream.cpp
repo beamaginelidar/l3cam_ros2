@@ -41,9 +41,7 @@
 
 #include <thread>
 
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include <sensor_msgs/msg/point_field.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <vision_msgs/msg/detection3_d_array.hpp>
 
 #include <libL3Cam.h>
 #include <beamagine.h>
@@ -53,23 +51,23 @@ using namespace std::chrono_literals;
 
 bool g_listening = false;
 
-void PointCloudThread(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher)
+void DetectionsThread(rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr publisher)
 {
     struct sockaddr_in m_socket;
     int m_socket_descriptor;           // Socket descriptor
     std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
-    int m_udp_port = 6050;             // For the lidar it's 6050
+    int m_udp_port = 6049;             // For the lidar detections it's 6049
 
     socklen_t socket_len = sizeof(m_socket);
     char *buffer;
     buffer = (char *)malloc(64000);
 
-    int32_t m_pointcloud_size;
-    int32_t *m_pointcloud_data;
-    uint32_t m_timestamp;
-    bool m_is_reading_pointcloud = false;
-    int points_received = 1;
-    int pointcloud_index = 1;
+    uint32_t num_detections = 0;
+    uint32_t num_detections_pack = 0;
+    uint32_t detections_recv = 0;
+    bool m_is_reading_detections;
+    vision_msgs::msg::Detection3DArray m_3d_detections;
+    rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
 
     std_msgs::msg::Header header;
     header.frame_id = "lidar";
@@ -124,126 +122,90 @@ void PointCloudThread(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPt
     setsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
 
     g_listening = true;
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "LiDAR streaming.");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "LiDAR detections streaming.");
 
     while (g_listening)
     {
         int size_read = recvfrom(m_socket_descriptor, buffer, 64000, 0, (struct sockaddr *)&m_socket, &socket_len);
 
-        if (size_read == 17) // Header
+        if (size_read == 6) // Header
         {
-            memcpy(&m_pointcloud_size, &buffer[1], 4);
-            m_pointcloud_data = (int32_t *)malloc(sizeof(int32_t) * (((m_pointcloud_size) * 5) + 1));
-            memcpy(&m_pointcloud_data[0], &m_pointcloud_size, sizeof(int32_t));
-            int32_t suma_1, suma_2;
-            memcpy(&suma_1, &buffer[5], sizeof(int32_t));
-            memcpy(&suma_2, &buffer[9], sizeof(int32_t));
-            memcpy(&m_timestamp, &buffer[13], sizeof(uint32_t));
-            m_is_reading_pointcloud = true;
-            points_received = 0;
-            pointcloud_index = 1;
+            m_is_reading_detections = true;
+            memcpy(&num_detections, &buffer[2], sizeof(uint32_t));
+            detections_recv = 0;
+
+            m_3d_detections.detections.clear();
+            header.stamp = system_clock.now();
+            m_3d_detections.header = header;
         }
-        else if (size_read == 1) // End, send point cloud
+        else if (size_read == 1 || detections_recv == num_detections) // End, send point cloud
         {
-            if (points_received != m_pointcloud_size)
-            {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "lidar NET PROBLEM: points_received != m_pointcloud_size: " << points_received << " != " << m_pointcloud_size);
-                continue;
-            }
-
-            m_is_reading_pointcloud = false;
-
-            int size_pc = m_pointcloud_data[0];
-
-            // m_timestamp format: hhmmsszzz
-            time_t t = time(NULL);
-            std::tm *time_info = std::localtime(&t);
-            time_info->tm_sec = 0;
-            time_info->tm_min = 0;
-            time_info->tm_hour = 0;
-            header.stamp.sec = std::mktime(time_info) +
-                               (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
-                               (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
-                               (uint32_t)((m_timestamp / 1000) % 100);         // ss
-            header.stamp.nanosec = (m_timestamp % 1000) * 1e6;                 // zzz
-
-            sensor_msgs::msg::PointCloud2 pcl_msg;
-            pcl_msg.header = header;
-            pcl_msg.height = 1;
-            pcl_msg.width = size_pc;
-            pcl_msg.is_dense = true;
-
-            // Total number of bytes per point
-            pcl_msg.point_step = sizeof(float) * 3 + sizeof(uint16_t) + sizeof(uint32_t); // x(4) + y(4) + z(4) + intensity(2) + rgb(4)
-            pcl_msg.row_step = pcl_msg.point_step * pcl_msg.width;
-            pcl_msg.data.resize(pcl_msg.row_step);
-
-            // Modifier to describe what the fields are.
-            sensor_msgs::PointCloud2Modifier modifier(pcl_msg);
-            modifier.setPointCloud2Fields(5,
-                                          "x", 1, sensor_msgs::msg::PointField::FLOAT32,
-                                          "y", 1, sensor_msgs::msg::PointField::FLOAT32,
-                                          "z", 1, sensor_msgs::msg::PointField::FLOAT32,
-                                          "intensity", 1, sensor_msgs::msg::PointField::UINT16,
-                                          "rgb", 1, sensor_msgs::msg::PointField::UINT32);
-
-            // Iterators for PointCloud msg
-            sensor_msgs::PointCloud2Iterator<float> iterX(pcl_msg, pcl_msg.fields[0].name);
-            sensor_msgs::PointCloud2Iterator<float> iterY(pcl_msg, pcl_msg.fields[1].name);
-            sensor_msgs::PointCloud2Iterator<float> iterZ(pcl_msg, pcl_msg.fields[2].name);
-            sensor_msgs::PointCloud2Iterator<uint16_t> iterIntensity(pcl_msg, pcl_msg.fields[3].name);
-            sensor_msgs::PointCloud2Iterator<uint32_t> iterRgb(pcl_msg, pcl_msg.fields[4].name);
-
-            for (int i = 0; i < size_pc; ++i)
-            {
-                *iterY = -(float)m_pointcloud_data[5 * i + 1] / 1000.0;
-
-                *iterZ = -(float)m_pointcloud_data[5 * i + 2] / 1000.0;
-
-                *iterX = (float)m_pointcloud_data[5 * i + 3] / 1000.0;
-
-                *iterIntensity = (uint16_t)m_pointcloud_data[5 * i + 4];
-
-                *iterRgb = (uint32_t)m_pointcloud_data[5 * i + 5];
-
-                ++iterY;
-                ++iterZ;
-                ++iterX;
-                ++iterIntensity;
-                ++iterRgb;
-            }
-
-            publisher->publish(pcl_msg);
-
-            free(m_pointcloud_data);
-            m_pointcloud_data = nullptr;
-            points_received = 0;
-            pointcloud_index = 1;
+            m_is_reading_detections = false;
+            num_detections = 0;
+            detections_recv = 0;
+            publisher->publish(m_3d_detections);
         }
-        else if (size_read > 0 && m_is_reading_pointcloud) // Data
+        else if (size_read > 0 && m_is_reading_detections) // Data
         {
-            int32_t points = 0;
-            memcpy(&points, &buffer[0], 4);
-            memcpy(&m_pointcloud_data[pointcloud_index], &buffer[4], (sizeof(int32_t) * (points * 5)));
+            num_detections_pack = buffer[0];
+            detections_recv += num_detections_pack;
+            int offset = 1;
+            if (num_detections > 0)
+            {
+                for (uint32_t n = 0; n < num_detections_pack; ++n)
+                {
+                    //! read detections packages
+                    uint16_t confidence, label;
+                    uint8_t sensor_ori, red, green, blue;
+                    memcpy(&confidence, &buffer[offset], sizeof(uint16_t));
+                    memcpy(&label, &buffer[offset + 2], sizeof(uint16_t));
+                    memcpy(&sensor_ori, &buffer[offset + 4], sizeof(uint8_t));
+                    memcpy(&red, &buffer[offset + 5], sizeof(uint8_t));
+                    memcpy(&green, &buffer[offset + 6], sizeof(uint8_t));
+                    memcpy(&blue, &buffer[offset + 7], sizeof(uint8_t));
+                    float cx, cy, cz, sx, sy, sz, rw, rx, ry, rz;
+                    memcpy(&cx, &buffer[offset + 8], sizeof(float));
+                    memcpy(&cy, &buffer[offset + 12], sizeof(float));
+                    memcpy(&cz, &buffer[offset + 16], sizeof(float));
+                    memcpy(&sx, &buffer[offset + 20], sizeof(float));
+                    memcpy(&sy, &buffer[offset + 24], sizeof(float));
+                    memcpy(&sz, &buffer[offset + 28], sizeof(float));
+                    memcpy(&rw, &buffer[offset + 32], sizeof(float));
+                    memcpy(&rx, &buffer[offset + 36], sizeof(float));
+                    memcpy(&ry, &buffer[offset + 40], sizeof(float));
+                    memcpy(&rz, &buffer[offset + 44], sizeof(float));
+                    offset += 48;
 
-            pointcloud_index += (points * 5);
+                    vision_msgs::msg::Detection3D det;
+                    det.header = header;
+                    det.bbox.center.position.x = cz / 1e3;
+                    det.bbox.center.position.y = -cx / 1e3;
+                    det.bbox.center.position.z = -cy / 1e3;
+                    det.bbox.center.orientation.w = 0.5 * ( rw + rx - ry + rz);
+                    det.bbox.center.orientation.x = 0.5 * (-rw + rx + ry + rz);
+                    det.bbox.center.orientation.y = 0.5 * ( rw - rx + ry + rz);
+                    det.bbox.center.orientation.z = 0.5 * (-rw - rx - ry + rz);
+                    det.bbox.size.x = sx / 1e3;
+                    det.bbox.size.y = sy / 1e3;
+                    det.bbox.size.z = sz / 1e3;
+                    vision_msgs::msg::ObjectHypothesisWithPose hyp_3d;
+                    hyp_3d.hypothesis.class_id = std::to_string(label);
+                    hyp_3d.hypothesis.score = (double)confidence;
+                    det.results.push_back(hyp_3d);
 
-            points_received += points;
+                    m_3d_detections.detections.push_back(det);
+                }
+            }
 
             // check if under size
-            if (points_received > m_pointcloud_size)
-                m_is_reading_pointcloud = false;
+            if (detections_recv > num_detections)
+                m_is_reading_detections = false;
         }
-        // size_read == -1 --> timeout
     }
 
     publisher = NULL; //! Without this, the node becomes zombie
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting lidar streaming thread");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting lidar detections streaming thread");
     free(buffer);
-    if (m_pointcloud_data)
-    {
-        free(m_pointcloud_data);
-    }
 
     shutdown(m_socket_descriptor, SHUT_RDWR);
     close(m_socket_descriptor);
@@ -251,15 +213,15 @@ void PointCloudThread(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPt
 
 namespace l3cam_ros2
 {
-    class LidarStream : public SensorStream
+    class LidarDetectionsStream : public SensorStream
     {
     public:
-        explicit LidarStream() : SensorStream("lidar_stream")
+        explicit LidarDetectionsStream() : SensorStream("lidar_stream")
         {
             declareServiceServers("lidar");
         }
 
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
+        rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr publisher_;
 
     private:
         void stopListening()
@@ -267,7 +229,7 @@ namespace l3cam_ros2
             g_listening = false;
         }
 
-    }; // class LidarStream
+    }; // class LidarDetectionsStream
 
 } // namespace l3cam_ros2
 
@@ -275,7 +237,7 @@ int main(int argc, char const *argv[])
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<l3cam_ros2::LidarStream> node = std::make_shared<l3cam_ros2::LidarStream>();
+    std::shared_ptr<l3cam_ros2::LidarDetectionsStream> node = std::make_shared<l3cam_ros2::LidarDetectionsStream>();
 
     if (!node->get_parameter("simulator").as_bool())
     {
@@ -334,7 +296,7 @@ int main(int argc, char const *argv[])
 
         if (sensor_is_available)
         {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "LiDAR available for streaming");
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "LiDAR detections available for streaming");
         }
         else
         {
@@ -343,8 +305,8 @@ int main(int argc, char const *argv[])
     }
     node->undeclare_parameter("simulator");
 
-    node->publisher_ = node->create_publisher<sensor_msgs::msg::PointCloud2>("PC2_lidar", 10);
-    std::thread thread(PointCloudThread, node->publisher_);
+    node->publisher_ = node->create_publisher<vision_msgs::msg::Detection3DArray>("lidar_detections", 10);
+    std::thread thread(DetectionsThread, node->publisher_);
     thread.detach();
 
     rclcpp::spin(node);

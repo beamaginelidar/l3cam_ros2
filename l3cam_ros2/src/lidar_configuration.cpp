@@ -683,7 +683,7 @@ int main(int argc, char **argv)
     if (rclcpp::spin_until_future_complete(node, resultGetSensors) == rclcpp::FutureReturnCode::SUCCESS)
     {
         auto response = resultGetSensors.get();
-        if(response)
+        if (response)
         {
             error = response->error;
 

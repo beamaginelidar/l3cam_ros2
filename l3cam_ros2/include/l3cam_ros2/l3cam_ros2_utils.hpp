@@ -41,14 +41,17 @@ typedef enum LibL3CamStatus
     terminated_status     // after TERMINATE
 } LibL3CamStatus;
 
-typedef enum polAngle
+typedef enum polMode
 {
-    angle_0 = 0,
+    no_angle = 0,
+    angle_0,
     angle_45,
     angle_90,
     angle_135,
-    no_angle
-} polAngle;
+    dolp,
+    aolp,
+    raw
+} polMode;
 
 static const char *bmg_ros2_error_find_devices_timeout = "Timeout error while finding devices\0";
 static const char *bmg_ros2_error_failed_to_call_service = "Failed to call service\0";

@@ -25,7 +25,6 @@
     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "sensor_stream.hpp"
 #include <chrono>
 
 #include <sys/socket.h>
@@ -54,46 +53,67 @@
 #include <beamagine.h>
 #include <beamErrors.h>
 
+#include "sensor_stream.hpp"
+
 using namespace std::chrono_literals;
 
 bool g_listening = false;
 
-bool g_rgb = true; // true if rgb sensor available, false if narrow available
-bool g_wide = false;
+std::mutex g_mutex;
+int g_thread_counter = 0;
+const int g_max_thread = 100;
 
-void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher,
-                 rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
+void CompressSendImageThread(cv::Mat img_data,
+                             rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher,
+                             std::vector<int> compression_params,
+                             std_msgs::msg::Header header)
 {
-    struct sockaddr_in m_socket;
-    int m_socket_descriptor;           // Socket descriptor
-    std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
-    int m_udp_port = 6020;             // For RGB and Allied Narrow it's 6020
+    if (g_thread_counter >= g_max_thread)
+        return;
 
-    socklen_t socket_len = sizeof(m_socket);
-    char *buffer;
-    buffer = (char *)malloc(64000);
+    g_mutex.lock();
+    ++g_thread_counter;
+    g_mutex.unlock();
 
-    uint16_t m_image_height;
-    uint16_t m_image_width;
-    uint8_t m_image_channels;
-    uint32_t m_timestamp;
-    uint8_t m_image_detections;
-    vision_msgs::msg::Detection2DArray m_2d_detections;
-    vision_msgs::msg::Detection2D detection_2d;
-    int m_image_data_size = -1;
-    bool m_is_reading_image = false;
-    char *m_image_buffer = NULL;
-    int bytes_count = 0;
+    std::vector<uchar> buffer;
+    bool success = false;
+    try
+    {
+        success = cv::imencode(".jpg", img_data, buffer, compression_params);
+    }
+    catch (cv::Exception &e)
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "OpenCV compression error: %s", e.what());
+        return;
+    }
 
-    std_msgs::msg::Header header;
-    header.frame_id = g_rgb ? "rgb" : "allied_narrow";
+    if (success)
+    {
+        sensor_msgs::msg::CompressedImage compressed_msg;
+        compressed_msg.header = header;
+        compressed_msg.format = "jpeg";
+        compressed_msg.data = buffer;
 
+        publisher->publish(compressed_msg);
+    }
+    else
+    {
+        RCLCPP_WARN(rclcpp::get_logger("rclcpp"), "Failed to compress image.");
+    }
+
+    g_mutex.lock();
+    --g_thread_counter;
+    g_mutex.unlock();
+}
+
+bool openSocket(int &m_socket_descriptor, sockaddr_in &m_socket, std::string &m_address, int m_udp_port)
+{
     if ((m_socket_descriptor = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
         perror("Opening socket");
-        return;
+        return false;
     }
-    // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket RGB created");
+    // else RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Socket created");
 
     memset((char *)&m_socket, 0, sizeof(struct sockaddr_in));
     m_socket.sin_addr.s_addr = inet_addr((char *)m_address.c_str());
@@ -103,21 +123,21 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     if (inet_aton((char *)m_address.c_str(), &m_socket.sin_addr) == 0)
     {
         perror("inet_aton() failed");
-        return;
+        return false;
     }
 
     if (bind(m_socket_descriptor, (struct sockaddr *)&m_socket, sizeof(struct sockaddr_in)) == -1)
     {
         perror("Could not bind name to socket");
         close(m_socket_descriptor);
-        return;
+        return false;
     }
 
     int rcvbufsize = 134217728;
     if (0 != setsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbufsize, sizeof(rcvbufsize)))
     {
         perror("Error setting size to socket");
-        return;
+        return false;
     }
 
     // VERIFY what the kernel actually gave you
@@ -137,11 +157,54 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     read_timeout.tv_sec = 1;
     setsockopt(m_socket_descriptor, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
 
+    return true;
+}
+
+void ImageThread(rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher,
+                 int quality,
+                 bool optimize,
+                 int rst_interval,
+                 rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher)
+{
+    struct sockaddr_in m_socket;
+    int m_socket_descriptor;           // Socket descriptor
+    std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
+    int m_udp_port = 6030;             // For Thermal it's 6030
+
+    socklen_t socket_len = sizeof(m_socket);
+    char *buffer;
+    buffer = (char *)malloc(64000);
+
+    uint16_t m_image_height;
+    uint16_t m_image_width;
+    uint8_t m_image_channels;
+    uint32_t m_timestamp;
+    uint8_t m_image_detections;
+    vision_msgs::msg::Detection2DArray m_2d_detections;
+    vision_msgs::msg::Detection2D detection_2d;
+    int m_image_data_size;
+    bool m_is_reading_image = false;
+    char *m_image_buffer = NULL;
+    int bytes_count = 0;
+
+    std_msgs::msg::Header header;
+    header.frame_id = "thermal";
+
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(quality);
+    compression_params.push_back(cv::IMWRITE_JPEG_OPTIMIZE);
+    compression_params.push_back(optimize ? 1 : 0);
+    compression_params.push_back(cv::IMWRITE_JPEG_RST_INTERVAL);
+    compression_params.push_back(rst_interval);
+
+    if (!openSocket(m_socket_descriptor, m_socket, m_address, m_udp_port))
+    {
+        return;
+    }
+
     g_listening = true;
-    if (g_rgb)
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "RGB streaming.");
-    else
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Allied Narrow streaming.");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Thermal streaming compressed.");
 
     uint8_t *image_pointer = NULL;
 
@@ -193,7 +256,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
         {
             if (bytes_count != m_image_data_size)
             {
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "rgb_narrow NET PROBLEM: bytes_count != m_image_data_size: " << bytes_count << " != " << m_image_data_size);
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "thermal NET PROBLEM: bytes_count != m_image_data_size: " << bytes_count << " != " << m_image_data_size);
                 continue;
             }
 
@@ -207,27 +270,13 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC1, image_pointer);
             }
-            else if (m_image_channels == 2)
-            {
-                img_data = cv::Mat(m_image_height, m_image_width, CV_8UC2, image_pointer);
-                if (g_rgb && !g_wide) // econ
-                {
-                    cv::cvtColor(img_data, img_data, cv::COLOR_YUV2BGR_YUYV);
-                }
-                else // econ wide and narrow
-                {
-                    cv::cvtColor(img_data, img_data, cv::COLOR_YUV2BGR_Y422);
-                }
-            }
             else if (m_image_channels == 3)
             {
                 img_data = cv::Mat(m_image_height, m_image_width, CV_8UC3, image_pointer);
             }
 
-            const std::string encoding = m_image_channels == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
-            std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, encoding, img_data).toImageMsg();
-
-            publisher->publish(*img_msg);
+            std::thread comp_thread(CompressSendImageThread, img_data.clone(), publisher, compression_params, header);
+            comp_thread.detach();
 
             detections_publisher->publish(m_2d_detections);
         }
@@ -277,7 +326,7 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
 
     publisher = NULL; //! Without this, the node becomes zombie
     detections_publisher = NULL;
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Exiting " << (g_rgb ? "rgb" : "allied narrow") << " streaming thread");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting thermal streaming thread");
     free(buffer);
     free(m_image_buffer);
 
@@ -285,16 +334,128 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
     close(m_socket_descriptor);
 }
 
+void FloatImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher)
+{
+    struct sockaddr_in m_socket;
+    int m_socket_descriptor;           // Socket descriptor
+    std::string m_address = "0.0.0.0"; // Local address of the network interface port connected to the L3CAM
+    int m_udp_port = 6031;             // For float Thermal it's 6031
+
+    socklen_t socket_len = sizeof(m_socket);
+    char *buffer;
+    buffer = (char *)malloc(64000);
+
+    uint16_t m_image_height;
+    uint16_t m_image_width;
+    uint32_t m_timestamp;
+    int m_image_data_size = -1;
+    bool m_is_reading_image = false;
+    int bytes_count = 0;
+
+    if (!openSocket(m_socket_descriptor, m_socket, m_address, m_udp_port))
+    {
+        return;
+    }
+
+    g_listening = true;
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Float Thermal streaming");
+
+    float *thermal_data_pointer = NULL;
+    int float_pointer_cnt = 0;
+
+    while (g_listening)
+    {
+        int size_read = recvfrom(m_socket_descriptor, buffer, 64000, 0, (struct sockaddr *)&m_socket, &socket_len);
+        if (size_read == 9) // Header
+        {
+            memcpy(&m_image_height, &buffer[1], 2);
+            memcpy(&m_image_width, &buffer[3], 2);
+            memcpy(&m_timestamp, &buffer[5], 4);
+
+            if (thermal_data_pointer != NULL)
+            {
+                free(thermal_data_pointer);
+                thermal_data_pointer = NULL;
+            }
+
+            m_image_data_size = m_image_height * m_image_width * sizeof(float);
+
+            thermal_data_pointer = (float *)malloc(m_image_data_size);
+
+            m_is_reading_image = true;
+            bytes_count = 0;
+            float_pointer_cnt = 0;
+        }
+        else if (size_read == 1) // End, send image
+        {
+            if (bytes_count != m_image_data_size)
+            {
+                RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "thermal NET PROBLEM: bytes_count != m_image_data_size");
+                continue;
+            }
+
+            m_is_reading_image = false;
+            bytes_count = 0;
+            float_pointer_cnt = 0;
+
+            cv::Mat float_image = cv::Mat(m_image_height, m_image_width, CV_32FC1, thermal_data_pointer);
+
+            // publish float image
+            std_msgs::msg::Header header;
+            header.frame_id = "f_thermal";
+            // m_timestamp format: hhmmsszzz
+            time_t t = time(NULL);
+            std::tm *time_info = std::localtime(&t);
+            time_info->tm_sec = 0;
+            time_info->tm_min = 0;
+            time_info->tm_hour = 0;
+            header.stamp.sec = std::mktime(time_info) +
+                               (uint32_t)(m_timestamp / 10000000) * 3600 +     // hh
+                               (uint32_t)((m_timestamp / 100000) % 100) * 60 + // mm
+                               (uint32_t)((m_timestamp / 1000) % 100);         // ss
+            header.stamp.nanosec = (m_timestamp % 1000) * 1e6;                 // zzz
+
+            std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_32FC1, float_image).toImageMsg();
+
+            publisher->publish(*img_msg);
+        }
+        else if (size_read > 0 && m_is_reading_image) // Data
+        {
+            memcpy(&thermal_data_pointer[float_pointer_cnt], buffer, size_read);
+            bytes_count += size_read;
+            float_pointer_cnt += size_read / 4;
+
+            // check if under size
+            if (bytes_count > m_image_data_size)
+                m_is_reading_image = false;
+        }
+        // size_read == -1 --> timeout
+    }
+
+    publisher = NULL;
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Exiting float thermal streaming thread");
+    free(buffer);
+
+    shutdown(m_socket_descriptor, SHUT_RDWR);
+    close(m_socket_descriptor);
+}
+
 namespace l3cam_ros2
 {
-    class RgbNarrowStream : public SensorStream
+    class ThermalStream : public SensorStream
     {
     public:
-        explicit RgbNarrowStream() : SensorStream("rgb_narrow_stream")
+        explicit ThermalStream() : SensorStream("thermal_stream")
         {
+            this->declare_parameter("jpeg_quality", rclcpp::ParameterValue(90));
+            this->declare_parameter("jpeg_optimize", rclcpp::ParameterValue(true));
+            this->declare_parameter("jpeg_rst_interval", rclcpp::ParameterValue(10));
+
+            declareServiceServers("thermal");
         }
 
-        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
+        rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher_;
+        rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr f_publisher_;
         rclcpp::Publisher<vision_msgs::msg::Detection2DArray>::SharedPtr detections_publisher_;
 
     private:
@@ -303,7 +464,7 @@ namespace l3cam_ros2
             g_listening = false;
         }
 
-    }; // class RgbNarrowStream
+    }; // class ThermalStream
 
 } // namespace l3cam_ros2
 
@@ -311,11 +472,11 @@ int main(int argc, char const *argv[])
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<l3cam_ros2::RgbNarrowStream> node = std::make_shared<l3cam_ros2::RgbNarrowStream>();
+    std::shared_ptr<l3cam_ros2::ThermalStream> node = std::make_shared<l3cam_ros2::ThermalStream>();
 
     if (!node->get_parameter("simulator").as_bool())
     {
-        // Check if RGB or Allied Narrow is available
+        // Check if Thermal is available
         int i = 0;
         while (!node->client_get_sensors_->wait_for_service(1s))
         {
@@ -350,21 +511,9 @@ int main(int argc, char const *argv[])
             {
                 for (int i = 0; i < response->num_sensors; ++i)
                 {
-                    if (response->sensors[i].sensor_type == sensor_econ_rgb && response->sensors[i].sensor_available)
+                    if (response->sensors[i].sensor_type == sensor_thermal && response->sensors[i].sensor_available)
                     {
                         sensor_is_available = true;
-                        g_rgb = true;
-                    }
-                    else if (response->sensors[i].sensor_type == sensor_econ_wide && response->sensors[i].sensor_available)
-                    {
-                        sensor_is_available = true;
-                        g_rgb = true;
-                        g_wide = true;
-                    }
-                    else if (response->sensors[i].sensor_type == sensor_allied_narrow && response->sensors[i].sensor_available)
-                    {
-                        sensor_is_available = true;
-                        g_rgb = false;
                     }
                 }
             }
@@ -382,8 +531,7 @@ int main(int argc, char const *argv[])
 
         if (sensor_is_available)
         {
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), (g_rgb ? "RGB" : "Allied Narrow") << " camera available for streaming");
-            node->declareServiceServers((g_rgb ? "rgb" : "allied_narrow"));
+            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Thermal camera available for streaming");
         }
         else
         {
@@ -392,10 +540,14 @@ int main(int argc, char const *argv[])
     }
     node->undeclare_parameter("simulator");
 
-    node->publisher_ = node->create_publisher<sensor_msgs::msg::Image>(g_rgb ? "img_rgb" : "img_narrow", 10);
-    node->detections_publisher_ = node->create_publisher<vision_msgs::msg::Detection2DArray>(g_rgb ? "rgb_detections" : "narrow_detections", 10);
-    std::thread thread(ImageThread, node->publisher_, node->detections_publisher_);
+    node->publisher_ = node->create_publisher<sensor_msgs::msg::CompressedImage>("img_thermal/compressed", 10);
+    node->detections_publisher_ = node->create_publisher<vision_msgs::msg::Detection2DArray>("thermal_detections", 10);
+    std::thread thread(ImageThread, node->publisher_, node->get_parameter("jpeg_quality").as_int(), node->get_parameter("jpeg_optimize").as_bool(), node->get_parameter("jpeg_rst_interval").as_int(), node->detections_publisher_);
     thread.detach();
+
+    node->f_publisher_ = node->create_publisher<sensor_msgs::msg::Image>("img_f_thermal", 10);
+    std::thread thread_f(FloatImageThread, node->f_publisher_);
+    thread_f.detach();
 
     rclcpp::spin(node);
 

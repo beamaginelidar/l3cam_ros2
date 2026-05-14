@@ -5,9 +5,9 @@
     <!-- Lidar configuration -->
     <arg name="pointcloud_color" default="0" />
     <arg name="pointcloud_color_range_minimum" default="0" />
-    <arg name="pointcloud_color_range_maximum" default="300000" />
+    <arg name="pointcloud_color_range_maximum" default="30000" />
     <arg name="distance_range_minimum" default="1500" />
-    <arg name="distance_range_maximum" default="300000" />
+    <arg name="distance_range_maximum" default="150000" />
     <arg name="bias_short_range" default="false" />
     <arg name="auto_bias" default="true" />
     <arg name="bias_value_right" default="1580" />
@@ -99,11 +99,11 @@
 
     <!-- Dynamic reconfigure -->
     <!-- <node pkg="l3cam_ros2" exec="network_configuration" name="network_configuration" if="$(var network_conf)">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
     </node> -->
     
     <node pkg="l3cam_ros2" exec="lidar_configuration" name="lidar_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
         <param name="pointcloud_color" value="$(var pointcloud_color)" type="int" />
         <param name="pointcloud_color_range_minimum" value="$(var pointcloud_color_range_minimum)" type="int" />
         <param name="pointcloud_color_range_maximum" value="$(var pointcloud_color_range_maximum)" type="int" />
@@ -119,7 +119,7 @@
     </node>
     
     <node pkg="l3cam_ros2" exec="polarimetric_configuration" name="polarimetric_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
         <param name="polarimetric_camera_stream_processed_image" value="$(var polarimetric_camera_stream_processed_image)" type="bool" />
         <param name="polarimetric_camera_process_type" value="$(var polarimetric_camera_process_type)" type="int" />
         <param name="polarimetric_camera_brightness" value="$(var polarimetric_camera_brightness)" type="int" />
@@ -136,7 +136,7 @@
     </node>
     
     <node pkg="l3cam_ros2" exec="rgb_configuration" name="rgb_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
         <param name="rgb_camera_brightness" value="$(var rgb_camera_brightness)" type="int" />
         <param name="rgb_camera_contrast" value="$(var rgb_camera_contrast)" type="int" />
         <param name="rgb_camera_saturation" value="$(var rgb_camera_saturation)" type="int" />
@@ -151,7 +151,7 @@
     </node>
 
     <node pkg="l3cam_ros2" exec="thermal_configuration" name="thermal_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
         <param name="thermal_camera_colormap" value="$(var thermal_camera_colormap)" type="int" />
         <param name="thermal_camera_temperature_filter" value="$(var thermal_camera_temperature_filter)" type="bool" />
         <param name="thermal_camera_temperature_filter_min" value="$(var thermal_camera_temperature_filter_min)" type="int" />
@@ -162,7 +162,7 @@
     </node>
     
     <node pkg="l3cam_ros2" exec="allied_wide_configuration" name="allied_wide_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
         <param name="allied_wide_camera_exposure_time" value="$(var allied_wide_camera_exposure_time)" type="float" />
         <param name="allied_wide_camera_auto_exposure_time" value="$(var allied_wide_camera_auto_exposure_time)" type="bool" />
         <param name="allied_wide_camera_auto_exposure_time_range_min" value="$(var allied_wide_camera_auto_exposure_time_range_min)" type="float" />
@@ -186,7 +186,7 @@
     </node>
     
     <node pkg="l3cam_ros2" exec="allied_narrow_configuration" name="allied_narrow_configuration">
-        <param name="timeout_secs" value="$(var timeout_secs)" />
+        <param name="timeout_secs" value="$(var timeout_secs)" type="int" />
         <param name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" type="float" />
         <param name="allied_narrow_camera_auto_exposure_time" value="$(var allied_narrow_camera_auto_exposure_time)" type="bool" />
         <param name="allied_narrow_camera_auto_exposure_time_range_min" value="$(var allied_narrow_camera_auto_exposure_time_range_min)" type="float" />

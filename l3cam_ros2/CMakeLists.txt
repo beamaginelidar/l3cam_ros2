@@ -15,6 +15,7 @@ find_package(rclcpp REQUIRED)
 find_package(l3cam_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
+find_package(vision_msgs REQUIRED)
 
 include_directories(
   include/l3cam_ros2
@@ -60,16 +61,36 @@ ament_target_dependencies(lidar_stream "rclcpp" "l3cam_interfaces" "sensor_msgs"
 target_link_libraries(lidar_stream ${l3cam_LIBRARIES})
 
 add_executable(polarimetric_wide_stream src/polarimetric_wide_stream.cpp src/sensor_stream.cpp)
-ament_target_dependencies(polarimetric_wide_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
+ament_target_dependencies(polarimetric_wide_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge" "vision_msgs")
 target_link_libraries(polarimetric_wide_stream ${l3cam_LIBRARIES})
 
 add_executable(rgb_narrow_stream src/rgb_narrow_stream.cpp src/sensor_stream.cpp)
-ament_target_dependencies(rgb_narrow_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
+ament_target_dependencies(rgb_narrow_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge" "vision_msgs")
 target_link_libraries(rgb_narrow_stream ${l3cam_LIBRARIES})
 
 add_executable(thermal_stream src/thermal_stream.cpp src/sensor_stream.cpp)
-ament_target_dependencies(thermal_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
+ament_target_dependencies(thermal_stream "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge" "vision_msgs")
 target_link_libraries(thermal_stream ${l3cam_LIBRARIES})
+
+add_executable(lidar_stream_tiny src/lidar_stream_tiny.cpp src/sensor_stream.cpp)
+ament_target_dependencies(lidar_stream_tiny "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge")
+target_link_libraries(lidar_stream_tiny ${l3cam_LIBRARIES})
+
+add_executable(polarimetric_wide_stream_comp src/polarimetric_wide_stream_comp.cpp src/sensor_stream.cpp)
+ament_target_dependencies(polarimetric_wide_stream_comp "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge" "vision_msgs")
+target_link_libraries(polarimetric_wide_stream_comp ${l3cam_LIBRARIES})
+
+add_executable(rgb_narrow_stream_comp src/rgb_narrow_stream_comp.cpp src/sensor_stream.cpp)
+ament_target_dependencies(rgb_narrow_stream_comp "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge" "vision_msgs")
+target_link_libraries(rgb_narrow_stream_comp ${l3cam_LIBRARIES})
+
+add_executable(thermal_stream_comp src/thermal_stream_comp.cpp src/sensor_stream.cpp)
+ament_target_dependencies(thermal_stream_comp "rclcpp" "l3cam_interfaces" "sensor_msgs" "cv_bridge" "vision_msgs")
+target_link_libraries(thermal_stream_comp ${l3cam_LIBRARIES})
+
+add_executable(lidar_detections_stream src/lidar_detections_stream.cpp src/sensor_stream.cpp)
+ament_target_dependencies(lidar_detections_stream "rclcpp" "l3cam_interfaces" "vision_msgs")
+target_link_libraries(lidar_detections_stream ${l3cam_LIBRARIES})
 
 install(TARGETS 
     l3cam_ros2_node
@@ -84,6 +105,11 @@ install(TARGETS
     polarimetric_wide_stream
     rgb_narrow_stream
     thermal_stream
+    lidar_stream_tiny
+    polarimetric_wide_stream_comp
+    rgb_narrow_stream_comp
+    thermal_stream_comp
+    lidar_detections_stream
   DESTINATION lib/${PROJECT_NAME}
 )
 

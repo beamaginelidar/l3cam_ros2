@@ -104,7 +104,7 @@ namespace l3cam_ros2
             this->declare_parameter("polarimetric_camera_stream_processed_image", true);
             intRange.set__from_value(0).set__to_value(4);
             descriptor.integer_range = {intRange};
-            this->declare_parameter("polarimetric_camera_process_type", 4, descriptor); // see polAngle
+            this->declare_parameter("polarimetric_camera_process_type", 4, descriptor); // see polModes
             intRange.set__from_value(0).set__to_value(255);
             descriptor.integer_range = {intRange};
             this->declare_parameter("polarimetric_camera_brightness", 127, descriptor); // 0 - 255

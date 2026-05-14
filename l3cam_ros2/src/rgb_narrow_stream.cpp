@@ -46,7 +46,7 @@
 #include "sensor_msgs/image_encodings.hpp"
 #include "vision_msgs/msg/detection2_d_array.hpp"
 
-#include "cv_bridge/cv_bridge.h"
+#include "cv_bridge/cv_bridge.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 

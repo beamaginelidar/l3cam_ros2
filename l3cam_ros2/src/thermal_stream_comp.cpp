@@ -318,8 +318,8 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr
             bytes_count += size_read;
 
             // check if under size
-            // if (bytes_count >= m_image_data_size)
-            //     m_is_reading_image = false;
+            if (bytes_count > m_image_data_size)
+                m_is_reading_image = false;
         }
         // size_read == -1 --> timeout
     }
@@ -424,6 +424,10 @@ void FloatImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publ
             memcpy(&thermal_data_pointer[float_pointer_cnt], buffer, size_read);
             bytes_count += size_read;
             float_pointer_cnt += size_read / 4;
+
+            // check if under size
+            if (bytes_count > m_image_data_size)
+                m_is_reading_image = false;
         }
         // size_read == -1 --> timeout
     }

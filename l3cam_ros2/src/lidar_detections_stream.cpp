@@ -196,6 +196,10 @@ void DetectionsThread(rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::Sha
                     m_3d_detections.detections.push_back(det);
                 }
             }
+
+            // check if under size
+            if (detections_recv > num_detections)
+                m_is_reading_detections = false;
         }
     }
 

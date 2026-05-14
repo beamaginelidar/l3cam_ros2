@@ -269,8 +269,8 @@ void ImageThread(rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher
             bytes_count += size_read;
 
             // check if under size
-            // if (bytes_count >= m_image_data_size)
-            //     m_is_reading_image = false;
+            if (bytes_count > m_image_data_size)
+                m_is_reading_image = false;
         }
         // size_read == -1 --> timeout
     }

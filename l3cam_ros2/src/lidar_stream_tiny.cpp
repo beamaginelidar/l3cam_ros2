@@ -158,12 +158,12 @@ void CompressSendPointCloudThread(std::vector<int32_t> point_cloud_data,
         tpc_msg.points.push_back(z_16);
         tpc_msg.intensities.push_back(i_8);
     }
-
+    /*
     if (count_removed > 0)
     {
-        //RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Removed " << count_removed << " duplicated points");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Removed " << count_removed << " duplicated points");
     }
-
+    */
     publisher->publish(tpc_msg);
 
     g_mutex.lock();
@@ -327,8 +327,8 @@ void PointCloudThread(rclcpp::Publisher<l3cam_interfaces::msg::TinyPointCloud>::
             points_received += points;
 
             // check if under size
-            // if (points_received >= m_pointcloud_size)
-            //     m_is_reading_pointcloud = false;
+            if (points_received > m_pointcloud_size)
+                m_is_reading_pointcloud = false;
         }
         // size_read == -1 --> timeout
     }

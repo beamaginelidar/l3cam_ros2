@@ -231,8 +231,8 @@ void PointCloudThread(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPt
             points_received += points;
 
             // check if under size
-            // if (points_received >= m_pointcloud_size)
-            //     m_is_reading_pointcloud = false;
+            if (points_received > m_pointcloud_size)
+                m_is_reading_pointcloud = false;
         }
         // size_read == -1 --> timeout
     }

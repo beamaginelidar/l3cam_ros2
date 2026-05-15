@@ -223,19 +223,19 @@
             <param name="allied_wide_camera_saturation" value="$(var allied_wide_camera_saturation)" type="float" />
             <param name="allied_wide_camera_sharpness" value="$(var allied_wide_camera_sharpness)" type="float" />
             <param name="allied_wide_camera_hue" value="$(var allied_wide_camera_hue)" type="float" />
-            <param name="allied_wide_camera_intensity_auto_precedence" value="$(var allied_wide_camera_intensity_auto_precedence)" type="float" />
+            <param name="allied_wide_camera_intensity_auto_precedence" value="$(var allied_wide_camera_intensity_auto_precedence)" type="int" />
             <param name="allied_wide_camera_auto_white_balance" value="$(var allied_wide_camera_auto_white_balance)" type="bool" />
-            <param name="allied_wide_camera_balance_ratio_selector" value="$(var allied_wide_camera_balance_ratio_selector)" type="float" />
+            <param name="allied_wide_camera_balance_ratio_selector" value="$(var allied_wide_camera_balance_ratio_selector)" type="int" />
             <param name="allied_wide_camera_balance_ratio" value="$(var allied_wide_camera_balance_ratio)" type="float" />
             <param name="allied_wide_camera_balance_white_auto_rate" value="$(var allied_wide_camera_balance_white_auto_rate)" type="float" />
             <param name="allied_wide_camera_balance_white_auto_tolerance" value="$(var allied_wide_camera_balance_white_auto_tolerance)" type="float" />
-            <param name="allied_wide_camera_auto_mode_region_height" value="$(var allied_wide_camera_auto_mode_region_height)" type="float" />
-            <param name="allied_wide_camera_auto_mode_region_width" value="$(var allied_wide_camera_auto_mode_region_width)" type="float" />
-            <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" type="float" />
+            <param name="allied_wide_camera_auto_mode_region_height" value="$(var allied_wide_camera_auto_mode_region_height)" type="int" />
+            <param name="allied_wide_camera_auto_mode_region_width" value="$(var allied_wide_camera_auto_mode_region_width)" type="int" />
+            <param name="allied_wide_camera_intensity_controller_region" value="$(var allied_wide_camera_intensity_controller_region)" type="int" />
             <param name="allied_wide_camera_intensity_controller_target" value="$(var allied_wide_camera_intensity_controller_target)" type="float" />
-            <param name="allied_wide_camera_max_driver_buffers_count" value="$(var allied_wide_camera_max_driver_buffers_count)" type="float" />
-            <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" type="float" />
-            <param name="allied_wide_rtsp_pipeline" value="$(var allied_wide_rtsp_pipeline)" type="float" />
+            <param name="allied_wide_camera_max_driver_buffers_count" value="$(var allied_wide_camera_max_driver_buffers_count)" type="int" />
+            <param name="allied_wide_streaming_protocol" value="$(var allied_wide_streaming_protocol)" type="int" />
+            <param name="allied_wide_rtsp_pipeline" value="$(var allied_wide_rtsp_pipeline)" type="str" />
 
             <param name="allied_narrow_camera_black_level" value="$(var allied_narrow_camera_black_level)" type="float" />
             <param name="allied_narrow_camera_exposure_time" value="$(var allied_narrow_camera_exposure_time)" type="float" />
@@ -250,19 +250,19 @@
             <param name="allied_narrow_camera_saturation" value="$(var allied_narrow_camera_saturation)" type="float" />
             <param name="allied_narrow_camera_sharpness" value="$(var allied_narrow_camera_sharpness)" type="float" />
             <param name="allied_narrow_camera_hue" value="$(var allied_narrow_camera_hue)" type="float" />
-            <param name="allied_narrow_camera_intensity_auto_precedence" value="$(var allied_narrow_camera_intensity_auto_precedence)" type="float" />
+            <param name="allied_narrow_camera_intensity_auto_precedence" value="$(var allied_narrow_camera_intensity_auto_precedence)" type="int" />
             <param name="allied_narrow_camera_auto_white_balance" value="$(var allied_narrow_camera_auto_white_balance)"  type="bool" />
-            <param name="allied_narrow_camera_balance_ratio_selector" value="$(var allied_narrow_camera_balance_ratio_selector)" type="float" />
+            <param name="allied_narrow_camera_balance_ratio_selector" value="$(var allied_narrow_camera_balance_ratio_selector)" type="int" />
             <param name="allied_narrow_camera_balance_ratio" value="$(var allied_narrow_camera_balance_ratio)" type="float" />
             <param name="allied_narrow_camera_balance_white_auto_rate" value="$(var allied_narrow_camera_balance_white_auto_rate)" type="float" />
             <param name="allied_narrow_camera_balance_white_auto_tolerance" value="$(var allied_narrow_camera_balance_white_auto_tolerance)" type="float" />
-            <param name="allied_narrow_camera_auto_mode_region_height" value="$(var allied_narrow_camera_auto_mode_region_height)" type="float" />
-            <param name="allied_narrow_camera_auto_mode_region_width" value="$(var allied_narrow_camera_auto_mode_region_width)" type="float" />
-            <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" type="float" />
+            <param name="allied_narrow_camera_auto_mode_region_height" value="$(var allied_narrow_camera_auto_mode_region_height)" type="int" />
+            <param name="allied_narrow_camera_auto_mode_region_width" value="$(var allied_narrow_camera_auto_mode_region_width)" type="int" />
+            <param name="allied_narrow_camera_intensity_controller_region" value="$(var allied_narrow_camera_intensity_controller_region)" type="int" />
             <param name="allied_narrow_camera_intensity_controller_target" value="$(var allied_narrow_camera_intensity_controller_target)" type="float" />
-            <param name="allied_narrow_camera_max_driver_buffers_count" value="$(var allied_narrow_camera_max_driver_buffers_count)" type="float" />
-            <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" type="float" />
-            <param name="allied_narrow_rtsp_pipeline" value="$(var allied_narrow_rtsp_pipeline)" type="float" />
+            <param name="allied_narrow_camera_max_driver_buffers_count" value="$(var allied_narrow_camera_max_driver_buffers_count)" type="int" />
+            <param name="allied_narrow_streaming_protocol" value="$(var allied_narrow_streaming_protocol)" type="int" />
+            <param name="allied_narrow_rtsp_pipeline" value="$(var allied_narrow_rtsp_pipeline)" type="str" />
         </node>
 
         <!-- Start dyanmic reconfigure -->
